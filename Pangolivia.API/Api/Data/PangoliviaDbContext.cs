@@ -24,14 +24,14 @@ namespace Pangolivia.Data
                 entity.ToTable("quiz");
                 entity.HasKey(q => q.Id);
                 entity.Property(q => q.Id)
-                      .HasColumnName("id")
-                      .ValueGeneratedOnAdd();
+                    .HasColumnName("id")
+                    .ValueGeneratedOnAdd();
                 entity.Property(q => q.QuizName)
-                      .HasColumnName("quiz_name")
-                      .IsRequired()
-                      .HasMaxLength(100);
+                    .HasColumnName("quiz_name")
+                    .IsRequired()
+                    .HasMaxLength(100);
                 entity.Property(q => q.CreatedByUserId)
-                      .HasColumnName("created_by_user_id");
+                    .HasColumnName("created_by_user_id");
                       
             });
         }
