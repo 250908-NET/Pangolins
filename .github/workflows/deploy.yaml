@@ -5,13 +5,13 @@ on:
     branches: [ main ]
 
 # TODO: Deploy to azure on new main update
-# jobs:
-#   build-and-deploy:
-#     runs-on: ubuntu-latest
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
 #       - name: Set up Docker Buildx
 #         uses: docker/setup-buildx-action@v3
