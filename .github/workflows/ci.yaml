@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    # TODO: Add CICD testing for .NET
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x' # or your required version
+
+      - name: Restore dependencies
+        run: dotnet restore Pangolins.sln
+
+      - name: Build
+        run: dotnet build Pangolins.sln --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test Pangolins.sln --no-build --configuration Release
+
+    # TODO: Add CICD testing for NextJS
+
+    # TODO: Docker image build
+      # - name: Test build NextJS Docker image
+      #   run: docker build -t test-nextjs ./frontend -f ./pangolivia.frontend/Dockerfile
+
+      # - name: Test build .NET API Docker image
+      #   run: docker build -t test-dotnet-api ./backend/app -f ./backend/app/Dockerfile

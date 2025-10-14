@@ -1,0 +1,62 @@
+name: Deploy to Azure
+
+on:
+  push:
+    branches: [ main ]
+
+# TODO: Deploy to azure on new main update
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
+
+#       - name: Log in to Azure Container Registry
+#         uses: azure/docker-login@v1
+#         with:
+#           login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+#           username: ${{ secrets.ACR_USERNAME }}
+#           password: ${{ secrets.ACR_PASSWORD }}
+
+#       - name: Build and push NextJS image
+#         uses: docker/build-push-action@v5
+#         with:
+#           context: ./frontend
+#           file: ./frontend/Dockerfile
+#           push: true
+#           tags: ${{ secrets.ACR_LOGIN_SERVER }}/nextjs:latest
+
+#       - name: Build and push .NET API image
+#         uses: docker/build-push-action@v5
+#         with:
+#           context: ./backend/app
+#           file: ./backend/app/Dockerfile
+#           push: true
+#           tags: ${{ secrets.ACR_LOGIN_SERVER }}/dotnet-api:latest
+
+#       - name: Build and push SQL Server image
+#         uses: docker/build-push-action@v5
+#         with:
+#           context: ./sqlserver
+#           file: ./sqlserver/Dockerfile
+#           push: true
+#           tags: ${{ secrets.ACR_LOGIN_SERVER }}/sqlserver:latest
+
+#       - name: Azure Login
+#         uses: azure/login@v2
+#         with:
+#           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+#       - name: Deploy containers to Azure Web App
+#         uses: azure/webapps-deploy@v3
+#         with:
+#           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+#           images: |
+#             ${{ secrets.ACR_LOGIN_SERVER }}/nextjs:latest
+#             ${{ secrets.ACR_LOGIN_SERVER }}/dotnet-api:latest
+#             ${{ secrets.ACR_LOGIN_SERVER }}/sqlserver:latest
