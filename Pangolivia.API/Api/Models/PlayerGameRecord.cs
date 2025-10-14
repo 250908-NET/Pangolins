@@ -12,6 +12,4 @@ public class PlayerGameRecord {
     double score {get; set;} = 0;
 
 
-    public ICollection<GameRecord> GameRecordsList { get; set; } = new List<GameRecord>();
-
 }
