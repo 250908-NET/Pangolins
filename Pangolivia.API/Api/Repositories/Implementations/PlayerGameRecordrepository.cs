@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Pangolivia.API.Data;
 using Pangolivia.API.Models;
 
@@ -8,24 +9,61 @@ public class PlayerGameRecordRepository : IPlayerGameRecordRepository
     {
         _context = context;
     }
-    public Task<List<PlayerGameRecordModel>> getAllPlayerGameRecords()
+    public async Task<List<PlayerGameRecordModel>> getAllPlayerGameRecords()
     {
-        throw new NotImplementedException();
+        return await _context.PlayerGameRecords
+         .Include(pgr => pgr.User)
+         .Include(pgr => pgr.GameRecord)
+         .ToListAsync();
     }
-    public Task<PlayerGameRecordModel> getPlayerGameRecordModelByUserId(int userID)
+    public async Task<PlayerGameRecordModel> getPlayerGameRecordModelByUserId(int userId)
     {
-        throw new NotImplementedException();
+        var FoundPlayerGameRecordModel = await _context.PlayerGameRecords
+        .Include(pgr => pgr.GameRecord)
+        .FirstOrDefaultAsync(pgr => pgr.UserId == userId);
+
+        if (FoundPlayerGameRecordModel != null)
+        {
+            return FoundPlayerGameRecordModel;
+        }
+        return null;
+        // throw new NotImplementedException();
     }
-    public Task<PlayerGameRecordModel> AddPlayerGameRecordModel(PlayerGameRecordModel PGRM_DTO)
+    public async Task<PlayerGameRecordModel> AddPlayerGameRecordModel(PlayerGameRecordDto PGRM_DTO)
     {
-        throw new NotImplementedException();
+        var model = new PlayerGameRecordModel
+        {
+            UserId = PGRM_DTO.UserId,
+            GameRecordId = PGRM_DTO.GameRecordId,
+            score = PGRM_DTO.Score
+        };
+        _context.PlayerGameRecords.Add(model);
+        await _context.SaveChangesAsync();
+        return model;
     }
-    public Task RemovePlayerGameRecordModel(int id)
+    public async Task RemovePlayerGameRecordModel(int id)
     {
-        throw new NotImplementedException();
+        var record = await _context.PlayerGameRecords.FindAsync(id);
+
+        if (record == null)
+        {
+            throw new KeyNotFoundException($"PlayerGameRecord with id {id} not found.");
+        }
+
+        _context.PlayerGameRecords.Remove(record);
+        await _context.SaveChangesAsync();
+
     }
-    public Task UpdatePlayerGameRecordModel(int id)
+    public async Task UpdatePlayerGameRecordModel(int id, int newScore)
     {
-        throw new NotImplementedException();
+        var record = await _context.PlayerGameRecords.FindAsync(id);
+
+        if (record == null)
+        {
+            throw new KeyNotFoundException($"PlayerGameRecord with id {id} not found.");
+        }
+
+        record.score = newScore;
+        await _context.SaveChangesAsync();
     }
 }
