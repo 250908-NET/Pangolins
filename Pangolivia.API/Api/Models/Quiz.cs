@@ -16,5 +16,9 @@ public class Quiz
 
     [ForeignKey("User")]
     public int CreatedByUserId { get; set; }
+
+    // Links to other models
+    public User? CreatedByUser { get; set; }
+    public List<Question> Questions { get; set; } = new();
 }
 
