@@ -5,7 +5,7 @@ using Pangolivia.API.Models;
 public class PlayerGameRecordRepository : IPlayerGameRecordRepository
 {
     private PangoliviaDbContext _context;
-    PlayerGameRecordRepository(PangoliviaDbContext context)
+    public PlayerGameRecordRepository(PangoliviaDbContext context)
     {
         _context = context;
     }
