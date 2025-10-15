@@ -1,4 +1,4 @@
-using Pangolivia.Models;
+using Pangolivia.API.Models;
 
 namespace Pangolivia.Repositories;
 
@@ -14,4 +14,3 @@ public interface IQuizRepository
     Task<List<Quiz>> GetByUserIdAsync(int userId);
     Task<bool> SaveChangesAsync();
 }
-
