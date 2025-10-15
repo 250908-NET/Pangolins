@@ -1,14 +1,13 @@
-using Pangolivia.Models;
+using Pangolivia.API.Models;
 
 namespace Pangolivia.Repositories;
 
 public interface IQuizRepository
 {
-    Task<List<Quiz>> GetAllAsync();
-    Task<Quiz?> GetByIdAsync(int id);
-    Task AddAsync(Quiz quiz);
-    Task UpdateAsync(Quiz quiz);
+    Task<List<QuizModel>> GetAllAsync();
+    Task<QuizModel?> GetByIdAsync(int id);
+    Task AddAsync(QuizModel quiz);
+    Task UpdateAsync(QuizModel quiz);
     Task DeleteAsync(int id);
     Task SaveChangesAsync();
 }
-
