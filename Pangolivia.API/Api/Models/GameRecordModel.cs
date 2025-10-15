@@ -29,5 +29,5 @@ public class GameRecordModel
     [Column("datetime_completed")]
     public DateTime datetimeCompleted { get; set; }
 
-    // public ICollection<PlayerGameRecordModel> PlayerGameRecords { get; set; } = new List<PlayerGameRecordModel>();
+    public ICollection<PlayerGameRecordModel> PlayerGameRecords { get; set; } = new List<PlayerGameRecordModel>();
 }
