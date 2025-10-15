@@ -24,38 +24,38 @@ public class PangoliviaDbContext : DbContext
         modelBuilder.Entity<GameRecordModel>(entity =>
         {
             entity.HasOne(gr => gr.HostUser)
-                .WithMany() // If you add a collection navigation property to UserModel, put it here
+                .WithMany(u => u.HostedGameRecords) // This points to the ICollection in UserModel
                 .HasForeignKey(gr => gr.HostUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(gr => gr.Quiz)
-                .WithMany() // If you add a collection navigation property to QuizModel, put it here
+                .WithMany(q => q.GameRecords) // This points to the ICollection in QuizModel
                 .HasForeignKey(gr => gr.QuizId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
         modelBuilder.Entity<PlayerGameRecordModel>(entity =>
         {
             entity.HasOne(pgr => pgr.GameRecord)
-                .WithMany() // If you add a collection navigation property to QuizModel, put it here
+                .WithMany(gr => gr.PlayerGameRecords) // This points to the ICollection in GameRecordModel
                 .HasForeignKey(pgr => pgr.GameRecordId)
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasOne(pgr => pgr.User)
-                .WithMany() // If you add a collection navigation property to UserModel, put it here
+                .WithMany(u => u.PlayerGameRecords) // This points to the ICollection in UserModel
                 .HasForeignKey(pgr => pgr.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<QuizModel>(entity =>
         {
             entity.HasOne(q => q.CreatedByUser)
-                .WithMany() // If you add a collection navigation property to UserModel, put it here
+                .WithMany(u => u.CreatedQuizzes) // This points to the ICollection in UserModel
                 .HasForeignKey(q => q.CreatedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<QuestionModel>(entity =>
         {
             entity.HasOne(q => q.Quiz)
-                .WithMany() // If you add a collection navigation property to UserModel, put it here
+                .WithMany(qz => qz.Questions) // This points to the ICollection in QuizModel
                 .HasForeignKey(q => q.QuizId)
                 .OnDelete(DeleteBehavior.Restrict);
         });

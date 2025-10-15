@@ -21,7 +21,7 @@ public class QuizModel
     [ForeignKey(nameof(CreatedByUserId))]
     public UserModel? CreatedByUser { get; set; }
 
-    // public ICollection<QuestionModel> Questions { get; set; } = new List<QuestionModel>();
-    // public ICollection<GameRecordModel> GameRecords { get; set; } = new List<GameRecordModel>();
+    public ICollection<QuestionModel> Questions { get; set; } = new List<QuestionModel>();
+    public ICollection<GameRecordModel> GameRecords { get; set; } = new List<GameRecordModel>();
 }
 

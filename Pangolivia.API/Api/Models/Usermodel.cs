@@ -18,7 +18,7 @@ public class UserModel
     [Column("username")]
     public string Username { get; set; } = string.Empty;
 
-    // public ICollection<PlayerGameRecordModel> PlayerGameRecords { get; set; } = new List<PlayerGameRecordModel>();
-    // public ICollection<GameRecordModel> HostedGameRecords { get; set; } = new List<GameRecordModel>();
-    // public ICollection<QuizModel> CreatedQuizzes { get; set; } = new List<QuizModel>();
+    public ICollection<PlayerGameRecordModel> PlayerGameRecords { get; set; } = new List<PlayerGameRecordModel>();
+    public ICollection<GameRecordModel> HostedGameRecords { get; set; } = new List<GameRecordModel>();
+    public ICollection<QuizModel> CreatedQuizzes { get; set; } = new List<QuizModel>();
 }
