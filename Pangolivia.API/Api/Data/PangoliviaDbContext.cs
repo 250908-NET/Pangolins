@@ -19,7 +19,7 @@ public class PangoliviaDbContext : DbContext
     {
         // modelBuilder.Entity<UserModel>(entity =>
         // {
-            
+
         // });
         modelBuilder.Entity<GameRecordModel>(entity =>
         {
@@ -39,7 +39,7 @@ public class PangoliviaDbContext : DbContext
                 .WithMany(gr => gr.PlayerGameRecords) // This points to the ICollection in GameRecordModel
                 .HasForeignKey(pgr => pgr.GameRecordId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
+
             entity.HasOne(pgr => pgr.User)
                 .WithMany(u => u.PlayerGameRecords) // This points to the ICollection in UserModel
                 .HasForeignKey(pgr => pgr.UserId)
@@ -59,7 +59,23 @@ public class PangoliviaDbContext : DbContext
                 .HasForeignKey(q => q.QuizId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
-        
+
+
+        modelBuilder.Entity<PlayerGameRecordModel>()
+            .HasKey(pgr => pgr.Id);
+
+        modelBuilder.Entity<PlayerGameRecordModel>()
+            .HasOne(pgr => pgr.User)
+            .WithMany(u => u.PlayerGameRecords)
+            .HasForeignKey(pgr => pgr.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PlayerGameRecordModel>()
+            .HasOne(pgr => pgr.GameRecord)
+            .WithMany(gr => gr.PlayerGameRecords)
+            .HasForeignKey(pgr => pgr.GameRecordId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         base.OnModelCreating(modelBuilder);
     }
 }
