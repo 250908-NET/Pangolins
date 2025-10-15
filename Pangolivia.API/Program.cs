@@ -19,10 +19,11 @@ builder.Services.AddDbContext<PangoliviaDbContext>(options =>
 
 // Dependency Injection
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
-builder.Services.AddScoped<IQuizService, QuizService>();
+
+// builder.Services.AddScoped<IQuizService, QuizService>();
 
 // AutoMapper
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+// builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 // Controllers + Swagger
 builder.Services.AddControllers();
