@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Pangolivia.API.Data;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
+using AutoMapper;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +41,8 @@ builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 
 // AutoMapper
 // builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+
 
 // Controllers + Swagger
 builder.Services.AddControllers();
