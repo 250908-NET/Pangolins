@@ -3,6 +3,7 @@ using Microsoft.VisualBasic;
 using Pangolivia.API.Data;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
+namespace Pangolivia.API.Repositories;
 
 public class UserRepository : IUserRepository
 {
