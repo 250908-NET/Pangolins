@@ -2,6 +2,8 @@ using Serilog;
 
 
 namespace Pangolivia.API;
+using Microsoft.EntityFrameworkCore;
+using Pangolivia.API.Data;
 
 public class Program
 {
@@ -14,6 +16,12 @@ public class Program
             .CreateLogger();
 
         var builder = WebApplication.CreateBuilder(args);
+
+
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        builder.Services.AddDbContext<PangoliviaDbContext>(options =>
+            options.UseSqlServer(connectionString));
+            
 
         builder.Host.UseSerilog();
 
