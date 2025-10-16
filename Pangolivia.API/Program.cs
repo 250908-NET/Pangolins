@@ -5,17 +5,32 @@ using Pangolivia.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//  Configuration hierarchy: appsettings → secrets → env vars
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddUserSecrets<Program>(optional: true)
+    .AddEnvironmentVariables();
+
+//  Read the connection string
+var conn = builder.Configuration.GetConnectionString("DefaultConnection");
+
+//  Register EF Core context
+builder.Services.AddDbContext<PangoliviaDbContext>(opt =>
+    opt.UseSqlServer(conn));
+
+
 // Read connection string from text file
-var connectionStringPath = Path.Combine(Directory.GetCurrentDirectory(), "ConnectionString.txt");
-if (!File.Exists(connectionStringPath))
-{
-    throw new FileNotFoundException("Could not find ConnectionString.txt at project root.", connectionStringPath);
-}
-var connectionString = File.ReadAllText(connectionStringPath).Trim();
+// var connectionStringPath = Path.Combine(Directory.GetCurrentDirectory(), "ConnectionString.txt");
+// if (!File.Exists(connectionStringPath))
+// {
+//     throw new FileNotFoundException("Could not find ConnectionString.txt at project root.", connectionStringPath);
+// }
+// var connectionString = File.ReadAllText(connectionStringPath).Trim();
 
 // Register DbContext with the read connection string
 builder.Services.AddDbContext<PangoliviaDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(conn));
 
 // Dependency Injection
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
