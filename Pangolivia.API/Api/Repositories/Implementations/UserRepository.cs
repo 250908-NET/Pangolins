@@ -1,50 +1,143 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using Pangolivia.API.Data;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
 
-public class UserRepository
+public class UserRepository : IUserRepository
 {
     private PangoliviaDbContext _context;
     public UserRepository(PangoliviaDbContext context)
     {
         _context = context;
     }
-    Task<List<UserModel>> getAllUserModels()
+    public async Task<List<UserModel>> getAllUserModels()
     {
-        throw new NotImplementedException();
+        return await _context.Users
+        .Include(u => u.Username)
+        .ToListAsync();
+        // throw new NotImplementedException();
     }
 
-    Task<UserModel> getUserModelById(int id)
+    public Task<UserModel?> getUserModelById(int id)
     {
-        throw new NotImplementedException();
+        var user = _context.Users.Include(u => u.Username)
+                    .FirstOrDefaultAsync(user => user.Id == id);
+        if (user != null)
+        {
+            return user;
+        }
+        throw new KeyNotFoundException($"UserModel with id {id} not found.");
+
     }
 
-    Task<UserModel> getUserModelByUsername(string username)
+    public async Task<UserModel> getUserModelByUsername(string username)
     {
-        throw new NotImplementedException();
+        var user = await _context.Users
+        .Include(u => u.PlayerGameRecords)
+        .Include(u => u.HostedGameRecords)
+        .Include(u => u.CreatedQuizzes)
+        .FirstOrDefaultAsync(u => u.Username == username);
+
+        if (user != null)
+        {
+            return user;
+        }
+        throw new KeyNotFoundException($"UserModel with id {username} not found.");
     }
 
-    Task<UserModel> createUserModel(CreateUserDTO userDTO)
+    public async Task<UserModel> createUserModel(CreateUserDTO userDTO)
     {
-        throw new NotImplementedException();
+        var model = new UserModel
+        {
+            AuthUuid = userDTO.authUuid,
+            Username = userDTO.username
+        };
+        _context.Users.Add(model);
+        await _context.SaveChangesAsync();
+        return model;
+        // throw new NotImplementedException();
     }
     // Update methods*********************************
-    Task<UserModel> updateUserModelPlayerGameRecord(int id, PlayerGameRecordDto PGR)
+    public async Task<UserModel> updateUserModelPlayerGameRecord(int id, PlayerGameRecordDto pgrDto)
     {
-        throw new NotImplementedException();
+        var user = await _context.Users
+    .Include(u => u.PlayerGameRecords)
+    .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"UserModel with id {id} not found. PlayerGameRecord NOT Updated");
+        }
+
+        var playerGameRecord = new PlayerGameRecordModel
+        {
+            GameRecordId = pgrDto.GameRecordId,
+            UserId = pgrDto.UserId,
+            score = pgrDto.Score
+        };
+
+        user.PlayerGameRecords.Add(playerGameRecord);
+
+        await _context.SaveChangesAsync();
+
+        return user;
+        // throw new NotImplementedException();
     }
-    Task<UserModel> updateUserModelHostedGameRecord(int id, GameRecordModel GRM)
+
+    public async Task<UserModel> updateUserModelHostedGameRecord(int id, GameRecordModel GRM)
     {
-        throw new NotImplementedException();
+        var user = await _context.Users
+        .Include(u => u.Id)
+        .Include(u => u.HostedGameRecords)
+        .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"UserModel with id {id} not found. HostedGameRecord NOT Updated");
+        }
+        // Assign the foreign key 
+        GRM.HostUserId = user.Id;
+
+        user.HostedGameRecords.Add(GRM);
+
+        await _context.SaveChangesAsync();
+
+        return user;
+        // throw new NotImplementedException();
     }
-    Task<UserModel> updateUserModelCreatedQuizzes(int id, QuizModel quiz)
+    public async Task<UserModel> updateUserModelCreatedQuizzes(int id, QuizModel quiz)
     {
-        throw new NotImplementedException();
+        var user = await _context.Users
+        .Include(u => u.Id)
+        .Include(u => u.CreatedQuizzes)
+        .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"UserModel with id {id} not found. CreatedQuizzes NOT Updated");
+        }
+        // link quize to user
+        quiz.CreatedByUserId = user.Id;
+
+        user.CreatedQuizzes.Add(quiz);
+
+        await _context.SaveChangesAsync();
+
+        return user;
+        // throw new NotImplementedException();
     }
     // **********************************************
-    Task removeUserModel(int id)
+    public async Task removeUserModel(int id)
     {
-        throw new NotImplementedException();
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null)
+            throw new KeyNotFoundException($"UserModel with id {id} not found.");
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+
+        // throw new NotImplementedException();
     }
 }
