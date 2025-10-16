@@ -9,61 +9,67 @@ public class PlayerGameRecordRepository : IPlayerGameRecordRepository
     {
         _context = context;
     }
-    public async Task<List<PlayerGameRecordModel>> getAllPlayerGameRecords()
-    {
-        return await _context.PlayerGameRecords
-         .Include(pgr => pgr.User)
-         .Include(pgr => pgr.GameRecord)
-         .ToListAsync();
-    }
-    public async Task<PlayerGameRecordModel?> getPlayerGameRecordModelByUserId(int userId)
-    {
-        var FoundPlayerGameRecordModel = await _context.PlayerGameRecords
-        .Include(pgr => pgr.GameRecord)
-        .FirstOrDefaultAsync(pgr => pgr.UserId == userId);
-
-        if (FoundPlayerGameRecordModel != null)
+    public async Task<IEnumerable<PlayerGameRecordModel>> GetAllAsync()
         {
-            return FoundPlayerGameRecordModel;
-        }
-        return null;
-        // throw new NotImplementedException();
-    }
-    public async Task<PlayerGameRecordModel> AddPlayerGameRecordModel(PlayerGameRecordDto PGRM_DTO)
-    {
-        var model = new PlayerGameRecordModel
-        {
-            UserId = PGRM_DTO.UserId,
-            GameRecordId = PGRM_DTO.GameRecordId,
-            score = PGRM_DTO.Score
-        };
-        _context.PlayerGameRecords.Add(model);
-        await _context.SaveChangesAsync();
-        return model;
-    }
-    public async Task RemovePlayerGameRecordModel(int id)
-    {
-        var record = await _context.PlayerGameRecords.FindAsync(id);
-
-        if (record == null)
-        {
-            throw new KeyNotFoundException($"PlayerGameRecord with id {id} not found.");
+            return await _context.PlayerGameRecords
+                .Include(p => p.User)
+                .Include(p => p.GameRecord)
+                .ToListAsync();
         }
 
-        _context.PlayerGameRecords.Remove(record);
-        await _context.SaveChangesAsync();
-
-    }
-    public async Task UpdatePlayerGameRecordModel(int id, int newScore)
-    {
-        var record = await _context.PlayerGameRecords.FindAsync(id);
-
-        if (record == null)
+        public async Task<PlayerGameRecordModel?> GetByIdAsync(int id)
         {
-            throw new KeyNotFoundException($"PlayerGameRecord with id {id} not found.");
+            return await _context.PlayerGameRecords
+                .Include(p => p.User)
+                .Include(p => p.GameRecord)
+                .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        record.score = newScore;
-        await _context.SaveChangesAsync();
-    }
+        public async Task<IEnumerable<PlayerGameRecordModel>> GetByUserIdAsync(int userId)
+        {
+            return await _context.PlayerGameRecords
+                .Where(p => p.UserId == userId)
+                .Include(p => p.GameRecord)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<PlayerGameRecordModel>> GetByGameRecordIdAsync(int gameRecordId)
+        {
+            return await _context.PlayerGameRecords
+                .Where(p => p.GameRecordId == gameRecordId)
+                .Include(p => p.User)
+                .ToListAsync();
+        }
+
+        public async Task<PlayerGameRecordModel> AddAsync(PlayerGameRecordModel record)
+        {
+            _context.PlayerGameRecords.Add(record);
+            await _context.SaveChangesAsync();
+            return record;
+        }
+
+        public async Task<PlayerGameRecordModel> UpdateAsync(PlayerGameRecordModel record)
+        {
+            _context.PlayerGameRecords.Update(record);
+            await _context.SaveChangesAsync();
+            return record;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var record = await _context.PlayerGameRecords.FindAsync(id);
+            if (record == null)
+                return false;
+
+            _context.PlayerGameRecords.Remove(record);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<double> GetAverageScoreByGameAsync(int gameRecordId)
+        {
+            return await _context.PlayerGameRecords
+                .Where(p => p.GameRecordId == gameRecordId)
+                .AverageAsync(p => p.score);
+        }
 }

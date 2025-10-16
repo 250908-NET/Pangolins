@@ -2,11 +2,14 @@ using Pangolivia.API.Models;
 
 public interface IPlayerGameRecordRepository
 {
-    public Task<List<PlayerGameRecordModel>> getAllPlayerGameRecords();
-    public Task<PlayerGameRecordModel?> getPlayerGameRecordModelByUserId(int userID);
-    public Task<PlayerGameRecordModel> AddPlayerGameRecordModel(PlayerGameRecordDto PGRM_DTO);
-    public Task RemovePlayerGameRecordModel(int id);
-    public Task UpdatePlayerGameRecordModel(int id, int newScore);
+    Task<IEnumerable<PlayerGameRecordModel>> GetAllAsync();
+    Task<PlayerGameRecordModel?> GetByIdAsync(int id);
+    Task<IEnumerable<PlayerGameRecordModel>> GetByUserIdAsync(int userId);
+    Task<IEnumerable<PlayerGameRecordModel>> GetByGameRecordIdAsync(int gameRecordId);
+    Task<PlayerGameRecordModel> AddAsync(PlayerGameRecordModel record);
+    Task<PlayerGameRecordModel> UpdateAsync(PlayerGameRecordModel record);
+    Task<bool> DeleteAsync(int id);
+    Task<double> GetAverageScoreByGameAsync(int gameRecordId);
 
 
 }
