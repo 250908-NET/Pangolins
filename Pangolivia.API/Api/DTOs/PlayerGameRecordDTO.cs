@@ -1,9 +1,12 @@
-public class PlayerGameRecordDto
+
+
+namespace Pangolivia.API.DTOs
 {
-    public int Id { get; set; }
-    public int UserId { get; set; }
-    public string? Username { get; set; }
-    public int GameRecordId { get; set; }
-    public DateTime? GameCompletedAt { get; set; }
-    public double Score { get; set; }
+    public class PlayerGameRecordDTO
+    {
+        public int Id { get; set; }
+        public int GameRecordId { get; set; }
+        public int PlayerUserId { get; set; }
+        public int score { get; set; }
+    }
 }
