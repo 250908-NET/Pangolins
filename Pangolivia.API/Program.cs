@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Pangolivia.Data;
-using Pangolivia.Repositories;
-using Pangolivia.Services;
+using Pangolivia.API.Data;
+using Pangolivia.API.Repositories;
+using Pangolivia.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
