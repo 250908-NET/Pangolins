@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 // Placeholder
 
-namespace Pangolivia.Models;
+namespace Pangolivia.API.Models;
 
 [Table("question")]
 public class Question
@@ -23,6 +23,6 @@ public class Question
     public int QuizId { get; set; }
 
     // Navigation property
-    public Quiz? Quiz { get; set; }
+    public QuizModel? QuizModel { get; set; }
 }
 
