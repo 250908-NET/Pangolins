@@ -16,7 +16,7 @@ public class PlayerGameRecordRepository : IPlayerGameRecordRepository
          .Include(pgr => pgr.GameRecord)
          .ToListAsync();
     }
-    public async Task<PlayerGameRecordModel> getPlayerGameRecordModelByUserId(int userId)
+    public async Task<PlayerGameRecordModel?> getPlayerGameRecordModelByUserId(int userId)
     {
         var FoundPlayerGameRecordModel = await _context.PlayerGameRecords
         .Include(pgr => pgr.GameRecord)
