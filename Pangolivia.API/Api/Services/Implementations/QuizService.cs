@@ -5,7 +5,7 @@ using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
 
-namespace Pangolivia.Services.Implementations;
+namespace Pangolivia.API.Services;
 
 public class QuizService : IQuizService
 {
