@@ -21,8 +21,8 @@ builder.Services.AddDbContext<PangoliviaDbContext>(options =>
 
 // Dependency Injection
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
-
-// builder.Services.AddScoped<IQuizService, QuizService>();
+builder.Services.AddScoped<IQuizService, QuizService>();
+builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
