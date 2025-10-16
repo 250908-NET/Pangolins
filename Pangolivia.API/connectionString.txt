@@ -1,0 +1,1 @@
+Server=localhost,1433;Database=Pangolivia;User Id=sa;Password=JobMoney12345!;TrustServerCertificate=True;
