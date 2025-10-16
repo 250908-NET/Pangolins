@@ -1,47 +1,45 @@
-using Serilog;
+using Microsoft.EntityFrameworkCore;
+using Pangolivia.Data;
+using Pangolivia.Repositories;
+using Pangolivia.Services;
 
+var builder = WebApplication.CreateBuilder(args);
 
-namespace Pangolivia.API;
-
-public class Program
+// Read connection string from text file
+var connectionStringPath = Path.Combine(Directory.GetCurrentDirectory(), "ConnectionString.txt");
+if (!File.Exists(connectionStringPath))
 {
-    public static void Main(string[] args)
-    {
-
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.Console()
-            .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
-            .CreateLogger();
-
-        var builder = WebApplication.CreateBuilder(args);
-
-        builder.Host.UseSerilog();
-
-        // Add services to the container.
-        builder.Services.AddControllers();
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
-        builder.Services.AddSwaggerGen();
-
-        var app = builder.Build();
-
-        app.UseSerilogRequestLogging();
-
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
-
-        app.UseHttpsRedirection();
-
-        app.UseAuthorization();
-
-
-        app.MapControllers();
-
-        app.Run();
-    }
+    throw new FileNotFoundException("Could not find ConnectionString.txt at project root.", connectionStringPath);
 }
+var connectionString = File.ReadAllText(connectionStringPath).Trim();
+
+// Register DbContext with the read connection string
+builder.Services.AddDbContext<PangoliviaDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// Dependency Injection
+builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+
+// builder.Services.AddScoped<IQuizService, QuizService>();
+
+// AutoMapper
+// builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+
+// Controllers + Swagger
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// Middleware
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+app.Run();
