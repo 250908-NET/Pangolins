@@ -3,13 +3,21 @@ using Pangolivia.API.Data;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+// DotNetEnv.Env.Load();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var builder = WebApplication.CreateBuilder(args);
 
 // Register DbContext with the read connection string
 builder.Services.AddDbContext<PangoliviaDbContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    string connectionString = builder.Configuration.GetConnectionString("Connection") ?? "";
+    if (connectionString == "")
+    {
+        Console.WriteLine("Connection string not found. Exiting program.");
+        Environment.Exit(1);
+    }
+    options.UseSqlServer(connectionString);
+});
 
 // Dependency Injection
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
