@@ -5,7 +5,7 @@ using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
 
-namespace Pangolivia.Services.Implementations;
+namespace Pangolivia.API.Services;
 
 public class QuizService : IQuizService
 {
@@ -47,7 +47,8 @@ public class QuizService : IQuizService
         return _mapper.Map<QuizDetailDto>(detailedQuiz);
     }
 
-    // UPDATE QUIZ
+    // UPDATE QUIZ 
+    // Need to change since Question will be different
     public async Task<QuizDetailDto> UpdateQuizAsync(int quizId, UpdateQuizRequestDto requestDto, int currentUserId)
     {
         var existingQuiz = await _quizRepository.GetByIdWithDetailsAsync(quizId);

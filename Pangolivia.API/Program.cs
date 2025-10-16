@@ -11,19 +11,22 @@ if (!File.Exists(connectionStringPath))
 {
     throw new FileNotFoundException("Could not find ConnectionString.txt at project root.", connectionStringPath);
 }
+
 var connectionString = File.ReadAllText(connectionStringPath).Trim();
 
 // Register DbContext with the read connection string
 builder.Services.AddDbContext<PangoliviaDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Dependency Injection
+// Repositories
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
 
-// builder.Services.AddScoped<IQuizService, QuizService>();
+// Services
+builder.Services.AddScoped<IQuizService, QuizService>();
 
 // AutoMapper
-// builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 // Controllers + Swagger
 builder.Services.AddControllers();
@@ -39,7 +42,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
 app.UseHttpsRedirection();
-app.UseAuthorization();
+//app.UseAuthorization();
 app.MapControllers();
 app.Run();
