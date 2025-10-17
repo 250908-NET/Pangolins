@@ -21,7 +21,10 @@ builder.Services.AddDbContext<PangoliviaDbContext>(options =>
 });
 
 // Repositories
-builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+// Services
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
 

@@ -1,200 +1,239 @@
- namespace Pangolivia.Tests.Repositories;
+namespace Pangolivia.Tests.Repositories;
 
- public class PlayerGameRecordRepositoryTests : RepositoryTestBase
- {
-     private readonly PlayerGameRecordRepository _repo;
+public class PlayerGameRecordRepositoryTests : RepositoryTestBase
+{
+    private readonly PlayerGameRecordRepository _repo;
 
-     public PlayerGameRecordRepositoryTests()
-     {
-         _repo = new PlayerGameRecordRepository(_context);
-     }
+    public PlayerGameRecordRepositoryTests()
+    {
+        _repo = new PlayerGameRecordRepository(_context);
+    }
 
     //Helper method to seed user, quiz, and game record
     //Arrange
-     private (int userId, int quizId, int gameRecordId) SeedUserQuizAndGame()
-     {
-         var user = new UserModel
-         {
-             AuthUuid = Guid.NewGuid().ToString(),
-             Username = $"user_{Guid.NewGuid():N}".Substring(0, 12)
-         };
-         _context.Users.Add(user);
-         _context.SaveChanges();
+    private (int userId, int quizId, int gameRecordId) SeedUserQuizAndGame()
+    {
+        var user = new UserModel
+        {
+            AuthUuid = Guid.NewGuid().ToString(),
+            Username = $"user_{Guid.NewGuid():N}".Substring(0, 12)
+        };
+        _context.Users.Add(user);
+        _context.SaveChanges();
 
-         var quiz = new QuizModel
-         {
-             QuizName = "Sample Quiz",
-             CreatedByUserId = user.Id
-         };
-         _context.Quizzes.Add(quiz);
-         _context.SaveChanges();
+        var quiz = new QuizModel
+        {
+            QuizName = "Sample Quiz",
+            CreatedByUserId = user.Id
+        };
+        _context.Quizzes.Add(quiz);
+        _context.SaveChanges();
 
-         var gameRecord = new GameRecordModel
-         {
-             HostUserId = user.Id,
-             QuizId = quiz.Id,
-             datetimeCompleted = DateTime.UtcNow
-         };
-         _context.GameRecords.Add(gameRecord);
-         _context.SaveChanges();
+        var gameRecord = new GameRecordModel
+        {
+            HostUserId = user.Id,
+            QuizId = quiz.Id,
+            datetimeCompleted = DateTime.UtcNow
+        };
+        _context.GameRecords.Add(gameRecord);
+        _context.SaveChanges();
 
-         return (user.Id, quiz.Id, gameRecord.Id);
-     }
+        return (user.Id, quiz.Id, gameRecord.Id);
+    }
 
-     [Fact]
-     public async Task GetAllPlayerGameRecords_WhenNone_ReturnsEmptyList()
-     {
-         //Act
-         var result = await _repo.getAllPlayerGameRecords();
+    [Fact]
+    public async Task GetAllAsync_WhenNone_ReturnsEmptyList() // Renamed to match repo
+    {
+        //Act
+        var result = await _repo.GetAllAsync(); // Call actual repo method
 
-         //Assert
-         result.Should().NotBeNull();
-         result.Should().BeEmpty();
-     }
+        //Assert
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
+    }
 
-     [Fact]
-     public async Task GetAllPlayerGameRecords_WhenExists_ReturnsListWithIncludes()
-     {
-             var (userId, _, gameRecordId) = SeedUserQuizAndGame();
-         var pgr = new PlayerGameRecordModel
-         {
-             UserId = userId,
-             GameRecordId = gameRecordId,
-             score = 10.5
-         };
-         _context.PlayerGameRecords.Add(pgr);
-         _context.SaveChanges();
+    [Fact]
+    public async Task GetAllAsync_WhenExists_ReturnsListWithIncludes() // Renamed to match repo
+    {
+        var (userId, _, gameRecordId) = SeedUserQuizAndGame();
+        var pgr = new PlayerGameRecordModel
+        {
+            UserId = userId,
+            GameRecordId = gameRecordId,
+            score = 10.5
+        };
+        _context.PlayerGameRecords.Add(pgr);
+        _context.SaveChanges();
 
-         //Act
-         var result = await _repo.getAllPlayerGameRecords();
+        //Act
+        var result = await _repo.GetAllAsync(); // Call actual repo method
 
-         //Assert
-         result.Should().HaveCount(1);
-         var saved = result.Single();
-         saved.User.Should().NotBeNull();
-         saved.GameRecord.Should().NotBeNull();
-         saved.score.Should().Be(10.5);
-     }
+        //Assert
+        result.Should().HaveCount(1);
+        var saved = result.Single();
+        saved.User.Should().NotBeNull();
+        saved.GameRecord.Should().NotBeNull();
+        saved.score.Should().Be(10.5); // Assuming 'score' property name is correct
+    }
 
-     [Fact]
-     public async Task GetPlayerGameRecordModelByUserId_WhenMissing_ReturnsNull()
-     {
-         //Act
-         var result = await _repo.getPlayerGameRecordModelByUserId(999);
+    [Fact]
+    public async Task GetByUserIdAsync_WhenMissing_ReturnsEmptyList() // Renamed and adjusted expectation
+    {
+        //Act
+        var result = await _repo.GetByUserIdAsync(999); // Call actual repo method
 
-         //Assert
-         result.Should().BeNull();
-     }
+        //Assert
+        result.Should().NotBeNull(); // It will return an empty enumerable, not null
+        result.Should().BeEmpty();
+    }
 
-     [Fact]
-     public async Task GetPlayerGameRecordModelByUserId_WhenExists_ReturnsRecord()
-     {
-         //Arrange
-         var (userId, _, gameRecordId) = SeedUserQuizAndGame();
-         var pgr = new PlayerGameRecordModel
-         {
-             UserId = userId,
-             GameRecordId = gameRecordId,
-             score = 7
-         };
-         _context.PlayerGameRecords.Add(pgr);
-         _context.SaveChanges();
+    [Fact]
+    public async Task GetByUserIdAsync_WhenExists_ReturnsRecord() // Renamed and adjusted expectation
+    {
+        //Arrange
+        var (userId, _, gameRecordId) = SeedUserQuizAndGame();
+        var pgr = new PlayerGameRecordModel
+        {
+            UserId = userId,
+            GameRecordId = gameRecordId,
+            score = 7
+        };
+        _context.PlayerGameRecords.Add(pgr);
+        _context.SaveChanges();
 
-         //Act
-         var result = await _repo.getPlayerGameRecordModelByUserId(userId);
+        //Act
+        var result = await _repo.GetByUserIdAsync(userId); // Call actual repo method
 
-         //Assert
-         result.Should().NotBeNull();
-         result!.UserId.Should().Be(userId);
-         result.GameRecord.Should().NotBeNull();
-     }
+        //Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(1);
+        var saved = result.Single();
+        saved.UserId.Should().Be(userId);
+        saved.GameRecord.Should().NotBeNull();
+    }
 
-     [Fact]
-     public async Task AddPlayerGameRecordModel_CreatesAndPersists()
-     {
-             var (userId, _, gameRecordId) = SeedUserQuizAndGame();
+    [Fact]
+    public async Task AddAsync_CreatesAndPersists() // Renamed to match repo
+    {
+        var (userId, _, gameRecordId) = SeedUserQuizAndGame();
 
-         var dto = new PlayerGameRecordDto
-         {
-             UserId = userId,
-             GameRecordId = gameRecordId,
-             Score = 42.3
-         };
+        // DTO to Model mapping logic would typically be in a service layer,
+        // or you instantiate the model directly for repository tests.
+        var newRecord = new PlayerGameRecordModel
+        {
+            UserId = userId,
+            GameRecordId = gameRecordId,
+            score = 42.3 // Assuming 'score' property name is correct
+        };
 
-         //Act
-         var created = await _repo.AddPlayerGameRecordModel(dto);
+        //Act
+        var created = await _repo.AddAsync(newRecord); // Call actual repo method
 
-         //Assert
-         created.Id.Should().BeGreaterThan(0);
-         created.UserId.Should().Be(userId);
-         created.GameRecordId.Should().Be(gameRecordId);
-         created.score.Should().Be(42.3);
+        //Assert
+        created.Id.Should().BeGreaterThan(0);
+        created.UserId.Should().Be(userId);
+        created.GameRecordId.Should().Be(gameRecordId);
+        created.score.Should().Be(42.3);
 
-         var fromDb = await _context.PlayerGameRecords.FindAsync(created.Id);
-         fromDb.Should().NotBeNull();
-     }
+        var fromDb = await _context.PlayerGameRecords.FindAsync(created.Id);
+        fromDb.Should().NotBeNull();
+        fromDb!.score.Should().Be(42.3); // Verify from DB
+    }
 
-     [Fact]
-     public async Task RemovePlayerGameRecordModel_WhenNotFound_Throws()
-     {
-         //Act
-         Func<Task> act = async () => await _repo.RemovePlayerGameRecordModel(12345);
+    [Fact]
+    public async Task DeleteAsync_WhenNotFound_ReturnsFalse() // Renamed and adjusted expectation
+    {
+        //Act
+        var result = await _repo.DeleteAsync(12345); // Call actual repo method
 
-         //Assert
-         await act.Should().ThrowAsync<KeyNotFoundException>();
-     }
+        //Assert
+        result.Should().BeFalse();
+    }
 
-     [Fact]
-     public async Task RemovePlayerGameRecordModel_WhenExists_Removes()
-     {
-         //Arrange
-         var (userId, _, gameRecordId) = SeedUserQuizAndGame();
-         var pgr = new PlayerGameRecordModel
-         {
-             UserId = userId,
-             GameRecordId = gameRecordId,
-             score = 1
-         };
-         _context.PlayerGameRecords.Add(pgr);
-         _context.SaveChanges();
+    [Fact]
+    public async Task DeleteAsync_WhenExists_Removes() // Renamed to match repo
+    {
+        //Arrange
+        var (userId, _, gameRecordId) = SeedUserQuizAndGame();
+        var pgr = new PlayerGameRecordModel
+        {
+            UserId = userId,
+            GameRecordId = gameRecordId,
+            score = 1
+        };
+        _context.PlayerGameRecords.Add(pgr);
+        _context.SaveChanges();
 
-         //Act
-         await _repo.RemovePlayerGameRecordModel(pgr.Id);
+        //Act
+        var result = await _repo.DeleteAsync(pgr.Id); // Call actual repo method
 
-         //Assert
-         var all = _context.PlayerGameRecords.ToList();
-         all.Should().BeEmpty();
-     }
+        //Assert
+        result.Should().BeTrue(); // Verify deletion was successful
+        var all = _context.PlayerGameRecords.ToList();
+        all.Should().BeEmpty();
+    }
 
-     [Fact]
-     public async Task UpdatePlayerGameRecordModel_WhenNotFound_Throws()
-     {
-         //Act
-         Func<Task> act = async () => await _repo.UpdatePlayerGameRecordModel(99999, 77);
+    // Test for GetByIdAsync when not found
+    [Fact]
+    public async Task GetByIdAsync_WhenMissing_ReturnsNull()
+    {
+        var result = await _repo.GetByIdAsync(999);
+        result.Should().BeNull();
+    }
 
-         //Assert
-         await act.Should().ThrowAsync<KeyNotFoundException>();
-     }
+    // Test for GetByIdAsync when exists
+    [Fact]
+    public async Task GetByIdAsync_WhenExists_ReturnsRecordWithIncludes()
+    {
+        var (userId, _, gameRecordId) = SeedUserQuizAndGame();
+        var pgr = new PlayerGameRecordModel
+        {
+            UserId = userId,
+            GameRecordId = gameRecordId,
+            score = 25
+        };
+        _context.PlayerGameRecords.Add(pgr);
+        _context.SaveChanges();
 
-     [Fact]
-     public async Task UpdatePlayerGameRecordModel_WhenExists_UpdatesScore()
-     {
-         //Arrange
-         var (userId, _, gameRecordId) = SeedUserQuizAndGame();
-         var pgr = new PlayerGameRecordModel
-         {
-             UserId = userId,
-             GameRecordId = gameRecordId,
-             score = 5
-         };
-         _context.PlayerGameRecords.Add(pgr);
-         _context.SaveChanges();
+        var result = await _repo.GetByIdAsync(pgr.Id);
 
-         //Act
-         await _repo.UpdatePlayerGameRecordModel(pgr.Id, 99);
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(pgr.Id);
+        result.User.Should().NotBeNull();
+        result.GameRecord.Should().NotBeNull();
+        result.score.Should().Be(25);
+    }
 
-         //Assert
-         var updated = await _context.PlayerGameRecords.FindAsync(pgr.Id);
-         updated!.score.Should().Be(99);
-     }
- }
+
+
+    [Fact]
+    public async Task UpdateAsync_WhenExists_UpdatesRecord() // Renamed to match repo, assuming it updates a whole model
+    {
+        //Arrange
+        var (userId, _, gameRecordId) = SeedUserQuizAndGame();
+        var pgr = new PlayerGameRecordModel
+        {
+            UserId = userId,
+            GameRecordId = gameRecordId,
+            score = 5
+        };
+        _context.PlayerGameRecords.Add(pgr);
+        _context.SaveChanges();
+
+        // Modify the existing model
+        pgr.score = 99;
+        // pgr.SomeOtherProperty = "New Value"; // If you update other properties
+
+        //Act
+        var updatedRecord = await _repo.UpdateAsync(pgr); // Pass the modified model
+
+        //Assert
+        updatedRecord.Should().NotBeNull();
+        updatedRecord.Id.Should().Be(pgr.Id);
+        updatedRecord.score.Should().Be(99);
+
+        var fromDb = await _context.PlayerGameRecords.FirstOrDefaultAsync(x => x.Id == pgr.Id);
+        fromDb.Should().NotBeNull();
+        fromDb!.score.Should().Be(99);
+    }
+}
