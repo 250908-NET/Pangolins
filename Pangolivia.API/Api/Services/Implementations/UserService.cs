@@ -3,8 +3,9 @@ using Microsoft.VisualBasic;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
+using Pangolivia.API.Services;
 
-public class UserService
+public class UserService : IUserService
 {
 
     private UserRepository _context;
@@ -20,9 +21,13 @@ public class UserService
         return _context.getAllUserModels();
     }
 
-    public Task<UserModel> getUserByUserIdAsync(int id)
+    public Task<UserModel> getUserByIdAsync(int id)
     {
         return _context.getUserModelById(id);
+    }
+    public Task<UserModel> findUserByUsernameAsync(string username)
+    {
+        return _context.getUserModelByUsername(username);
     }
 
     public Task<UserModel> createUserAsync(CreateUserDTO userDTO)
