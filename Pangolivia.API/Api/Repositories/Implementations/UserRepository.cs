@@ -77,7 +77,7 @@ public class UserRepository : IUserRepository
         {
             GameRecordId = pgrDto.GameRecordId,
             UserId = pgrDto.UserId,
-            score = pgrDto.Score
+            score = pgrDto.score
         };
 
         user.PlayerGameRecords.Add(playerGameRecord);
