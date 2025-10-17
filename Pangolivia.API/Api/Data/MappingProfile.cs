@@ -15,7 +15,7 @@ public class MappingProfile : Profile
 
         CreateMap<QuizModel, QuizSummaryDto>()
             .ForMember(dest => dest.QuestionCount, opt => opt.MapFrom(src => src.Questions.Count))
-            .ForMember(dest => dest.CreatorUsername, opt => opt.Ignore()); // to change later
+            .ForMember(dest => dest.CreatorUsername, opt => opt.MapFrom(src => src.CreatedByUser != null ? src.CreatedByUser.Username : "Unknown"));
 
         CreateMap<CreateQuizRequestDto, QuizModel>();
         CreateMap<UpdateQuizRequestDto, QuizModel>();
