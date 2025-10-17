@@ -47,7 +47,8 @@ public class QuizService : IQuizService
         return _mapper.Map<QuizDetailDto>(detailedQuiz);
     }
 
-    // UPDATE QUIZ
+    // UPDATE QUIZ 
+    // Need to change since Question will be different
     public async Task<QuizDetailDto> UpdateQuizAsync(int quizId, UpdateQuizRequestDto requestDto, int currentUserId)
     {
         var existingQuiz = await _quizRepository.GetByIdWithDetailsAsync(quizId);
