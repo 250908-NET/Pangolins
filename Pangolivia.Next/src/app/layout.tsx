@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./styles.css";
 import { Header } from "@/components/header";
 import { Aclonica, Space_Mono } from "next/font/google"
+import { ThemeProvider } from "@/components/theme-provider";
 
 const aclonica = Aclonica({ weight: "400", subsets: ["latin"], variable: "--font-sans" })
 const spaceMono = Space_Mono({ weight: "400", subsets: ["latin"], variable: "--font-mono" }) 
@@ -28,12 +30,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Header />
-        <main className="pt-6">{children}</main>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Header />
+          <main className="pt-6">{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   );

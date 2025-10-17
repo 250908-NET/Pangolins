@@ -4,8 +4,8 @@ export const Logo = () => {
     return (
         <Image
             src="/logo.png"
-            width={50}
-            height={50}
+            width={500}
+            height={500}
             className="w-auto inline-block transition-transform duration-300 hover:-rotate-3"
             alt="Logo"
             priority = {false}

@@ -1,0 +1,21 @@
+:root{
+    --background: black;
+    --fixAccent: #fbff00;
+    --fixMenu: #00ff94;
+    --fixText: #d3d3d3;
+}
+
+body {
+    background-image: url(/logo.png);
+    background-attachment: fixed;
+    background-position: center;
+    background-position-y: center;
+    background-size: cover;
+    background-position-y: inherit;
+}.accent {
+    color: var(--fixAccent);
+}
+
+.txtBody {
+    color: var(--fixText);
+}
