@@ -5,6 +5,8 @@ using Pangolivia.API.Services;  // ok to keep even if unused right now
 using AutoMapper;
 using Serilog;
 using Pangolivia.API.Api.Middleware;
+using Pangolivia.API.Services.External;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +46,13 @@ builder.Services.AddSwaggerGen();
 
 // Exception middleware DI
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
+
+// Trivia API client
+builder.Services.AddHttpClient<ITriviaApiClient, TriviaApiClient>(client =>
+{
+    client.BaseAddress = new Uri("https://opentdb.com/");
+});
+
 
 var app = builder.Build();
 

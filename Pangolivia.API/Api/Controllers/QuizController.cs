@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
+using Pangolivia.API.Services.External;
+
 
 namespace Pangolivia.API.Api.Controllers
 {
@@ -10,10 +12,21 @@ namespace Pangolivia.API.Api.Controllers
     {
         private readonly IQuizRepository _repo;
 
-        public QuizController(IQuizRepository repo)
+        // public QuizController(IQuizRepository repo)
+        // {
+        //     _repo = repo;
+        // }
+
+        // Constructor with Trivia API client injection
+
+        private readonly ITriviaApiClient _trivia;
+        public QuizController(IQuizRepository repo, ITriviaApiClient trivia)
         {
             _repo = repo;
+            _trivia = trivia;
         }
+
+
 
         // GET: api/quiz
         [HttpGet]
@@ -104,9 +117,41 @@ namespace Pangolivia.API.Api.Controllers
 
             return NoContent();
         }
+
+        // GET: api/quiz/external
+        [HttpGet("external")]
+        public async Task<ActionResult<object>> GetExternal(
+            [FromQuery] int amount = 5,
+            [FromQuery] int? category = null,     // e.g., 9 = General Knowledge
+            [FromQuery] string? difficulty = null,// "easy" | "medium" | "hard"
+            [FromQuery] string type = "multiple", // "multiple" | "boolean"
+            CancellationToken ct = default)
+        {
+            var data = await _trivia.FetchAsync(amount, category, difficulty, type, ct);
+
+            // Minimal transformation so the shape is nice for your frontend
+            var result = new
+            {
+                responseCode = data.ResponseCode,
+                items = data.Results.Select((r, idx) => new {
+                    id = idx + 1,
+                    category = r.Category,
+                    difficulty = r.Difficulty,
+                    question = r.Question,
+                    correct = r.CorrectAnswer,
+                    incorrect = r.IncorrectAnswers
+                })
+            };
+
+            return Ok(result);
+        }
+
+
+
+
     }
 
-    // --- Minimal DTOs used here (adjust if your team already has these) ---
+    // --- Minimal DTOs used here
     public class CreateQuizRequestDto
     {
         public string Name { get; set; } = string.Empty;
