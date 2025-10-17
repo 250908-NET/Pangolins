@@ -12,8 +12,8 @@ using Pangolivia.API.Data;
 namespace Pangolivia.API.Migrations
 {
     [DbContext(typeof(PangoliviaDbContext))]
-    [Migration("20251016153718_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251017183446_Refactor")]
+    partial class Refactor
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
