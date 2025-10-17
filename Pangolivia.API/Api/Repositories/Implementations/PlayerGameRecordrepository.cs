@@ -31,10 +31,13 @@ public class PlayerGameRecordRepository : IPlayerGameRecordRepository
     }
     public async Task<PlayerGameRecordModel> AddPlayerGameRecordModel(PlayerGameRecordDto PGRM_DTO)
     {
+        if (PGRM_DTO == null) throw new ArgumentNullException(nameof(PGRM_DTO));
+        if (PGRM_DTO.GameRecordId == null) throw new ArgumentNullException(nameof(PGRM_DTO.GameRecordId));
+
         var model = new PlayerGameRecordModel
         {
             UserId = PGRM_DTO.UserId,
-            GameRecordId = PGRM_DTO.GameRecordId,
+            GameRecordId = PGRM_DTO.GameRecordId.Value,
             score = PGRM_DTO.Score
         };
         _context.PlayerGameRecords.Add(model);
