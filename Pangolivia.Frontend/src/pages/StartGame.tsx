@@ -1,34 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Play, Users, Calendar } from 'lucide-react'
+import { Play, Users, Loader2 } from 'lucide-react'
+import { useQuizzes } from '@/hooks/useQuizzes'
 
-interface GameData {
-  roomCode: string
-  name: string
-  questions: unknown[]
-  createdAt: string
-}
 
 export default function StartGamePage() {
   const navigate = useNavigate()
-  const [allGames, setAllGames] = useState<Record<string, GameData>>({})
+  const { data: allQuizzes, isLoading } = useQuizzes()
   const [hostName, setHostName] = useState('')
-  const [selectedGame, setSelectedGame] = useState<string | null>(null)
+  const [selectedQuiz, setSelectedQuiz] = useState<number | null>(null)
 
-  useEffect(() => {
-    loadGames()
-  }, [])
-
-  const loadGames = () => {
-    const games = JSON.parse(localStorage.getItem('allGames') || '{}')
-    setAllGames(games)
-  }
-
-  const handleStartGame = (roomCode: string) => {
+  const handleStartGame = (quizId: number) => {
     if (!hostName.trim()) {
       alert('Please enter your name before starting the game')
       return
@@ -38,7 +24,7 @@ export default function StartGamePage() {
     const hostPlayer = {
       id: crypto.randomUUID(),
       name: hostName,
-      roomCode: roomCode,
+      quizId: quizId,
       isHost: true,
       joinedAt: new Date().toISOString()
     }
@@ -47,13 +33,11 @@ export default function StartGamePage() {
     localStorage.setItem('currentPlayer', JSON.stringify(hostPlayer))
     
     // Initialize players list with host
-    localStorage.setItem(`players_${roomCode}`, JSON.stringify([hostPlayer]))
+    localStorage.setItem(`players_${quizId}`, JSON.stringify([hostPlayer]))
     
     // Redirect to lobby
-    navigate(`/game-lobby?room=${roomCode}`)
+    navigate(`/game-lobby?quiz=${quizId}`)
   }
-
-  const gamesList = Object.values(allGames)
 
   return (
     <section className="min-h-screen px-4 py-16">
@@ -83,7 +67,11 @@ export default function StartGamePage() {
           </CardContent>
         </Card>
 
-        {gamesList.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : !allQuizzes || allQuizzes.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground mb-4">
@@ -96,39 +84,35 @@ export default function StartGamePage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Available Games</h2>
-            {gamesList.map((game) => (
+            <h2 className="text-xl font-semibold">Available Quizzes</h2>
+            {allQuizzes.map((quiz) => (
               <Card 
-                key={game.roomCode}
+                key={quiz.id}
                 className={`cursor-pointer transition-all ${
-                  selectedGame === game.roomCode 
+                  selectedQuiz === quiz.id 
                     ? 'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-900' 
                     : 'hover:border-gray-400'
                 }`}
-                onClick={() => setSelectedGame(game.roomCode)}
+                onClick={() => setSelectedQuiz(quiz.id)}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-xl">{game.name}</CardTitle>
+                      <CardTitle className="text-xl">{quiz.quizName}</CardTitle>
                       <div className="mt-2 flex flex-wrap gap-3 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Users className="h-4 w-4" />
-                          <span>{game.questions.length} questions</span>
+                          <span>{quiz.questionCount} questions</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>Created {new Date(game.createdAt).toLocaleDateString()}</span>
+                          <span>By {quiz.creatorUsername}</span>
                         </div>
                       </div>
-                      <CardDescription className="mt-2">
-                        Room Code: <span className="font-mono font-semibold">{game.roomCode}</span>
-                      </CardDescription>
                     </div>
                     <Button
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleStartGame(game.roomCode)
+                        handleStartGame(quiz.id)
                       }}
                       disabled={!hostName.trim()}
                       size="lg"

@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Loader2 } from 'lucide-react'
+import { useCreateQuiz } from '@/hooks/useQuizzes'
+import type { QuestionDto } from '@/types/api'
 
 interface Answer {
   id: string
@@ -19,15 +21,15 @@ interface Question {
   answers: Answer[]
 }
 
+// Hardcoded user ID for now (from mock data)
+const CURRENT_USER_ID = 1;
+
 export default function CreateGamePage() {
   const navigate = useNavigate()
+  const createQuiz = useCreateQuiz()
   const [gameName, setGameName] = useState('')
   const [questions, setQuestions] = useState<Question[]>([])
   const [hostName, setHostName] = useState('')
-
-  const generateRoomCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString()
-  }
 
   const addQuestion = () => {
     const newQuestion: Question = {
@@ -94,7 +96,7 @@ export default function CreateGamePage() {
     ))
   }
 
-  const handleSaveGame = () => {
+  const handleSaveGame = async () => {
     if (!hostName.trim()) {
       alert('Please enter your name before creating the game')
       return
@@ -114,36 +116,44 @@ export default function CreateGamePage() {
       }
     }
 
-    const newRoomCode = generateRoomCode()
-    const gameData = {
-      roomCode: newRoomCode,
-      name: gameName,
-      questions: questions,
-      createdAt: new Date().toISOString()
+    try {
+      // Convert local questions to API format
+      const apiQuestions: QuestionDto[] = questions.map((q) => {
+        const correctIndex = q.answers.findIndex(a => a.isCorrect)
+        return {
+          id: 0, // Backend will assign ID
+          questionText: q.text,
+          options: q.answers.map(a => a.text),
+          correctOptionIndex: correctIndex,
+        }
+      })
+
+      // Create quiz via API
+      const newQuiz = await createQuiz.mutateAsync({
+        quiz: {
+          quizName: gameName,
+          questions: apiQuestions,
+        },
+        creatorUserId: CURRENT_USER_ID,
+      })
+
+      // Store host player info for lobby
+      const hostPlayer = {
+        id: crypto.randomUUID(),
+        name: hostName,
+        quizId: newQuiz.id,
+        isHost: true,
+        joinedAt: new Date().toISOString()
+      }
+      localStorage.setItem('currentPlayer', JSON.stringify(hostPlayer))
+      localStorage.setItem(`players_${newQuiz.id}`, JSON.stringify([hostPlayer]))
+
+      alert('Quiz created successfully!')
+      navigate(`/game-lobby?quiz=${newQuiz.id}`)
+    } catch (error) {
+      console.error('Failed to create quiz:', error)
+      alert('Failed to create quiz. Please try again.')
     }
-    
-    // Store in localStorage with room code as key
-    const allGames = JSON.parse(localStorage.getItem('allGames') || '{}')
-    allGames[newRoomCode] = gameData
-    localStorage.setItem('allGames', JSON.stringify(allGames))
-    
-    // Create host player
-    const hostPlayer = {
-      id: crypto.randomUUID(),
-      name: hostName,
-      roomCode: newRoomCode,
-      isHost: true,
-      joinedAt: new Date().toISOString()
-    }
-    
-    // Store host as current player
-    localStorage.setItem('currentPlayer', JSON.stringify(hostPlayer))
-    
-    // Initialize players list with host
-    localStorage.setItem(`players_${newRoomCode}`, JSON.stringify([hostPlayer]))
-    
-    // Redirect to lobby
-    navigate(`/game-lobby?room=${newRoomCode}`)
   }
 
   return (
@@ -292,9 +302,10 @@ export default function CreateGamePage() {
           <Button variant="outline" onClick={() => navigate('/')}>Cancel</Button>
           <Button 
             onClick={handleSaveGame} 
-            disabled={!hostName.trim() || !gameName || questions.length === 0}
+            disabled={!hostName.trim() || !gameName || questions.length === 0 || createQuiz.isPending}
           >
-            Create & Go to Lobby
+            {createQuiz.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {createQuiz.isPending ? 'Creating...' : 'Create & Go to Lobby'}
           </Button>
         </div>
       </div>

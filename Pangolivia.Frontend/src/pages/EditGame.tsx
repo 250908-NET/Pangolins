@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Trash2, Edit, ArrowLeft } from 'lucide-react'
+import { Plus, Trash2, Edit, ArrowLeft, Loader2 } from 'lucide-react'
+import { useQuizzes, useQuiz, useUpdateQuiz, useDeleteQuiz } from '@/hooks/useQuizzes'
+import type { QuestionDto } from '@/types/api'
 
 interface Answer {
   id: string
@@ -19,47 +21,44 @@ interface Question {
   answers: Answer[]
 }
 
-interface GameData {
-  roomCode: string
-  name: string
-  questions: Question[]
-  createdAt: string
-}
+// Hardcoded user ID for now (from mock data)
+const CURRENT_USER_ID = 1;
 
 export default function EditGamePage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const editRoomCode = searchParams.get('room')
+  const editQuizId = searchParams.get('quiz') ? parseInt(searchParams.get('quiz')!) : null
 
-  const [allGames, setAllGames] = useState<Record<string, GameData>>({})
-  const [editingGame, setEditingGame] = useState<GameData | null>(null)
+  const { data: allQuizzes, isLoading: loadingQuizzes } = useQuizzes()
+  const { data: editingQuiz, isLoading: loadingQuiz } = useQuiz(editQuizId || 0)
+  const updateQuiz = useUpdateQuiz()
+  const deleteQuiz = useDeleteQuiz()
+
   const [gameName, setGameName] = useState('')
   const [questions, setQuestions] = useState<Question[]>([])
 
   useEffect(() => {
-    loadGames()
-  }, [])
-
-  useEffect(() => {
-    if (editRoomCode && allGames[editRoomCode]) {
-      const game = allGames[editRoomCode]
-      setEditingGame(game)
-      setGameName(game.name)
-      setQuestions(game.questions)
+    if (editingQuiz) {
+      setGameName(editingQuiz.quizName)
+      // Convert API questions to local format
+      const localQuestions: Question[] = editingQuiz.questions.map(q => ({
+        id: q.id.toString(),
+        text: q.questionText,
+        answers: q.options.map((opt, idx) => ({
+          id: `${q.id}-${idx}`,
+          text: opt,
+          isCorrect: idx === q.correctOptionIndex,
+        })),
+      }))
+      setQuestions(localQuestions)
     }
-  }, [editRoomCode, allGames])
+  }, [editingQuiz])
 
-  const loadGames = () => {
-    const games = JSON.parse(localStorage.getItem('allGames') || '{}')
-    setAllGames(games)
-  }
-
-  const handleSelectGame = (roomCode: string) => {
-    navigate(`/edit-game?room=${roomCode}`)
+  const handleSelectGame = (quizId: number) => {
+    navigate(`/edit-game?quiz=${quizId}`)
   }
 
   const handleBackToList = () => {
-    setEditingGame(null)
     setGameName('')
     setQuestions([])
     navigate('/edit-game')
@@ -130,8 +129,8 @@ export default function EditGamePage() {
     ))
   }
 
-  const handleSaveChanges = () => {
-    if (!editingGame) return
+  const handleSaveChanges = async () => {
+    if (!editingQuiz) return
 
     // Validate all questions have exactly 4 answers with one correct
     for (const question of questions) {
@@ -147,40 +146,65 @@ export default function EditGamePage() {
       }
     }
 
-    const updatedGame: GameData = {
-      ...editingGame,
-      name: gameName,
-      questions: questions
+    try {
+      // Convert local questions to API format
+      const apiQuestions: QuestionDto[] = questions.map((q) => {
+        const correctIndex = q.answers.findIndex(a => a.isCorrect)
+        return {
+          id: parseInt(q.id) || 0,
+          questionText: q.text,
+          options: q.answers.map(a => a.text),
+          correctOptionIndex: correctIndex,
+        }
+      })
+
+      await updateQuiz.mutateAsync({
+        quizId: editingQuiz.id,
+        quiz: {
+          quizName: gameName,
+          questions: apiQuestions,
+        },
+        currentUserId: CURRENT_USER_ID,
+      })
+
+      alert('Quiz updated successfully!')
+      handleBackToList()
+    } catch (error) {
+      console.error('Failed to update quiz:', error)
+      alert('Failed to update quiz. Please try again.')
     }
-
-    const games = JSON.parse(localStorage.getItem('allGames') || '{}')
-    games[editingGame.roomCode] = updatedGame
-    localStorage.setItem('allGames', JSON.stringify(games))
-
-    alert('Game updated successfully!')
-    loadGames()
   }
 
-  const handleDeleteGame = (roomCode: string) => {
-    if (confirm('Are you sure you want to delete this game? This action cannot be undone.')) {
-      const games = JSON.parse(localStorage.getItem('allGames') || '{}')
-      delete games[roomCode]
-      localStorage.setItem('allGames', JSON.stringify(games))
-      
-      // Clean up related data
-      localStorage.removeItem(`players_${roomCode}`)
-      localStorage.removeItem(`game_${roomCode}_started`)
-      
-      loadGames()
-      if (editingGame?.roomCode === roomCode) {
-        handleBackToList()
+  const handleDeleteGame = async (quizId: number) => {
+    if (confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
+      try {
+        await deleteQuiz.mutateAsync({ id: quizId, currentUserId: CURRENT_USER_ID })
+        
+        // Clean up related data
+        localStorage.removeItem(`players_${quizId}`)
+        localStorage.removeItem(`game_${quizId}_started`)
+        
+        if (editingQuiz?.id === quizId) {
+          handleBackToList()
+        }
+      } catch (error) {
+        console.error('Failed to delete quiz:', error)
+        alert('Failed to delete quiz. Please try again.')
       }
     }
   }
 
   // Game List View
-  if (!editingGame) {
-    const gamesList = Object.values(allGames)
+  if (!editQuizId) {
+    if (loadingQuizzes) {
+      return (
+        <section className="min-h-screen px-4 py-16">
+          <div className="mx-auto max-w-4xl flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </section>
+      )
+    }
 
     return (
       <section className="min-h-screen px-4 py-16">
@@ -192,7 +216,7 @@ export default function EditGamePage() {
             </p>
           </div>
 
-          {gamesList.length === 0 ? (
+          {!allQuizzes || allQuizzes.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <p className="text-muted-foreground mb-4">
@@ -205,24 +229,21 @@ export default function EditGamePage() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {gamesList.map((game) => (
-                <Card key={game.roomCode}>
+              {allQuizzes.map((quiz) => (
+                <Card key={quiz.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-xl">{game.name}</CardTitle>
+                        <CardTitle className="text-xl">{quiz.quizName}</CardTitle>
                         <CardDescription className="mt-1">
-                          Room Code: {game.roomCode} • {game.questions.length} questions
-                        </CardDescription>
-                        <CardDescription className="mt-1 text-xs">
-                          Created: {new Date(game.createdAt).toLocaleDateString()}
+                          By {quiz.creatorUsername} • {quiz.questionCount} questions
                         </CardDescription>
                       </div>
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleSelectGame(game.roomCode)}
+                          onClick={() => handleSelectGame(quiz.id)}
                         >
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
@@ -230,9 +251,10 @@ export default function EditGamePage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeleteGame(game.roomCode)}
+                          onClick={() => handleDeleteGame(quiz.id)}
+                          disabled={deleteQuiz.isPending}
                         >
-                          <Trash2 className="h-4 w-4 text-red-600" />
+                          {deleteQuiz.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-red-600" />}
                         </Button>
                       </div>
                     </div>
@@ -247,6 +269,27 @@ export default function EditGamePage() {
   }
 
   // Edit Game View
+  if (loadingQuiz) {
+    return (
+      <section className="min-h-screen px-4 py-16">
+        <div className="mx-auto max-w-4xl flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </section>
+    )
+  }
+
+  if (!editingQuiz) {
+    return (
+      <section className="min-h-screen px-4 py-16">
+        <div className="mx-auto max-w-4xl">
+          <p className="text-muted-foreground">Quiz not found.</p>
+          <Button onClick={handleBackToList} className="mt-4">Back to List</Button>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="min-h-screen px-4 py-16">
       <div className="mx-auto max-w-4xl">
@@ -267,9 +310,9 @@ export default function EditGamePage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Game Details</CardTitle>
+            <CardTitle>Quiz Details</CardTitle>
             <CardDescription>
-              Room Code: {editingGame.roomCode}
+              Created by: {editingQuiz.creatorUsername}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -396,9 +439,10 @@ export default function EditGamePage() {
           </Button>
           <Button 
             onClick={handleSaveChanges} 
-            disabled={!gameName || questions.length === 0}
+            disabled={!gameName || questions.length === 0 || updateQuiz.isPending}
           >
-            Save Changes
+            {updateQuiz.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {updateQuiz.isPending ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </div>

@@ -3,6 +3,8 @@ using Pangolivia.API.Data;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
 using Pangolivia.API.Models;
+using Pangolivia.API.Middleware;
+
 
 DotNetEnv.Env.Load();
 
@@ -20,9 +22,20 @@ builder.Services.AddDbContext<PangoliviaDbContext>(options =>
     options.UseSqlServer(connectionString);
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 
 // Services
 builder.Services.AddScoped<IQuizService, QuizService>();
@@ -43,11 +56,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseMiddleware<RequestLoggingMiddleware>();
 }
-
 
 app.UseHttpsRedirection();
 //app.UseAuthorization();
+app.UseCors();
 app.MapControllers();
 
 // Seed data at startup
