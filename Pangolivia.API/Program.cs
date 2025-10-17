@@ -8,15 +8,6 @@ DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Read connection string from text file
-var connectionStringPath = Path.Combine(Directory.GetCurrentDirectory(), "ConnectionString.txt");
-if (!File.Exists(connectionStringPath))
-{
-    throw new FileNotFoundException("Could not find ConnectionString.txt at project root.", connectionStringPath);
-}
-
-var connectionString = File.ReadAllText(connectionStringPath).Trim();
-
 // Register DbContext with the read connection string
 builder.Services.AddDbContext<PangoliviaDbContext>(options =>
 {
