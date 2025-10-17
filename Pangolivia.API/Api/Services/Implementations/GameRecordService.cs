@@ -24,7 +24,7 @@ namespace Pangolivia.API.Services
         // Create a new game session (host starts a quiz)
         public async Task<GameRecordDto> CreateGameAsync(CreateGameRecordDto dto)
         {
-            var host = await _userRepository.GetByIdAsync(dto.HostUserId);
+            var host = await _userRepository.getUserModelById(dto.HostUserId);
             var quiz = await _quizRepository.GetByIdAsync(dto.QuizId);
 
             if (host == null)

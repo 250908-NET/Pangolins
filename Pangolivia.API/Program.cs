@@ -3,27 +3,31 @@ using Pangolivia.API.Data;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+DotNetEnv.Env.Load();
 
-// Read connection string from text file
-var connectionStringPath = Path.Combine(Directory.GetCurrentDirectory(), "ConnectionString.txt");
-if (!File.Exists(connectionStringPath))
-{
-    throw new FileNotFoundException("Could not find ConnectionString.txt at project root.", connectionStringPath);
-}
-var connectionString = File.ReadAllText(connectionStringPath).Trim();
+var builder = WebApplication.CreateBuilder(args);
 
 // Register DbContext with the read connection string
 builder.Services.AddDbContext<PangoliviaDbContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    string connectionString = builder.Configuration.GetConnectionString("Connection") ?? "";
+    if (connectionString == "")
+    {
+        Console.WriteLine("Connection string not found. Exiting program.");
+        Environment.Exit(1);
+    }
+    options.UseSqlServer(connectionString);
+});
 
 // Dependency Injection
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, IUserService>();
 
 // builder.Services.AddScoped<IQuizService, QuizService>();
 
 // AutoMapper
-// builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 // Controllers + Swagger
 builder.Services.AddControllers();

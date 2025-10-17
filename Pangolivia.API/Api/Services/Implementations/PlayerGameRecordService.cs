@@ -26,7 +26,7 @@ namespace Pangolivia.API.Services
         public async Task<PlayerGameRecordDto> RecordScoreAsync(CreatePlayerGameRecordDto dto)
         {
             var game = await _gameRecordRepository.GetGameRecordByIdAsync(dto.GameRecordId);
-            var user = await _userRepository.GetByIdAsync(dto.UserId);
+            var user = await _userRepository.getUserModelById(dto.UserId);
 
             if (game == null)
                 throw new Exception($"Game record with ID {dto.GameRecordId} not found.");
