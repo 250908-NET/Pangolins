@@ -3,6 +3,7 @@ using Microsoft.VisualBasic;
 using Pangolivia.API.Data;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
+namespace Pangolivia.API.Repositories;
 
 public class UserRepository : IUserRepository
 {
@@ -19,9 +20,9 @@ public class UserRepository : IUserRepository
         // throw new NotImplementedException();
     }
 
-    public Task<UserModel?> getUserModelById(int id)
+    public async Task<UserModel> getUserModelById(int id)
     {
-        var user = _context.Users.Include(u => u.Username)
+        var user = await _context.Users.Include(u => u.Username)
                     .FirstOrDefaultAsync(user => user.Id == id);
         if (user != null)
         {
