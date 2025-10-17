@@ -1,6 +1,6 @@
 using Pangolivia.API.Models;
 
-namespace Pangolivia.Repositories.Interfaces
+namespace Pangolivia.API.Repositories
 {
     public interface IGameRecordRepository
     {

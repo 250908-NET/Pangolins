@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using Pangolivia.API.Data;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
@@ -31,6 +30,8 @@ public class UserRepository : IUserRepository
         throw new KeyNotFoundException($"UserModel with id {id} not found.");
 
     }
+
+
 
     public async Task<UserModel> getUserModelByUsername(string username)
     {
@@ -75,7 +76,7 @@ public class UserRepository : IUserRepository
         {
             GameRecordId = pgrDto.GameRecordId,
             UserId = pgrDto.UserId,
-            score = pgrDto.Score
+            score = pgrDto.score
         };
 
         user.PlayerGameRecords.Add(playerGameRecord);
