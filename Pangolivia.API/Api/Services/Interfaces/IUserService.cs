@@ -1,6 +1,5 @@
 using Pangolivia.API.Models;
 using Pangolivia.API.DTOs;
-using Microsoft.VisualBasic;
 
 namespace Pangolivia.API.Services;
 
@@ -12,6 +11,5 @@ public interface IUserService
     Task<UserModel> createUserAsync(CreateUserDTO userDTO);
     Task<UserModel> updateUserAsync(int userId, object Obj);
     Task deleteUserAsync(int id);
-    // **************************************
 
 }

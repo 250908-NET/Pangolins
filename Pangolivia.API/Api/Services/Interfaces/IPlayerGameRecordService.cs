@@ -1,6 +1,6 @@
 using Pangolivia.API.DTOs;
 
-namespace Pangolivia.API.Services.Interfaces
+namespace Pangolivia.API.Services
 {
     public interface IPlayerGameRecordService
     {

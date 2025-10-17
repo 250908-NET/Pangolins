@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
-using Microsoft.VisualBasic;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
@@ -8,10 +6,10 @@ using Pangolivia.API.Services;
 public class UserService : IUserService
 {
 
-    private UserRepository _context;
+    private IUserRepository _context;
 
 
-    public UserService(UserRepository context)
+    public UserService(IUserRepository context)
     {
         _context = context;
     }
