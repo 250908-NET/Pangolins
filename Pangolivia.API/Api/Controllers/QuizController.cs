@@ -3,7 +3,7 @@ using Pangolivia.API.Services;
 using Pangolivia.API.DTOs;
 
 
-namespace Pangolivia.Controllers
+namespace Pangolivia.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
