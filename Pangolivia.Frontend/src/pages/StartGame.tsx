@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Play, Users, Loader2 } from 'lucide-react'
 import { useQuizzes } from '@/hooks/useQuizzes'
+import { toast } from 'sonner'
 
 
 export default function StartGamePage() {
@@ -16,7 +17,7 @@ export default function StartGamePage() {
 
   const handleStartGame = (quizId: number) => {
     if (!hostName.trim()) {
-      alert('Please enter your name before starting the game')
+      toast.error('Please enter your name before starting the game')
       return
     }
 

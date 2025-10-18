@@ -3,7 +3,7 @@ import { Header } from '@/components/header'
 import Home from '@/pages/Home'
 import Login from '@/pages/Login'
 import SignUp from '@/pages/SignUp'
-import CreateGame from '@/pages/CreateGame'
+import QuizEditor from '@/pages/QuizEditor'
 import StartGame from '@/pages/StartGame'
 import JoinGame from '@/pages/JoinGame'
 import EditGame from '@/pages/EditGame'
@@ -11,6 +11,7 @@ import GameLobby from '@/pages/GameLobby'
 import GameActive from '@/pages/GameActive'
 import Profile from '@/pages/Profile'
 import NotFound from '@/pages/NotFound'
+import { Toaster } from '@/components/ui/sonner'
 
 function App() {
   return (
@@ -22,7 +23,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/sign-up" element={<SignUp />} />
-            <Route path="/create-game" element={<CreateGame />} />
+            <Route path="/create-game" element={<QuizEditor />} />
+            <Route path="/quiz/edit" element={<QuizEditor />} />
             <Route path="/start-game" element={<StartGame />} />
             <Route path="/join-game" element={<JoinGame />} />
             <Route path="/edit-game" element={<EditGame />} />
@@ -32,6 +34,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <Toaster richColors position="bottom-center" />
       </div>
     </Router>
   )
