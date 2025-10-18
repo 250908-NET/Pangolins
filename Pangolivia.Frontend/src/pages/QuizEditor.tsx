@@ -1,171 +1,231 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Plus, Trash2, Loader2, ArrowLeft } from "lucide-react";
-import {
-  useCreateQuiz,
-  useQuiz,
-  useUpdateQuiz,
-} from "@/hooks/useQuizzes";
-import type { QuestionDto } from "@/types/api";
+import { Loader2 } from "lucide-react";
+import { useCreateQuiz, useQuiz, useUpdateQuiz } from "@/hooks/useQuizzes";
+import type { QuestionDto, QuizDetailDto } from "@/types/api";
 import { toast } from "sonner";
-
-interface Answer {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-}
-
-interface Question {
-  id: string;
-  text: string;
-  answers: Answer[];
-}
+import {
+  QuizHeader,
+  QuizDetailsCard,
+  QuestionsList,
+} from "@/features/quiz-editor/components";
+import type { Question } from "@/features/quiz-editor/components";
 
 const CURRENT_USER_ID = 1;
 
-export default function QuizEditorPage() {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const quizId = searchParams.get("id");
-  const isEditMode = !!quizId;
+// Helper: Convert API to local format
+const toLocalQuestions = (questions: QuestionDto[]): Question[] =>
+  questions.map((q) => ({
+    id: q.id.toString(),
+    text: q.questionText,
+    answers: q.options.map((opt, idx) => ({
+      id: `${q.id}-${idx}`,
+      text: opt,
+      isCorrect: idx === q.correctOptionIndex,
+    })),
+  }));
 
+interface QuizEditorProps {
+  mode: "create" | "edit";
+}
+
+export default function QuizEditorPage({ mode }: QuizEditorProps) {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = mode === "edit";
+  const quizId = isEditMode ? id : null;
+
+  // Fetch existing quiz if editing
   const { data: existingQuiz, isLoading: loadingQuiz } = useQuiz(
     quizId ? parseInt(quizId) : 0
   );
-  const createQuiz = useCreateQuiz();
-  const updateQuiz = useUpdateQuiz();
+  const createQuizMutation = useCreateQuiz();
+  const updateQuizMutation = useUpdateQuiz();
 
-  const [gameName, setGameName] = useState("");
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [hostName, setHostName] = useState("");
+  // Local state for draft quiz and host name
+  const [hostName, setHostName] = useState<string>("");
+  const [draftQuiz, setDraftQuiz] = useState<QuizDetailDto>({
+    id: 0,
+    quizName: "",
+    questions: [],
+    createdByUserId: CURRENT_USER_ID,
+    creatorUsername: "",
+  });
 
-  // Load existing quiz data when editing
+  // Load existing quiz data into local state when editing
   useEffect(() => {
-    if (existingQuiz && isEditMode) {
-      setGameName(existingQuiz.quizName);
-      const localQuestions: Question[] = existingQuiz.questions.map((q) => ({
-        id: q.id.toString(),
-        text: q.questionText,
-        answers: q.options.map((opt, idx) => ({
-          id: `${q.id}-${idx}`,
-          text: opt,
-          isCorrect: idx === q.correctOptionIndex,
-        })),
-      }));
-      setQuestions(localQuestions);
+    if (isEditMode && existingQuiz) {
+      setDraftQuiz(existingQuiz);
     }
-  }, [existingQuiz, isEditMode]);
+  }, [isEditMode, existingQuiz]);
 
-  const addQuestion = () => {
-    setQuestions((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), text: "", answers: [] },
-    ]);
-  };
+  // Current quiz data
+  const currentQuiz = draftQuiz;
 
-  const deleteQuestion = (questionId: string) => {
-    setQuestions((prev) => prev.filter((q) => q.id !== questionId));
-  };
-
-  const updateQuestionText = (questionId: string, text: string) => {
-    setQuestions((prev) =>
-      prev.map((q) => (q.id === questionId ? { ...q, text } : q))
-    );
-  };
-
-  const addAnswer = (questionId: string) => {
-    setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId
-          ? {
-              ...q,
-              answers: [
-                ...q.answers,
-                { id: crypto.randomUUID(), text: "", isCorrect: false },
-              ],
-            }
-          : q
-      )
-    );
-  };
-
-  const deleteAnswer = (questionId: string, answerId: string) => {
-    setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId
-          ? { ...q, answers: q.answers.filter((a) => a.id !== answerId) }
-          : q
-      )
-    );
-  };
-
-  const updateAnswerText = (
-    questionId: string,
-    answerId: string,
-    text: string
+  // Update quiz state
+  const updateQuizState = (
+    updater: (current: QuizDetailDto) => QuizDetailDto
   ) => {
-    setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId
-          ? {
-              ...q,
-              answers: q.answers.map((a) =>
-                a.id === answerId ? { ...a, text } : a
-              ),
-            }
-          : q
-      )
-    );
+    setDraftQuiz((prev) => updater(prev));
   };
 
-  const toggleCorrectAnswer = (questionId: string, answerId: string) => {
-    setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId
-          ? {
-              ...q,
-              answers: q.answers.map((a) => ({
-                ...a,
-                isCorrect: a.id === answerId ? !a.isCorrect : false,
-              })),
-            }
-          : q
-      )
-    );
+  // Actions: Simple state updates
+  const actions = {
+    setGameName: (value: string) => {
+      updateQuizState((current) => ({ ...current, quizName: value }));
+    },
+
+    setHostName: (value: string) => {
+      setHostName(value);
+    },
+
+    addQuestion: () => {
+      updateQuizState((current) => ({
+        ...current,
+        questions: [
+          ...current.questions,
+          {
+            id: Date.now(),
+            questionText: "",
+            options: [],
+            correctOptionIndex: 0,
+          },
+        ],
+      }));
+    },
+
+    deleteQuestion: (questionId: string) => {
+      const id = parseInt(questionId);
+      updateQuizState((current) => ({
+        ...current,
+        questions: current.questions.filter((q) => q.id !== id),
+      }));
+    },
+
+    updateQuestionText: (questionId: string, text: string) => {
+      const id = parseInt(questionId);
+      updateQuizState((current) => ({
+        ...current,
+        questions: current.questions.map((q) =>
+          q.id === id ? { ...q, questionText: text } : q
+        ),
+      }));
+    },
+
+    addAnswer: (questionId: string) => {
+      const id = parseInt(questionId);
+      updateQuizState((current) => ({
+        ...current,
+        questions: current.questions.map((q) =>
+          q.id === id ? { ...q, options: [...q.options, ""] } : q
+        ),
+      }));
+    },
+
+    deleteAnswer: (questionId: string, answerId: string) => {
+      const qId = parseInt(questionId);
+      const answerIndex = parseInt(answerId.split("-")[1]);
+
+      updateQuizState((current) => ({
+        ...current,
+        questions: current.questions.map((q) =>
+          q.id === qId
+            ? {
+                ...q,
+                options: q.options.filter((_, idx) => idx !== answerIndex),
+                correctOptionIndex:
+                  q.correctOptionIndex === answerIndex
+                    ? 0
+                    : q.correctOptionIndex > answerIndex
+                    ? q.correctOptionIndex - 1
+                    : q.correctOptionIndex,
+              }
+            : q
+        ),
+      }));
+    },
+
+    updateAnswerText: (questionId: string, answerId: string, text: string) => {
+      const qId = parseInt(questionId);
+      const answerIndex = parseInt(answerId.split("-")[1]);
+
+      updateQuizState((current) => ({
+        ...current,
+        questions: current.questions.map((q) =>
+          q.id === qId
+            ? {
+                ...q,
+                options: q.options.map((opt, idx) =>
+                  idx === answerIndex ? text : opt
+                ),
+              }
+            : q
+        ),
+      }));
+    },
+
+    toggleCorrectAnswer: (questionId: string, answerId: string) => {
+      const qId = parseInt(questionId);
+      const answerIndex = parseInt(answerId.split("-")[1]);
+
+      updateQuizState((current) => ({
+        ...current,
+        questions: current.questions.map((q) =>
+          q.id === qId ? { ...q, correctOptionIndex: answerIndex } : q
+        ),
+      }));
+    },
   };
 
   const validateForm = () => {
+    if (!currentQuiz) return false;
+
+    const { questions, quizName } = currentQuiz;
+
     if (!isEditMode && !hostName.trim()) {
       toast.error("Please enter your name before creating the game");
       return false;
     }
 
-    for (const question of questions) {
-      const questionLabel = question.text || "Untitled question";
+    if (!quizName.trim()) {
+      toast.error("Please enter a quiz name");
+      return false;
+    }
 
-      if (question.answers.length !== 4) {
+    if (questions.length === 0) {
+      toast.error("Please add at least one question");
+      return false;
+    }
+
+    for (const question of questions) {
+      const questionLabel = question.questionText || "Untitled question";
+
+      if (!question.questionText.trim()) {
+        toast.error(`Please enter text for "${questionLabel}"`);
+        return false;
+      }
+
+      if (question.options.length !== 4) {
         toast.error(
-          `Each question must have exactly 4 answers. "${questionLabel}" has ${question.answers.length}.`
+          `Each question must have exactly 4 answers. "${questionLabel}" has ${question.options.length}.`
         );
         return false;
       }
 
-      const correctCount = question.answers.filter((a) => a.isCorrect).length;
-      if (correctCount !== 1) {
-        toast.error(
-          `Each question must have exactly one correct answer. "${questionLabel}" has ${correctCount}.`
-        );
+      // Check all options have text
+      for (let i = 0; i < question.options.length; i++) {
+        if (!question.options[i].trim()) {
+          toast.error(`"${questionLabel}" - Answer ${i + 1} cannot be empty`);
+          return false;
+        }
+      }
+
+      if (
+        question.correctOptionIndex < 0 ||
+        question.correctOptionIndex >= question.options.length
+      ) {
+        toast.error(`"${questionLabel}" must have a correct answer selected.`);
         return false;
       }
     }
@@ -174,36 +234,37 @@ export default function QuizEditorPage() {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+    if (!validateForm() || !currentQuiz) return;
 
     try {
-      const apiQuestions: QuestionDto[] = questions.map((q) => ({
-        id: parseInt(q.id) || 0,
-        questionText: q.text,
-        options: q.answers.map((a) => a.text),
-        correctOptionIndex: q.answers.findIndex((a) => a.isCorrect),
-      }));
-
       if (isEditMode && existingQuiz) {
-        // Update existing quiz
-        await updateQuiz.mutateAsync({
+        console.log("Updating quiz:", {
+          quizName: currentQuiz.quizName,
+          questions: currentQuiz.questions,
+        });
+        await updateQuizMutation.mutateAsync({
           quizId: existingQuiz.id,
           quiz: {
-            quizName: gameName,
-            questions: apiQuestions,
+            quizName: currentQuiz.quizName,
+            questions: currentQuiz.questions,
           },
           currentUserId: CURRENT_USER_ID,
         });
-
         toast.success("Quiz updated successfully!");
         navigate("/edit-game");
       } else {
-        // Create new quiz
-        const newQuiz = await createQuiz.mutateAsync({
-          quiz: {
-            quizName: gameName,
-            questions: apiQuestions,
-          },
+        // For new quiz, set question IDs to 0 (API will assign real IDs)
+        const questionsForApi = currentQuiz.questions.map((q) => ({
+          ...q,
+          id: 0, // API assigns IDs on creation
+        }));
+
+        console.log("Creating quiz:", {
+          quizName: currentQuiz.quizName,
+          questions: questionsForApi,
+        });
+        const newQuiz = await createQuizMutation.mutateAsync({
+          quiz: { quizName: currentQuiz.quizName, questions: questionsForApi },
           creatorUserId: CURRENT_USER_ID,
         });
 
@@ -224,9 +285,17 @@ export default function QuizEditorPage() {
         toast.success("Quiz created successfully!");
         navigate(`/game-lobby?quiz=${newQuiz.id}`);
       }
-    } catch (error) {
-      console.error(`Failed to ${isEditMode ? "update" : "create"} quiz:`, error);
-      toast.error(`Failed to ${isEditMode ? "update" : "create"} quiz. Please try again.`);
+    } catch (error: any) {
+      console.error(
+        `Failed to ${isEditMode ? "update" : "create"} quiz:`,
+        error
+      );
+      console.error("Error details:", error.response?.data || error.message);
+      const errorMessage =
+        error.response?.data?.message || error.message || "Please try again.";
+      toast.error(
+        `Failed to ${isEditMode ? "update" : "create"} quiz: ${errorMessage}`
+      );
     }
   };
 
@@ -240,193 +309,40 @@ export default function QuizEditorPage() {
     );
   }
 
-  const isSaving = isEditMode ? updateQuiz.isPending : createQuiz.isPending;
+  if (!currentQuiz) return null;
+
+  const isSaving = isEditMode
+    ? updateQuizMutation.isPending
+    : createQuizMutation.isPending;
+  const localQuestions = toLocalQuestions(currentQuiz.questions);
 
   return (
     <section className="min-h-screen px-4 py-16">
       <div className="mx-auto max-w-4xl">
-        <div className="mb-8">
-          {isEditMode && (
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/edit-game")}
-              className="mb-4"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Games List
-            </Button>
-          )}
-          <h1 className="mb-2 text-3xl font-bold">
-            {isEditMode ? "Edit Quiz" : "Create New Game"}
-          </h1>
-          <p className="text-muted-foreground">
-            {isEditMode
-              ? "Modify questions and answers for your quiz"
-              : "Build your custom trivia game with questions and answers"}
-          </p>
-        </div>
+        <QuizHeader
+          isEditMode={isEditMode}
+          onBack={() => navigate("/edit-game")}
+        />
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>
-              {isEditMode ? "Quiz Details" : "Game Details"}
-            </CardTitle>
-            <CardDescription>
-              {isEditMode
-                ? `Created by: ${existingQuiz?.creatorUsername || "Unknown"}`
-                : "Set up your game information"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!isEditMode && (
-              <div className="space-y-2">
-                <Label htmlFor="hostName">Your Name (Host)</Label>
-                <Input
-                  id="hostName"
-                  placeholder="Enter your name..."
-                  value={hostName}
-                  onChange={(e) => setHostName(e.target.value)}
-                />
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="gameName">
-                {isEditMode ? "Quiz Name" : "Game Name"}
-              </Label>
-              <Input
-                id="gameName"
-                placeholder="Enter game name..."
-                value={gameName}
-                onChange={(e) => setGameName(e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <QuizDetailsCard
+          isEditMode={isEditMode}
+          gameName={currentQuiz.quizName}
+          hostName={hostName}
+          creatorUsername={currentQuiz.creatorUsername}
+          onGameNameChange={actions.setGameName}
+          onHostNameChange={actions.setHostName}
+        />
 
-        <div className="mb-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold">Questions</h2>
-            <Button onClick={addQuestion} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Question
-            </Button>
-          </div>
-
-          {questions.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">
-                  {'No questions yet. Click "Add Question" to get started.'}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            questions.map((question, qIndex) => (
-              <Card key={question.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg">
-                      Question {qIndex + 1}
-                    </CardTitle>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteQuestion(question.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor={`question-${question.id}`}>
-                      Question Text
-                    </Label>
-                    <Textarea
-                      id={`question-${question.id}`}
-                      placeholder="Enter your question..."
-                      value={question.text}
-                      onChange={(e) =>
-                        updateQuestionText(question.id, e.target.value)
-                      }
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label>Answers ({question.answers.length}/4)</Label>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addAnswer(question.id)}
-                        disabled={question.answers.length >= 4}
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Answer
-                      </Button>
-                    </div>
-
-                    {question.answers.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        No answers yet. Add exactly 4 answers with one correct.
-                      </p>
-                    ) : (
-                      question.answers.map((answer, aIndex) => (
-                        <div
-                          key={answer.id}
-                          className="flex items-start gap-2 rounded-lg border p-3"
-                        >
-                          <div className="flex-1 space-y-2">
-                            <Input
-                              placeholder={`Answer ${aIndex + 1}...`}
-                              value={answer.text}
-                              onChange={(e) =>
-                                updateAnswerText(
-                                  question.id,
-                                  answer.id,
-                                  e.target.value
-                                )
-                              }
-                            />
-                            <label className="flex items-center gap-2 text-sm">
-                              <input
-                                type="checkbox"
-                                checked={answer.isCorrect}
-                                onChange={() =>
-                                  toggleCorrectAnswer(question.id, answer.id)
-                                }
-                                className="h-4 w-4 rounded border-gray-300"
-                              />
-                              <span
-                                className={
-                                  answer.isCorrect
-                                    ? "font-semibold text-green-600"
-                                    : ""
-                                }
-                              >
-                                Correct Answer
-                              </span>
-                            </label>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              deleteAnswer(question.id, answer.id)
-                            }
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+        <QuestionsList
+          questions={localQuestions}
+          onAddQuestion={actions.addQuestion}
+          onDeleteQuestion={actions.deleteQuestion}
+          onUpdateQuestionText={actions.updateQuestionText}
+          onAddAnswer={actions.addAnswer}
+          onDeleteAnswer={actions.deleteAnswer}
+          onUpdateAnswerText={actions.updateAnswerText}
+          onToggleCorrect={actions.toggleCorrectAnswer}
+        />
 
         <div className="flex justify-end gap-3">
           <Button
@@ -439,8 +355,8 @@ export default function QuizEditorPage() {
             onClick={handleSave}
             disabled={
               (!isEditMode && !hostName.trim()) ||
-              !gameName ||
-              questions.length === 0 ||
+              !currentQuiz.quizName ||
+              currentQuiz.questions.length === 0 ||
               isSaving
             }
           >

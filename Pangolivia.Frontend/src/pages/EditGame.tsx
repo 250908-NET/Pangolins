@@ -33,7 +33,7 @@ export default function EditGamePage() {
   const [quizToDelete, setQuizToDelete] = useState<number | null>(null);
 
   const handleSelectGame = (quizId: number) => {
-    navigate(`/quiz/edit?id=${quizId}`);
+    navigate(`/quiz/edit/${quizId}`);
   };
 
   const handleDeleteGame = (quizId: number) => {

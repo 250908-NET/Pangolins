@@ -23,8 +23,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/sign-up" element={<SignUp />} />
-            <Route path="/create-game" element={<QuizEditor />} />
-            <Route path="/quiz/edit" element={<QuizEditor />} />
+            <Route path="/create-game" element={<QuizEditor mode="create" />} />
+            <Route path="/quiz/edit/:id" element={<QuizEditor mode="edit" />} />
             <Route path="/start-game" element={<StartGame />} />
             <Route path="/join-game" element={<JoinGame />} />
             <Route path="/edit-game" element={<EditGame />} />
