@@ -27,11 +27,26 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 // Read the connection string
-var conn = builder.Configuration.GetConnectionString("DefaultConnection");
+// var conn = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // Register EF Core context (single registration)
+// builder.Services.AddDbContext<PangoliviaDbContext>(opt =>
+//     opt.UseSqlServer(conn));
+// Read the connection string
+var conn = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Register EF Core context with resilient retries
 builder.Services.AddDbContext<PangoliviaDbContext>(opt =>
-    opt.UseSqlServer(conn));
+    opt.UseSqlServer(conn, sql =>
+    {
+        sql.EnableRetryOnFailure(
+            maxRetryCount: 5,                         // number of retries
+            maxRetryDelay: TimeSpan.FromSeconds(10),  // backoff between retries
+            errorNumbersToAdd: null);                 // let EF choose transient errors
+        // Optional: increase command timeout if your DB is slow to wake up
+        // sql.CommandTimeout(120);
+    }));
+
 
 // Dependency Injection
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
@@ -56,17 +71,25 @@ builder.Services.AddHttpClient<ITriviaApiClient, TriviaApiClient>(client =>
 
 var app = builder.Build();
 
+// Run migrations at startup (safe with retries enabled)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<PangoliviaDbContext>();
+    db.Database.Migrate();
+}
+
+
 // Global exception handler (keep early)
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// Swagger only in Development
-if (app.Environment.IsDevelopment())
+app.UseHttpsRedirection();
+// Swagger UI in Development and Production only
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
