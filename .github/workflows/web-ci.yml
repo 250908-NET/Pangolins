@@ -1,0 +1,37 @@
+name: Web CI
+
+on:
+  push:
+    branches: [ "main", "experiment2", "feat/**" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Pangolivia.Next
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Pangolivia.Next/package-lock.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build
+        env:
+          NEXT_PUBLIC_API_BASE: "http://api:8080"  # just a placeholder; CI only checks build
+        run: npm run build
+
+      # Uncomment if you have ESLint configured:
+      # - name: Lint
+      #   run: npm run lint

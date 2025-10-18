@@ -1,0 +1,39 @@
+name: API CI
+
+on:
+  push:
+    branches: [ "main", "experiment2", "feat/**" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore Pangolins.sln
+
+      - name: Build (Release)
+        run: dotnet build Pangolins.sln -c Release --no-restore
+
+      - name: Test with coverage
+        run: dotnet test Pangolins.sln -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Upload coverage (cobertura.xml)
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-code-coverage
+          path: |
+            **/TestResults/**/coverage.cobertura.xml
+
+      - name: Lint/Analyze (treat warnings as errors)
+        run: dotnet build Pangolivia.API/Pangolivia.API.csproj -c Release -warnaserror
