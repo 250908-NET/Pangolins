@@ -11,8 +11,12 @@ services:
       ASPNETCORE_ENVIRONMENT: "Development"
       ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=Pangolivia;User Id=sa;Password=Password123;TrustServerCertificate=True;"
 
+
   web:
-    build: ./Pangolivia.Next
+    build:
+      context: ./Pangolivia.Next
+      args:
+        NEXT_PUBLIC_API_BASE: "http://api:8080"
     container_name: pangolivia-web
     ports:
       - "3000:3000"
@@ -20,3 +24,4 @@ services:
       NEXT_PUBLIC_API_BASE: "http://api:8080"
     depends_on:
       - api
+
