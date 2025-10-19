@@ -19,14 +19,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Trash2, Edit, Loader2 } from "lucide-react";
-import { useQuizzes, useDeleteQuiz } from "@/hooks/useQuizzes";
+import { useQuizzesByUser, useDeleteQuiz } from "@/hooks/useQuizzes";
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from "sonner";
 
-const CURRENT_USER_ID = 1;
+// const CURRENT_USER_ID = 1;
 
 export default function EditGamePage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: allQuizzes, isLoading: loadingQuizzes } = useQuizzes();
+  const { data: allQuizzes, isLoading: loadingQuizzes } = useQuizzesByUser(user?.id ?? 0);
   const deleteQuiz = useDeleteQuiz();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -42,12 +44,13 @@ export default function EditGamePage() {
   };
 
   const confirmDeleteGame = async () => {
+    if (!quizToDelete || !user) return;
     if (!quizToDelete) return;
 
     try {
       await deleteQuiz.mutateAsync({
         id: quizToDelete,
-        currentUserId: CURRENT_USER_ID,
+        currentUserId: user?.id,
       });
 
       // Clean up related data

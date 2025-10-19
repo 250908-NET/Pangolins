@@ -1,4 +1,5 @@
 import { useQuizzes, useDeleteQuiz } from '@/hooks/useQuizzes';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trash2, Edit, Eye } from 'lucide-react';
@@ -9,13 +10,14 @@ interface QuizListProps {
 }
 
 export function QuizList({ onEdit, onView }: QuizListProps) {
+  const { user } = useAuth();
   const { data: quizzes, isLoading, error } = useQuizzes();
   const deleteQuiz = useDeleteQuiz();
 
   const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this quiz?')) {
       try {
-        await deleteQuiz.mutateAsync({ id, currentUserId: 1 }); // Using hardcoded userId for now
+        await deleteQuiz.mutateAsync({ id, currentUserId: user?.id ?? 1 }); // Using hardcoded userId for now
       } catch (err) {
         console.error('Failed to delete quiz:', err);
       }
