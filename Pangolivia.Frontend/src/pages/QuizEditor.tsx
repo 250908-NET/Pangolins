@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useCreateQuiz, useQuiz, useUpdateQuiz } from "@/hooks/useQuizzes";
 import type { QuestionDto, QuizDetailDto } from "@/types/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   QuizHeader,
@@ -12,7 +13,7 @@ import {
 } from "@/features/quiz-editor/components";
 import type { Question } from "@/features/quiz-editor/components";
 
-const CURRENT_USER_ID = 1;
+// const CURRENT_USER_ID = 1;
 
 // Helper: Convert API to local format
 const toLocalQuestions = (questions: QuestionDto[]): Question[] =>
@@ -31,6 +32,7 @@ interface QuizEditorProps {
 }
 
 export default function QuizEditorPage({ mode }: QuizEditorProps) {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditMode = mode === "edit";
@@ -49,8 +51,8 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
     id: 0,
     quizName: "",
     questions: [],
-    createdByUserId: CURRENT_USER_ID,
-    creatorUsername: "",
+    createdByUserId: user?.id ?? 0,
+    creatorUsername: user?.name ?? "",
   });
 
   // Load existing quiz data into local state when editing
@@ -248,7 +250,7 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
             quizName: currentQuiz.quizName,
             questions: currentQuiz.questions,
           },
-          currentUserId: CURRENT_USER_ID,
+          currentUserId: user?.id ?? 0,
         });
         toast.success("Quiz updated successfully!");
         navigate("/edit-game");
@@ -265,7 +267,7 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
         });
         const newQuiz = await createQuizMutation.mutateAsync({
           quiz: { quizName: currentQuiz.quizName, questions: questionsForApi },
-          creatorUserId: CURRENT_USER_ID,
+          creatorUserId: user?.id ?? 0,
         });
 
         const hostPlayer = {

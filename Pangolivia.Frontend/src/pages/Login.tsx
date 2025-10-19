@@ -2,13 +2,46 @@ import { LogoIcon } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Link } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
+    const navigate = useNavigate()
+    const location = useLocation()
+    const { login, isAuthenticated } = useAuth()
+    const [username, setUsername] = useState('')
+    const [password, setPassword] = useState('')
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+
+    const from = location.state?.from?.pathname || '/'
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/', { replace: true })
+        }
+    }, [isAuthenticated, navigate])
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setError('')
+        setLoading(true)
+        try {
+            await login(username, password)
+            navigate(from, { replace: true })
+        } catch (err: any) {
+            setError(err.message || 'An unexpected error occurred.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <section className="flex min-h-screen px-4 py-16 md:py-32">
             <form
-                action=""
+                onSubmit={handleSubmit}
                 className="bg-muted m-auto h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.125rem)] border shadow-md shadow-zinc-950/5 dark:[--color-muted:var(--color-zinc-900)]">
                 <div className="bg-card -m-px rounded-[calc(var(--radius)+.125rem)] border p-8 pb-6">
                     <div className="text-center">
@@ -23,17 +56,25 @@ export default function LoginPage() {
                     </div>
 
                     <div className="mt-6 space-y-6">
+                        {error && (
+                            <div className="flex items-start gap-2 rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
+                                <AlertCircle className="mt-0.5 h-4 w-4 text-red-600 dark:text-red-400" />
+                                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                            </div>
+                        )}
                         <div className="space-y-2">
                             <Label
-                                htmlFor="email"
+                                htmlFor="username"
                                 className="block text-sm">
                                 Username
                             </Label>
                             <Input
-                                type="email"
+                                type="text"
                                 required
-                                name="email"
-                                id="email"
+                                name="username"
+                                id="username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                             />
                         </div>
 
@@ -60,11 +101,14 @@ export default function LoginPage() {
                                 required
                                 name="pwd"
                                 id="pwd"
-                                className="input sz-md variant-mixed"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
 
-                        <Button className="w-full">Login</Button>
+                        <Button type="submit" className="w-full" disabled={loading}>
+                            {loading ? 'Logging in...' : 'Login'}
+                        </Button>
                     </div>
 
                     <div className="my-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
