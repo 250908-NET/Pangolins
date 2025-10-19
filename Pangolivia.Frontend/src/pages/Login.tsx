@@ -4,36 +4,23 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState, useEffect } from 'react'
-<<<<<<< HEAD
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-=======
-import { Link, useNavigate } from 'react-router-dom'
->>>>>>> 50e3057a9f991c20781ea2b9cac732d319acb950
 import { AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
     const navigate = useNavigate()
-<<<<<<< HEAD
     const location = useLocation()
-=======
->>>>>>> 50e3057a9f991c20781ea2b9cac732d319acb950
     const { login, isAuthenticated } = useAuth()
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
-<<<<<<< HEAD
     const from = location.state?.from?.pathname || '/'
 
     useEffect(() => {
         if (isAuthenticated) {
             navigate('/', { replace: true })
-=======
-    useEffect(() => {
-        if (isAuthenticated) {
-            navigate('/')
->>>>>>> 50e3057a9f991c20781ea2b9cac732d319acb950
         }
     }, [isAuthenticated, navigate])
 
@@ -43,10 +30,7 @@ export default function LoginPage() {
         setLoading(true)
         try {
             await login(username, password)
-<<<<<<< HEAD
             navigate(from, { replace: true })
-=======
->>>>>>> 50e3057a9f991c20781ea2b9cac732d319acb950
         } catch (err: any) {
             setError(err.message || 'An unexpected error occurred.')
         } finally {
