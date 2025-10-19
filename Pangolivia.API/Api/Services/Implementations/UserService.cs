@@ -23,15 +23,15 @@ public class UserService : IUserService
     {
         return _context.getUserModelById(id);
     }
-    public Task<UserModel> findUserByUsernameAsync(string username)
+    public Task<UserModel?> findUserByUsernameAsync(string username)
     {
         return _context.getUserModelByUsername(username);
     }
 
-    public Task<UserModel> createUserAsync(CreateUserDTO userDTO)
-    {
-        return _context.createUserModel(userDTO);
-    }
+    // public Task<UserModel> createUserAsync(CreateUserDTO userDTO)
+    // {
+    //     return _context.createUserModel(userDTO);
+    // }
 
     public Task<UserModel> updateUserAsync(int userId, object Obj)
     {
