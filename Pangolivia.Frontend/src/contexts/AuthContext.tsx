@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { createContext, useState, useEffect, useContext, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode'
@@ -5,6 +6,13 @@ import { api } from '../lib/api'
 
 interface User {
   id: number
+=======
+import { createContext, useState, useEffect, useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { jwtDecode } from 'jwt-decode'
+
+interface User {
+>>>>>>> 50e3057a9f991c20781ea2b9cac732d319acb950
   name: string
 }
 

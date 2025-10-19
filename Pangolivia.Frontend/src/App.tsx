@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 /*C:\Users\Husan\Projects\Revature\Pangolins\Pangolivia.Frontend\src\App.tsx*/
 import { Routes, Route, Outlet } from 'react-router-dom'
+=======
+import { Routes, Route } from 'react-router-dom'
+>>>>>>> 50e3057a9f991c20781ea2b9cac732d319acb950
 import { Header } from '@/components/header'
 import Home from '@/pages/Home'
 import Login from '@/pages/Login'
