@@ -55,7 +55,7 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<PangoliviaDbContext>();
 
     // Apply migrations automatically
-    context.Database.Migrate();
+    // context.Database.Migrate();
 
     // Check if the tables are empty
     if (!context.Users.Any() && !context.Quizzes.Any())
