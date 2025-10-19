@@ -8,7 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Users, Play, Copy, Check, UserCheck } from "lucide-react";
+import { Users, Play, Copy, Check, UserCheck, Loader2 } from "lucide-react";
+import { useQuiz } from "@/hooks/useQuizzes";
 
 interface Player {
   id: string;
@@ -17,52 +18,37 @@ interface Player {
   joinedAt: string;
 }
 
-interface GameData {
-  roomCode: string;
-  name: string;
-  questions: unknown[];
-  createdAt: string;
-}
+const PREFILL_QUIZ_ID = 1; // Development: prefill with a valid quiz ID
 
 export default function GameLobbyPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const roomCode = searchParams.get("room");
+  const quizIdParam = searchParams.get("quiz");
+  const quizId = quizIdParam ? parseInt(quizIdParam) : PREFILL_QUIZ_ID;
 
-  const [gameData, setGameData] = useState<GameData | null>(null);
+  const { data: quiz, isLoading: loadingQuiz } = useQuiz(quizId);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [copied, setCopied] = useState(false);
   const [hostReady, setHostReady] = useState(false);
 
   useEffect(() => {
-    if (!roomCode) {
+    if (!quizId) {
       navigate("/join-game");
       return;
     }
-
-    // Load game data
-    const allGames = JSON.parse(localStorage.getItem("allGames") || "{}");
-    const game = allGames[roomCode];
-
-    if (!game) {
-      navigate("/join-game");
-      return;
-    }
-
-    setGameData(game);
 
     // Load current player
     const playerData = JSON.parse(
       localStorage.getItem("currentPlayer") || "null"
     );
-    if (playerData && playerData.roomCode === roomCode) {
+    if (playerData && playerData.quizId === quizId) {
       setCurrentPlayer(playerData);
     }
 
     // Load players from localStorage (simulating multiplayer)
     const storedPlayers = JSON.parse(
-      localStorage.getItem(`players_${roomCode}`) || "[]"
+      localStorage.getItem(`players_${quizId}`) || "[]"
     );
 
     // Add current player if not already in list
@@ -72,17 +58,17 @@ export default function GameLobbyPage() {
     ) {
       storedPlayers.push(playerData);
       localStorage.setItem(
-        `players_${roomCode}`,
+        `players_${quizId}`,
         JSON.stringify(storedPlayers)
       );
     }
 
     setPlayers(storedPlayers);
-  }, [roomCode, navigate]);
+  }, [quizId, navigate]);
 
   const handleCopyCode = async () => {
-    if (roomCode) {
-      await navigator.clipboard.writeText(roomCode);
+    if (quizId) {
+      await navigator.clipboard.writeText(quizId.toString());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -93,19 +79,19 @@ export default function GameLobbyPage() {
   };
 
   const handleStartGame = () => {
-    if (currentPlayer?.isHost && roomCode) {
+    if (currentPlayer?.isHost && quizId) {
       // Mark game as started
-      localStorage.setItem(`game_${roomCode}_started`, "true");
-      navigate(`/game-active?room=${roomCode}`);
+      localStorage.setItem(`game_${quizId}_started`, "true");
+      navigate(`/game-active?quiz=${quizId}`);
     }
   };
 
   const handleLeaveGame = () => {
-    if (roomCode && currentPlayer) {
+    if (quizId && currentPlayer) {
       // Remove player from players list
       const updatedPlayers = players.filter((p) => p.id !== currentPlayer.id);
       localStorage.setItem(
-        `players_${roomCode}`,
+        `players_${quizId}`,
         JSON.stringify(updatedPlayers)
       );
       localStorage.removeItem("currentPlayer");
@@ -113,7 +99,18 @@ export default function GameLobbyPage() {
     navigate("/join-game");
   };
 
-  if (!gameData || !currentPlayer) {
+  if (loadingQuiz) {
+    return (
+      <section className="flex min-h-screen items-center justify-center px-4 py-16">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="text-lg">Loading quiz...</span>
+        </div>
+      </section>
+    );
+  }
+
+  if (!quiz || !currentPlayer) {
     return null;
   }
 
@@ -126,7 +123,7 @@ export default function GameLobbyPage() {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-3xl">{gameData.name}</CardTitle>
+                <CardTitle className="text-3xl">{quiz.quizName}</CardTitle>
                 <CardDescription className="mt-2">
                   Waiting for players to join...
                 </CardDescription>
@@ -142,10 +139,10 @@ export default function GameLobbyPage() {
             {/* Room Code */}
             <div className="rounded-lg border bg-zinc-50 p-4 dark:bg-zinc-900">
               <p className="text-muted-foreground mb-2 text-sm font-medium">
-                Room Code
+                Quiz ID
               </p>
               <div className="flex items-center justify-between">
-                <p className="text-3xl font-bold tracking-widest">{roomCode}</p>
+                <p className="text-3xl font-bold tracking-widest">{quizId}</p>
                 <Button variant="outline" size="sm" onClick={handleCopyCode}>
                   {copied ? (
                     <>
@@ -161,7 +158,7 @@ export default function GameLobbyPage() {
                 </Button>
               </div>
               <p className="text-muted-foreground mt-2 text-xs">
-                Share this code with friends to join
+                Share this ID with friends to join
               </p>
             </div>
 
@@ -206,7 +203,7 @@ export default function GameLobbyPage() {
             <div className="rounded-lg border bg-zinc-50 p-4 dark:bg-zinc-900">
               <p className="text-muted-foreground text-sm">
                 <span className="font-semibold">
-                  {gameData.questions.length}
+                  {quiz.questions.length}
                 </span>{" "}
                 questions ready
               </p>

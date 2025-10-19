@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using Pangolivia.API.Data;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
@@ -32,7 +31,9 @@ public class UserRepository : IUserRepository
 
     }
 
-    public async Task<UserModel> getUserModelByUsername(string username)
+
+
+    public async Task<UserModel?> getUserModelByUsername(string username)
     {
         var user = await _context.Users
         .Include(u => u.PlayerGameRecords)
@@ -40,24 +41,14 @@ public class UserRepository : IUserRepository
         .Include(u => u.CreatedQuizzes)
         .FirstOrDefaultAsync(u => u.Username == username);
 
-        if (user != null)
-        {
-            return user;
-        }
-        throw new KeyNotFoundException($"UserModel with id {username} not found.");
+        return user;
     }
 
-    public async Task<UserModel> createUserModel(CreateUserDTO userDTO)
+    public async Task<UserModel> createUserModel(UserModel user)
     {
-        var model = new UserModel
-        {
-            AuthUuid = userDTO.authUuid,
-            Username = userDTO.username
-        };
-        _context.Users.Add(model);
+        _context.Users.Add(user);
         await _context.SaveChangesAsync();
-        return model;
-        // throw new NotImplementedException();
+        return user;
     }
     // Update methods*********************************
     public async Task<UserModel> updateUserModelPlayerGameRecord(int id, PlayerGameRecordDto pgrDto)
@@ -75,7 +66,7 @@ public class UserRepository : IUserRepository
         {
             GameRecordId = pgrDto.GameRecordId,
             UserId = pgrDto.UserId,
-            score = pgrDto.Score
+            score = pgrDto.score
         };
 
         user.PlayerGameRecords.Add(playerGameRecord);

@@ -57,7 +57,7 @@ public class PangoliviaDbContext : DbContext
             entity.HasOne(q => q.Quiz)
                 .WithMany(qz => qz.Questions) // This points to the ICollection in QuizModel
                 .HasForeignKey(q => q.QuizId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
 

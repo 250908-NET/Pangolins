@@ -3,6 +3,11 @@ using Pangolivia.API.Data;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
 using Pangolivia.API.Models;
+using Pangolivia.API.Middleware;
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 DotNetEnv.Env.Load();
 
@@ -21,14 +26,47 @@ builder.Services.AddDbContext<PangoliviaDbContext>(options =>
 });
 
 // Repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
+builder.Services.AddScoped<IGameRecordRepository, GameRecordRepository>();
+builder.Services.AddScoped<IPlayerGameRecordRepository, PlayerGameRecordRepository>();
 
-// Services
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
+builder.Services.AddScoped<IGameRecordService, GameRecordService>();
+builder.Services.AddScoped<IPlayerGameRecordService, PlayerGameRecordService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+});
 
 // Controllers + Swagger
 builder.Services.AddControllers();
@@ -42,11 +80,14 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseMiddleware<RequestLoggingMiddleware>();
 }
 
-
 app.UseHttpsRedirection();
-//app.UseAuthorization();
+
+app.UseCors("AllowAll");
+
+app.UseAuthorization();
 app.MapControllers();
 
 // Seed data at startup
@@ -64,7 +105,8 @@ using (var scope = app.Services.CreateScope())
         var user = new UserModel
         {
             AuthUuid = Guid.NewGuid().ToString(),
-            Username = "testadmin"
+            Username = "testadmin",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123")
         };
         context.Users.Add(user);
         context.SaveChanges();

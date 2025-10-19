@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import React from 'react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 const menuItems = [
     { name: 'Start Game', href: '/start-game' },
@@ -14,6 +15,7 @@ const menuItems = [
 ]
 
 export const Header = () => {
+    const { isAuthenticated, logout } = useAuth()
     const [menuState, setMenuState] = React.useState(false)
     const [isScrolled, setIsScrolled] = React.useState(false)
 
@@ -77,7 +79,32 @@ export const Header = () => {
                                 </ul>
                             </div>
                             <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                                <Button
+                                {isAuthenticated ? (
+                                    <>
+                                        <Button onClick={logout} variant="outline" size="sm">
+                                            <span>Logout</span>
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            size="sm">
+                                            <Link to="/login">
+                                                <span>Login</span>
+                                            </Link>
+                                        </Button>
+                                        <Button
+                                            asChild
+                                            size="sm">
+                                            <Link to="/sign-up">
+                                                <span>Sign Up</span>
+                                            </Link>
+                                        </Button>
+                                    </>
+                                )}
+                                {/* <Button
                                     asChild
                                     variant="outline"
                                     size="sm"
@@ -101,7 +128,7 @@ export const Header = () => {
                                     <Link to="#">
                                         <span>Get Started</span> 
                                     </Link>
-                                </Button>
+                                </Button> */}
                             </div>
                         </div>
                     </div>
