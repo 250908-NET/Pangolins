@@ -171,6 +171,30 @@ public class GameSessionTests
     }
 
     [Fact]
+    public void AdvanceQuestion_ThrowsWhenGameEnded()
+    {
+        // Arrange
+        var question = new QuestionModel
+        {
+            Id = 99,
+            QuizId = 1,
+            QuestionText = "x",
+            CorrectAnswer = "a",
+            Answer2 = "b",
+            Answer3 = "c",
+            Answer4 = "d",
+        };
+        var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var user = new UserDto { Id = 1, Username = "u" };
+        session.RegisterPlayer(user, connectionId: "c");
+        session.EndGameAndGetFinalGameRecord();
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => session.AdvanceQuestion());
+    }
+
+    [Fact]
     public void AnswerQuestionForPlayer_SetsAnswerSuccessfully()
     {
         // Arrange
