@@ -23,14 +23,14 @@ public class GameSessionTests
     }
 
     [Fact]
-    public void Constructor_ThrowsWhenNameIsNull()
+    public void Constructor_Throws_WhenNameIsNull()
     {
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
         Assert.Throws<ArgumentNullException>(() => new GameSession(id: 1, name: null!, hostUserId: 1, quiz: quiz));
     }
 
     [Fact]
-    public void Constructor_ThrowsWhenQuizIsNull()
+    public void Constructor_Throws_WhenQuizIsNull()
     {
         Assert.Throws<ArgumentNullException>(() => new GameSession(id: 1, name: "name", hostUserId: 1, quiz: null!));
     }
@@ -88,7 +88,7 @@ public class GameSessionTests
     }
 
     [Fact]
-    public void RegisterPlayer_ThrowsWhenDuplicate()
+    public void RegisterPlayer_Throws_WhenDuplicate()
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
@@ -101,7 +101,7 @@ public class GameSessionTests
     }
 
     [Fact]
-    public void AdvanceQuestion_ThrowsWhenNoQuestions()
+    public void AdvanceQuestion_Throws_WhenNoQuestions()
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
@@ -147,7 +147,7 @@ public class GameSessionTests
     }
 
     [Fact]
-    public void AdvanceQuestion_ThrowsWhenActiveQuestion()
+    public void AdvanceQuestion_Throws_WhenActiveQuestion()
     {
         // Arrange: single question quiz
         var question = new QuestionModel
@@ -171,7 +171,7 @@ public class GameSessionTests
     }
 
     [Fact]
-    public void AdvanceQuestion_ThrowsWhenGameEnded()
+    public void AdvanceQuestion_Throws_WhenGameEnded()
     {
         // Arrange
         var question = new QuestionModel
@@ -229,7 +229,7 @@ public class GameSessionTests
     }
 
     [Fact]
-    public void AnswerQuestionForPlayer_ThrowsWhenPlayerNotRegistered()
+    public void AnswerQuestionForPlayer_Throws_WhenPlayerNotRegistered()
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
@@ -278,7 +278,7 @@ public class GameSessionTests
     }
 
     [Fact]
-    public void EndQuestionRound_ThrowsWhenNoActiveQuestion()
+    public void EndQuestionRound_Throws_WhenNoActiveQuestion()
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
