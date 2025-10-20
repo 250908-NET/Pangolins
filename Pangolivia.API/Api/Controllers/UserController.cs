@@ -21,7 +21,7 @@ namespace Pangolivia.API.Controllers
 
         // POST: api/Quiz
         [HttpPost]
-        public async Task<ActionResult<CreateUserDTO>> CreateUser([FromBody] UserModel User)
+        public async Task<ActionResult<UserModel>> CreateUser([FromBody] UserModel User)
         {
             _logger.LogInformation($"Creating a new user. with username {User.Username}", User.Username);
             UserModel result = await _userService.createUserAsync(User);
@@ -35,7 +35,7 @@ namespace Pangolivia.API.Controllers
             List<UserModel> result = await _userService.getAllUsersAsync();
             return Ok(result);
         }
-        [HttpGet("{id}")]
+        [HttpGet("ById/{id}")]
         public async Task<ActionResult<UserModel>> GetUserByID(int id)
         {
             _logger.LogInformation($"Get Users with id:{id} from database");

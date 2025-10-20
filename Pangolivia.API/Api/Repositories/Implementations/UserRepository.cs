@@ -14,7 +14,7 @@ public class UserRepository : IUserRepository
     public async Task<List<UserModel>> getAllUserModels()
     {
         return await _context.Users
-        .Include(u => u.Username)
+        // .Include(u => u.Username)
         .ToListAsync();
         // throw new NotImplementedException();
     }
