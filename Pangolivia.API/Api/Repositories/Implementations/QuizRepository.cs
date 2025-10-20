@@ -8,12 +8,11 @@ namespace Pangolivia.API.Repositories;
 public class QuizRepository : IQuizRepository
 {
     private readonly PangoliviaDbContext _context;
-    private readonly IMapper _mapper;
+  
 
-    public QuizRepository(PangoliviaDbContext context, IMapper mapper)
+    public QuizRepository(PangoliviaDbContext context)
     {
         _context = context;
-        _mapper = mapper;
     }
 
     // Create quiz
@@ -53,6 +52,7 @@ public class QuizRepository : IQuizRepository
     }
 
     // Get all quizzes
+    // NOTE: not working yet since Questions and Users is not defined
     public async Task<List<QuizModel>> GetAllAsync()
     {
         return await _context.Quizzes

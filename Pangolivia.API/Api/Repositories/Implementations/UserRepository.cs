@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using Pangolivia.API.Data;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
@@ -12,17 +11,46 @@ public class UserRepository : IUserRepository
     {
         _context = context;
     }
-    public async Task<List<UserModel>> getAllUserModels()
+    public async Task<List<UserDto>> getAllUserModels()
     {
+        // return await _context.Users
+        // .Include(u => u.Username)
+        // .ToListAsync();
+
         return await _context.Users
-        .Include(u => u.Username)
-        .ToListAsync();
+            .Select(u => new UserDto
+            {
+                Id = u.Id,
+                Username = u.Username,
+                PlayerGameRecords = u.PlayerGameRecords
+                    .Select(pgr => new PlayerGameRecordDto
+                    {
+                        Id = pgr.Id,
+                        score = pgr.score
+                    })
+                    .ToList(),
+                HostedGameRecords = u.HostedGameRecords
+                    .Select(g => new GameRecordDto
+                    {
+                        Id = g.Id,
+                        QuizId = g.QuizId,
+                        datetimeCompleted = g.datetimeCompleted
+                    }).ToList(),
+                CreatedQuizzes = u.CreatedQuizzes
+                    .Select(q => new QuizDetailDto
+                    {
+                        Id = q.Id,
+                        QuizName = q.QuizName,
+                        CreatedByUserId = q.CreatedByUserId
+                    }).ToList()
+            })
+                    .ToListAsync();
         // throw new NotImplementedException();
     }
 
     public async Task<UserModel> getUserModelById(int id)
     {
-        var user = await _context.Users.Include(u => u.Username)
+        var user = await _context.Users
                     .FirstOrDefaultAsync(user => user.Id == id);
         if (user != null)
         {
@@ -32,32 +60,57 @@ public class UserRepository : IUserRepository
 
     }
 
-    public async Task<UserModel> getUserModelByUsername(string username)
-    {
-        var user = await _context.Users
-        .Include(u => u.PlayerGameRecords)
-        .Include(u => u.HostedGameRecords)
-        .Include(u => u.CreatedQuizzes)
-        .FirstOrDefaultAsync(u => u.Username == username);
 
-        if (user != null)
+
+    public async Task<UserDto?> getUserModelByUsername(string username)
+    {
+        // var user = await _context.Users
+        // .FirstOrDefaultAsync(u => u.Username == username);
+        return await _context.Users
+        .Where(u => u.Username == username)
+        .Select(u => new UserDto
         {
-            return user;
-        }
-        throw new KeyNotFoundException($"UserModel with id {username} not found.");
+            Id = u.Id,
+            Username = u.Username,
+            PlayerGameRecords = u.PlayerGameRecords
+                .Select(pgr => new PlayerGameRecordDto
+                {
+                    Id = pgr.Id,
+                    score = pgr.score  // Capital S for C# convention
+                })
+                .ToList(),
+            HostedGameRecords = u.HostedGameRecords
+                .Select(g => new GameRecordDto
+                {
+                    Id = g.Id,
+                    QuizId = g.QuizId,
+                    datetimeCompleted = g.datetimeCompleted  // Match property names
+                })
+                .ToList(),
+            CreatedQuizzes = u.CreatedQuizzes
+                .Select(q => new QuizDetailDto
+                {
+                    Id = q.Id,
+                    QuizName = q.QuizName,
+                    CreatedByUserId = q.CreatedByUserId
+                })
+                .ToList()
+        })
+        .FirstOrDefaultAsync(); // <--- important
+        // return user;
     }
 
-    public async Task<UserModel> createUserModel(CreateUserDTO userDTO)
+    public async Task<UserModel> createUserModel(UserModel newUser)
     {
-        var model = new UserModel
-        {
-            AuthUuid = userDTO.authUuid,
-            Username = userDTO.username
-        };
-        _context.Users.Add(model);
+        // UserModel newUser = new UserModel
+        // {
+        //     AuthUuid = userDto.authUuid,
+        //     Username = userDto.username
+        // };
+
+        _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
-        return model;
-        // throw new NotImplementedException();
+        return newUser;
     }
     // Update methods*********************************
     public async Task<UserModel> updateUserModelPlayerGameRecord(int id, PlayerGameRecordDto pgrDto)
@@ -75,7 +128,7 @@ public class UserRepository : IUserRepository
         {
             GameRecordId = pgrDto.GameRecordId,
             UserId = pgrDto.UserId,
-            score = pgrDto.Score
+            score = pgrDto.score
         };
 
         user.PlayerGameRecords.Add(playerGameRecord);
@@ -131,14 +184,22 @@ public class UserRepository : IUserRepository
     // **********************************************
     public async Task removeUserModel(int id)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        UserModel user = await _context.Users
+        .Include(u => u.CreatedQuizzes)
+        .Include(u => u.PlayerGameRecords)
+        .Include(u => u.HostedGameRecords)
+        .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
+        {
             throw new KeyNotFoundException($"UserModel with id {id} not found.");
+        }
+        _context.Quizzes.RemoveRange(user.CreatedQuizzes);
+        _context.PlayerGameRecords.RemoveRange(user.PlayerGameRecords);
+        _context.GameRecords.RemoveRange(user.HostedGameRecords);
 
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
 
-        // throw new NotImplementedException();
     }
 }

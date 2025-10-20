@@ -33,10 +33,15 @@ public class QuizService : IQuizService
 
         foreach (var questionDto in requestDto.Questions)
         {
+            // Map Options array to individual answer fields
             var question = new QuestionModel
             {
                 QuestionText = questionDto.QuestionText,
-                QuizId = quiz.Id
+                QuizId = quiz.Id,
+                CorrectAnswer = questionDto.Options.ElementAtOrDefault(questionDto.CorrectOptionIndex) ?? string.Empty,
+                Answer2 = questionDto.Options.ElementAtOrDefault(questionDto.CorrectOptionIndex == 0 ? 1 : 0) ?? string.Empty,
+                Answer3 = questionDto.Options.ElementAtOrDefault(questionDto.CorrectOptionIndex <= 1 ? 2 : 1) ?? string.Empty,
+                Answer4 = questionDto.Options.ElementAtOrDefault(questionDto.CorrectOptionIndex <= 2 ? 3 : 2) ?? string.Empty
             };
             await _questionRepository.AddAsync(question);
         }
@@ -47,7 +52,8 @@ public class QuizService : IQuizService
         return _mapper.Map<QuizDetailDto>(detailedQuiz);
     }
 
-    // UPDATE QUIZ
+    // UPDATE QUIZ 
+    // Need to change since Question will be different
     public async Task<QuizDetailDto> UpdateQuizAsync(int quizId, UpdateQuizRequestDto requestDto, int currentUserId)
     {
         var existingQuiz = await _quizRepository.GetByIdWithDetailsAsync(quizId);
@@ -76,10 +82,15 @@ public class QuizService : IQuizService
         {
             if (dto.Id == 0)
             {
+                // Map Options array to individual answer fields
                 var newQuestion = new QuestionModel
                 {
                     QuestionText = dto.QuestionText,
-                    QuizId = quizId
+                    QuizId = quizId,
+                    CorrectAnswer = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex) ?? string.Empty,
+                    Answer2 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex == 0 ? 1 : 0) ?? string.Empty,
+                    Answer3 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex <= 1 ? 2 : 1) ?? string.Empty,
+                    Answer4 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex <= 2 ? 3 : 2) ?? string.Empty
                 };
                 await _questionRepository.AddAsync(newQuestion);
             }
@@ -89,6 +100,10 @@ public class QuizService : IQuizService
                 if (existingQuestion != null)
                 {
                     existingQuestion.QuestionText = dto.QuestionText;
+                    existingQuestion.CorrectAnswer = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex) ?? string.Empty;
+                    existingQuestion.Answer2 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex == 0 ? 1 : 0) ?? string.Empty;
+                    existingQuestion.Answer3 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex <= 1 ? 2 : 1) ?? string.Empty;
+                    existingQuestion.Answer4 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex <= 2 ? 3 : 2) ?? string.Empty;
                     await _questionRepository.UpdateAsync(existingQuestion);
                 }
             }

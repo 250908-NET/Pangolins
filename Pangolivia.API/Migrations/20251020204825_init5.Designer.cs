@@ -12,8 +12,8 @@ using Pangolivia.API.Data;
 namespace Pangolivia.API.Migrations
 {
     [DbContext(typeof(PangoliviaDbContext))]
-    [Migration("20251016153718_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251020204825_init5")]
+    partial class init5
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -162,6 +162,10 @@ namespace Pangolivia.API.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("auth_uuid");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -202,7 +206,7 @@ namespace Pangolivia.API.Migrations
                     b.HasOne("Pangolivia.API.Models.UserModel", "User")
                         .WithMany("PlayerGameRecords")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("GameRecord");
@@ -215,7 +219,7 @@ namespace Pangolivia.API.Migrations
                     b.HasOne("Pangolivia.API.Models.QuizModel", "Quiz")
                         .WithMany("Questions")
                         .HasForeignKey("QuizId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Quiz");
