@@ -129,6 +129,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<PangoliviaDbContext>();
+    context.Database.Migrate(); // Applies all pending EF Core migrations
 
     // Apply migrations automatically
     // context.Database.Migrate();
@@ -167,7 +168,7 @@ using (var scope = app.Services.CreateScope())
                 Answer3 = "Berlin",
                 Answer4 = "Madrid"
             },
-            
+
             new QuestionModel
             {
                 QuizId = quiz.Id,
