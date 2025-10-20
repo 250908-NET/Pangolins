@@ -3,6 +3,9 @@ name: Deploy to Azure
 on:
   push:
     branches: [ main, feat/cicd-update ]
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   build-and-deploy:
