@@ -58,8 +58,8 @@ jobs:
         uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
         with:
           push: true
-          tags: ${{ secrets.ACR_LOGIN_SERVER }}/pangolivia-api:latest
-          context: ./Pangolivia.API
+          tags: ${{ secrets.ACR_LOGIN_SERVER }}/pangolivia-frontend:latest
+          context: ./Pangolivia.Frontend
 
   deploy:
     permissions:
@@ -75,6 +75,6 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: pangolivia-api
-          publish-profile: ${{ secrets.API_PUBLISH_PROFILE }}
-          images: '${{ secrets.ACR_LOGIN_SERVER }}/pangolivia-api:latest'
+          app-name: pangolivia-frontend
+          publish-profile: ${{ secrets.FRONTEND_PUBLISH_PROFILE }}
+          images: '${{ secrets.ACR_LOGIN_SERVER }}/pangolivia-frontend:latest'
