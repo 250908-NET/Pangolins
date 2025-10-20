@@ -359,8 +359,8 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
   const localQuestions = toLocalQuestions(currentQuiz.questions);
 
   return (
-    <section className="min-h-screen px-4 py-16">
-      <div className="mx-auto max-w-4xl">
+    <section className="flex justify-center items-center min-h-screen px-4 ">
+      <div className="w-full max-w-3xl">
         <QuizHeader
           isEditMode={isEditMode}
           onBack={() => navigate("/edit-game")}

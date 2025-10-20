@@ -26,7 +26,7 @@ function App() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       <Header />
-      <main className="pt-6">
+      <main className="pt-20">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />

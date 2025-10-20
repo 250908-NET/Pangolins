@@ -86,7 +86,7 @@ export default function JoinGamePage() {
   }
 
   return (
-    <section className="flex min-h-screen items-center justify-center px-4 py-16">
+    <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4">
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="text-center">
