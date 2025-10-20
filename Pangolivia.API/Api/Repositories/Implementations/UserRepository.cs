@@ -44,11 +44,17 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    public async Task<UserModel> createUserModel(UserModel user)
+    public async Task<UserModel> createUserModel(UserModel newUser)
     {
-        _context.Users.Add(user);
+        // UserModel newUser = new UserModel
+        // {
+        //     AuthUuid = userDto.authUuid,
+        //     Username = userDto.username
+        // };
+
+        _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
-        return user;
+        return newUser;
     }
     // Update methods*********************************
     public async Task<UserModel> updateUserModelPlayerGameRecord(int id, PlayerGameRecordDto pgrDto)

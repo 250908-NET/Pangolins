@@ -28,10 +28,10 @@ public class UserService : IUserService
         return _context.getUserModelByUsername(username);
     }
 
-    // public Task<UserModel> createUserAsync(CreateUserDTO userDTO)
-    // {
-    //     return _context.createUserModel(userDTO);
-    // }
+    public Task<UserModel> createUserAsync(UserModel User)
+    {
+        return _context.createUserModel(User);
+    }
 
     public Task<UserModel> updateUserAsync(int userId, object Obj)
     {
