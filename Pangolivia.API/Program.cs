@@ -14,32 +14,24 @@ using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 if (builder.Environment.EnvironmentName == "Development")
 {
     DotNetEnv.Env.Load();
 }
-// builder.Configuration
-//     .SetBasePath(Directory.GetCurrentDirectory())
-//     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-//     .AddEnvironmentVariables(); // Reads both system and Docker environment variables
 
-// Print connection string (try ConnectionStrings:Connection, then "Connection" key, then environment variable)
-var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Connection") ?? "N/A";
-Console.WriteLine($"Connection String: {connectionString}");
-
-// Print all environment variables containing "Connection" (case-insensitive)
-var envVars = Environment.GetEnvironmentVariables();
-Console.WriteLine("Environment variables containing 'Connection':");
-foreach (System.Collections.DictionaryEntry entry in envVars)
+// Remap Azure SQL connection string to standard format
+if (Environment.GetEnvironmentVariable("SQLAZURECONNSTR_ConnectionStrings__Connection") is string sqlAzureConnStr)
 {
-    var key = entry.Key?.ToString() ?? "";
-    if (key.IndexOf("Connection", StringComparison.OrdinalIgnoreCase) >= 0)
-    {
-        var value = entry.Value?.ToString() ?? "";
-        Console.WriteLine($"{key} = {value}");
-    }
+    Environment.SetEnvironmentVariable("ConnectionStrings__Connection", sqlAzureConnStr);
 }
+
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddEnvironmentVariables();
+
+// Debug connection string resolution
+Console.WriteLine($"Connection String: {builder.Configuration.GetConnectionString("Connection")}");
 
 // Register DbContext with the read connection string
 builder.Services.AddDbContext<PangoliviaDbContext>(options =>
