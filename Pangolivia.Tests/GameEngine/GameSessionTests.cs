@@ -169,4 +169,49 @@ public class GameSessionTests
         // Attempting to advance again while active should throw
         Assert.Throws<InvalidOperationException>(() => session.AdvanceQuestion());
     }
+
+    [Fact]
+    public void AnswerQuestionForPlayer_SetsAnswerSuccessfully()
+    {
+        // Arrange
+        var question = new QuestionModel
+        {
+            Id = 10,
+            QuizId = 1,
+            QuestionText = "2+2?",
+            CorrectAnswer = "4",
+            Answer2 = "3",
+            Answer3 = "5",
+            Answer4 = "22",
+        };
+        var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var user1 = new UserDto { Id = 99, Username = "p99" };
+        var user2 = new UserDto { Id = 100, Username = "p100" };
+        session.RegisterPlayer(user1, connectionId: "c99");
+        session.RegisterPlayer(user2, connectionId: "c100");
+        QuestionForPlayerDto dto = session.AdvanceQuestion();
+
+        // Act
+        session.AnswerQuestionForPlayer(user1.Id, "4");
+        session.AnswerQuestionForPlayer(user2.Id, "5");
+        QuestionScoresDto roundResult = session.EndQuestionRound();
+
+        // Assert
+        PlayerQuestionScoresDto p1 = roundResult.PlayerScores.Single(ps => ps.UserId == user1.Id);
+        PlayerQuestionScoresDto p2 = roundResult.PlayerScores.Single(ps => ps.UserId == user2.Id);
+        Assert.Equal(1, p1.Score);
+        Assert.Equal(0, p2.Score);
+    }
+
+    [Fact]
+    public void AnswerQuestionForPlayer_ThrowsWhenPlayerNotRegistered()
+    {
+        // Arrange
+        var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => session.AnswerQuestionForPlayer(playerId: 999, answer: "x"));
+    }
 }
