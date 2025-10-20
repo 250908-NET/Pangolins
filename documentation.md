@@ -1,6 +1,4 @@
-here’s a compact, copy-pasteable **cheat sheet** of everything we did to get API + Next.js running locally, in Docker, and wired together. it’s written so a teammate can reproduce from a clean clone, and so you can show the flow to your trainer.
 
----
 
 # Pangolivia – dev & docker cheat sheet
 
