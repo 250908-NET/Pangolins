@@ -71,6 +71,57 @@ public class GameSession
         return CurrentQuestionIndex < questions.Count - 1;
     }
 
+    /// <summary>
+    /// Advances game to the next question round.
+    /// </summary>
+    /// <returns>The next question.</returns>
+    public QuestionForPlayerDto AdvanceQuestion()
+    {
+        if (Status == GameStatus.Ended)
+        {
+            throw new InvalidOperationException("Can not advance the question in a game that has already ended.");
+        }
+        else if (Status == GameStatus.ActiveQuestion)
+        {
+            throw new InvalidOperationException("Can not advance the question when the current question round hasn't ended yet.");
+        }
+
+        ICollection<QuestionModel> questions = Quiz.Questions;
+        if (questions == null || CurrentQuestionIndex >= questions.Count - 1)
+        {
+            throw new InvalidOperationException("There are no more questions left to advance to.");
+        }
+
+        CurrentQuestionIndex++;
+        Status = GameStatus.ActiveQuestion;
+
+        QuestionModel currentQuestion = questions.ElementAt(CurrentQuestionIndex);
+
+        var answers = new List<string>
+        {
+            currentQuestion.CorrectAnswer,
+            currentQuestion.Answer2,
+            currentQuestion.Answer3,
+            currentQuestion.Answer4,
+        };
+
+        // Fisher–Yates shuffle
+        for (int i = answers.Count - 1; i > 0; i--)
+        {
+            int j = Random.Shared.Next(i + 1);
+            (answers[i], answers[j]) = (answers[j], answers[i]);
+        }
+
+        return new QuestionForPlayerDto
+        {
+            QuestionText = currentQuestion.QuestionText,
+            Answer1 = answers[0],
+            Answer2 = answers[1],
+            Answer3 = answers[2],
+            Answer4 = answers[3],
+        };
+    }
+
     // public QuestionForPlayerDto NextQuestion() { }
 
     /// <summary>
