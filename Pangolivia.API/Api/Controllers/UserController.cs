@@ -21,18 +21,23 @@ namespace Pangolivia.API.Controllers
 
         // POST: api/Quiz
         [HttpPost]
-        public async Task<ActionResult<UserModel>> CreateUser([FromBody] UserModel User)
+        public async Task<ActionResult<UserModel>> CreateUser([FromBody] CreateUserDTO User)
         {
-            _logger.LogInformation($"Creating a new user. with username {User.Username}", User.Username);
-            UserModel result = await _userService.createUserAsync(User);
-            return CreatedAtAction(nameof(result.Username), User);
+            _logger.LogInformation($"Creating a new user. with username {User.username}", User.username);
+            UserModel newUser = new UserModel
+            {
+                AuthUuid = User.authUuid,
+                Username = User.username
+            };
+            UserModel result = await _userService.createUserAsync(newUser);
+            return Ok(User);
         }
 
         [HttpGet]
-        public async Task<ActionResult<CreateUserDTO>> GetAllUsers()
+        public async Task<ActionResult<UserDto>> GetAllUsers()
         {
             _logger.LogInformation("Get all Users from database");
-            List<UserModel> result = await _userService.getAllUsersAsync();
+            List<UserDto> result = await _userService.getAllUsersAsync();
             return Ok(result);
         }
         [HttpGet("ById/{id}")]
@@ -46,7 +51,7 @@ namespace Pangolivia.API.Controllers
         public async Task<ActionResult<UserModel>> GetUserByUsername(string username)
         {
             _logger.LogInformation($"Get Users with username:{username} from database");
-            UserModel result = await _userService.findUserByUsernameAsync(username);
+            var result = await _userService.findUserByUsernameAsync(username);
             if (result == null)
             {
                 return NoContent();

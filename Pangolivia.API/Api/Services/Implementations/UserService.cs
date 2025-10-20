@@ -14,7 +14,7 @@ public class UserService : IUserService
         _context = context;
     }
 
-    public Task<List<UserModel>> getAllUsersAsync()
+    public Task<List<UserDto>> getAllUsersAsync()
     {
         return _context.getAllUserModels();
     }
@@ -23,7 +23,7 @@ public class UserService : IUserService
     {
         return _context.getUserModelById(id);
     }
-    public Task<UserModel?> findUserByUsernameAsync(string username)
+    public Task<UserDto?> findUserByUsernameAsync(string username)
     {
         return _context.getUserModelByUsername(username);
     }

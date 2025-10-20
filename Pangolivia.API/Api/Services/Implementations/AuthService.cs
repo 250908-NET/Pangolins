@@ -22,7 +22,7 @@ namespace Pangolivia.API.Services
         public async Task<UserModel> RegisterAsync(UserRegisterDto userRegisterDto)
         {
             var existingUser = await _userRepository.getUserModelByUsername(userRegisterDto.Username);
-           
+
 
             if (existingUser != null)
             {
@@ -62,7 +62,7 @@ namespace Pangolivia.API.Services
             };
         }
 
-        private string GenerateJwtToken(UserModel user)
+        private string GenerateJwtToken(UserDto user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
