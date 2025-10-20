@@ -1,3 +1,5 @@
+namespace Pangolivia.API.DTOs;
+
 public class PlayerGameRecordDto
 {
     public int? Id { get; init; }
