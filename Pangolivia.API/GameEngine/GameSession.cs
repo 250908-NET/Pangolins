@@ -6,7 +6,6 @@ namespace Pangolivia.API.GameEngine;
 
 public class GameSession
 {
-    // immutable after construction
     public int Id { get; }
     public string Name { get; }
     public int HostUserId { get; }
@@ -14,7 +13,7 @@ public class GameSession
 
     private int CurrentQuestionIndex = -1;
 
-    public bool HasEnded { get; private set; } = false;
+    private GameStatus Status { get; set; } = GameStatus.Pending;
 
     private readonly ConcurrentDictionary<int, Player> Players;
 
@@ -65,7 +64,7 @@ public class GameSession
     /// </summary>
     public bool HasNextQuestion()
     {
-        if (HasEnded) return false;
+        if (Status == GameStatus.Ended) return false;
 
         ICollection<QuestionModel> questions = Quiz.Questions;
         if (questions == null) return false;
@@ -95,8 +94,58 @@ public class GameSession
         player.AnswerToCurrentQuestion = answer;
     }
 
-    // TODO: Implement EndQuestionRound
-    // public QuestionScoresDto EndQuestionRound() { }
+    /// <summary>
+    /// Returns the correct answer and the score increments for this question round (not the total
+    /// score) for each player. Answers for this round are no longer accepted after this method is
+    /// called.
+    /// </summary>
+    ///
+    /// <returns>A QuestionScoresDto describing the correct answer and players' score increments
+    /// (not total scores).</returns>
+    public QuestionScoresDto EndQuestionRound()
+    {
+        if (Status != GameStatus.ActiveQuestion)
+        {
+            throw new InvalidOperationException("Cannot end question round when there is no active question.");
+        }
+
+        Status = GameStatus.Pending;
+
+        ICollection<QuestionModel> questions = Quiz.Questions;
+
+        QuestionModel currentQuestion = questions.ElementAt(CurrentQuestionIndex);
+        string correctAnswer = currentQuestion.CorrectAnswer;
+
+        var playerScores = new List<PlayerQuestionScoresDto>();
+
+        foreach (Player player in Players.Values)
+        {
+            int scoreIncrement = 0;
+            if (player.AnswerToCurrentQuestion != null &&
+                player.AnswerToCurrentQuestion.Equals(correctAnswer, StringComparison.OrdinalIgnoreCase))
+            {
+                // TODO: Factor time into calculating the score increment for a correct answer.
+                scoreIncrement = 1;
+                player.AddPoints(scoreIncrement);
+            }
+
+            playerScores.Add(new PlayerQuestionScoresDto
+            {
+                UserId = player.UserId,
+                Username = player.Username,
+                Score = scoreIncrement,
+            });
+
+            player.ResetAnswer();
+        }
+
+        return new QuestionScoresDto
+        {
+            Question = currentQuestion.QuestionText,
+            Answer = correctAnswer,
+            PlayerScores = playerScores,
+        };
+    }
 
     /// <summary>
     /// End the game and return the final scores. If the game is already ended,
@@ -106,7 +155,7 @@ public class GameSession
     /// <returns>A GameRecordDto for the completed game.</returns>
     public GameRecordDto EndGameAndGetFinalGameRecord()
     {
-        HasEnded = true;
+        Status = GameStatus.Ended;
 
         if (Players == null || Players.IsEmpty)
             throw new InvalidOperationException("Cannot end game with no players.");
@@ -127,4 +176,11 @@ public class GameSession
 
         return gameRecordDto;
     }
+}
+
+enum GameStatus
+{
+    Pending,
+    ActiveQuestion,
+    Ended,
 }
