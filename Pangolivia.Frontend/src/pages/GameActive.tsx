@@ -285,7 +285,7 @@ export default function GameActivePage() {
   }
 
   return (
-    <section className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-16 dark:bg-transparent">
+    <section className="flex min-h-screen items-center justify-center px-4 py-16">
       <div className="w-full max-w-2xl">
         <Card>
           <CardHeader>

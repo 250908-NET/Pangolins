@@ -4,20 +4,65 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { LogIn, AlertCircle } from 'lucide-react'
+import { LogIn, AlertCircle, Loader2 } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { quizService } from '@/services/quizService'
 
 export default function JoinGamePage() {
   const navigate = useNavigate()
-  const [roomCode, setRoomCode] = useState('')
+  const [quizId, setQuizId] = useState('')
   const [playerName, setPlayerName] = useState('')
   const [error, setError] = useState('')
 
-  const handleRoomCodeChange = (value: string) => {
-    // Only allow numbers and limit to 6 digits
-    const numericValue = value.replace(/\D/g, '').slice(0, 6)
-    setRoomCode(numericValue)
+  const handleQuizIdChange = (value: string) => {
+    // Only allow numbers
+    const numericValue = value.replace(/\D/g, '')
+    setQuizId(numericValue)
     setError('')
   }
+
+  // Mutation to validate quiz and join game
+  const joinGameMutation = useMutation({
+    mutationFn: async ({ quizId, playerName }: { quizId: number; playerName: string }) => {
+      // Verify quiz exists
+      const quiz = await quizService.getQuizById(quizId)
+      return { quiz, quizId, playerName }
+    },
+    onSuccess: ({ quizId, playerName }) => {
+      // Create player ID and store player info
+      const playerId = crypto.randomUUID()
+      const playerData = {
+        id: playerId,
+        name: playerName,
+        quizId: quizId,
+        isHost: false,
+        joinedAt: new Date().toISOString()
+      }
+
+      // Store current player data
+      localStorage.setItem('currentPlayer', JSON.stringify(playerData))
+
+      // Add player to the quiz's player list
+      const existingPlayers = JSON.parse(
+        localStorage.getItem(`players_${quizId}`) || '[]'
+      )
+      const updatedPlayers = [...existingPlayers, playerData]
+      localStorage.setItem(`players_${quizId}`, JSON.stringify(updatedPlayers))
+
+      // Redirect to game lobby
+      navigate(`/game-lobby?quiz=${quizId}`)
+    },
+    onError: (err: any) => {
+      console.error('Error joining game:', err)
+      if (err.response?.status === 404) {
+        setError('Quiz not found. Please check the Quiz ID.')
+      } else if (err.message) {
+        setError(err.message)
+      } else {
+        setError('Failed to join game. Please try again.')
+      }
+    },
+  })
 
   const handleJoinGame = () => {
     if (!playerName.trim()) {
@@ -25,39 +70,17 @@ export default function JoinGamePage() {
       return
     }
 
-    if (roomCode.length !== 6) {
-      setError('Room code must be 6 digits')
+    if (!quizId) {
+      setError('Please enter a quiz ID')
       return
     }
 
-    // Retrieve game from localStorage
-    const allGames = JSON.parse(localStorage.getItem('allGames') || '{}')
-    const game = allGames[roomCode]
-
-    if (!game) {
-      setError('Game not found. Please check the room code.')
-      return
-    }
-
-    // Create player ID and store player info
-    const playerId = crypto.randomUUID()
-    const playerData = {
-      id: playerId,
-      name: playerName,
-      roomCode: roomCode,
-      isHost: false,
-      joinedAt: new Date().toISOString()
-    }
-
-    // Store current player data
-    localStorage.setItem('currentPlayer', JSON.stringify(playerData))
-
-    // Redirect to game lobby
-    navigate(`/game-lobby?room=${roomCode}`)
+    setError('')
+    joinGameMutation.mutate({ quizId: parseInt(quizId), playerName })
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && playerName.trim() && roomCode.length === 6) {
+    if (e.key === 'Enter' && playerName.trim() && quizId && !joinGameMutation.isPending) {
       handleJoinGame()
     }
   }
@@ -69,7 +92,7 @@ export default function JoinGamePage() {
           <CardHeader className="text-center">
             <CardTitle className="text-3xl">Join Game</CardTitle>
             <CardDescription>
-              Enter your name and the 6-digit room code
+              Enter your name and the Quiz ID to join
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -88,22 +111,20 @@ export default function JoinGamePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="roomCode" className="text-base">
-                Room Code
+              <Label htmlFor="quizId" className="text-base">
+                Quiz ID
               </Label>
               <Input
-                id="roomCode"
+                id="quizId"
                 type="text"
                 inputMode="numeric"
-                placeholder="000000"
-                value={roomCode}
-                onChange={(e) => handleRoomCodeChange(e.target.value)}
+                placeholder="Enter Quiz ID..."
+                value={quizId}
+                onChange={(e) => handleQuizIdChange(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="text-center text-2xl font-bold tracking-widest"
-                maxLength={6}
               />
               <p className="text-muted-foreground text-xs">
-                {roomCode.length}/6 digits
+                Ask the host for the Quiz ID
               </p>
             </div>
 
@@ -116,12 +137,21 @@ export default function JoinGamePage() {
 
             <Button
               onClick={handleJoinGame}
-              disabled={!playerName.trim() || roomCode.length !== 6}
+              disabled={!playerName.trim() || !quizId || joinGameMutation.isPending}
               className="w-full"
               size="lg"
             >
-              <LogIn className="mr-2 h-5 w-5" />
-              Join Game
+              {joinGameMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Joining...
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-5 w-5" />
+                  Join Game
+                </>
+              )}
             </Button>
 
             <div className="text-center">

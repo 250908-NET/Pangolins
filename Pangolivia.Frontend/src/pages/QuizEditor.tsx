@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -38,6 +38,10 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
   const isEditMode = mode === "edit";
   const quizId = isEditMode ? id : null;
 
+  // Counter for generating temporary negative IDs for new questions
+  // Negative IDs won't conflict with positive API-assigned IDs
+  const nextQuestionIdRef = useRef(-1);
+
   // Fetch existing quiz if editing
   const { data: existingQuiz, isLoading: loadingQuiz } = useQuiz(
     quizId ? parseInt(quizId) : 0
@@ -59,6 +63,8 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
   useEffect(() => {
     if (isEditMode && existingQuiz) {
       setDraftQuiz(existingQuiz);
+      // Reset counter when loading existing quiz
+      nextQuestionIdRef.current = -1;
     }
   }, [isEditMode, existingQuiz]);
 
@@ -72,6 +78,13 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
     setDraftQuiz((prev) => updater(prev));
   };
 
+  // Helper: Extract answer index from answerId string
+  // answerId format: "questionId-answerIndex" (e.g., "-1-0" or "5-2")
+  // Use .pop() to get last element, which handles negative IDs correctly
+  const getAnswerIndex = (answerId: string): number => {
+    return parseInt(answerId.split("-").pop()!);
+  };
+
   // Actions: Simple state updates
   const actions = {
     setGameName: (value: string) => {
@@ -83,51 +96,52 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
     },
 
     addQuestion: () => {
-      updateQuizState((current) => ({
-        ...current,
-        questions: [
-          ...current.questions,
-          {
-            id: Date.now(),
-            questionText: "",
-            options: [],
-            correctOptionIndex: 0,
-          },
-        ],
-      }));
+      updateQuizState((current) => {
+        // Use negative IDs for new questions (won't conflict with positive API IDs)
+        const newQuestion: QuestionDto = {
+          id: nextQuestionIdRef.current--, // -1, -2, -3, etc.
+          questionText: "",
+          options: [],
+          correctOptionIndex: 0,
+        };
+        return {
+          ...current,
+          questions: [...current.questions, newQuestion],
+        };
+      });
     },
 
     deleteQuestion: (questionId: string) => {
-      const id = parseInt(questionId);
+      const qId = parseInt(questionId);
       updateQuizState((current) => ({
         ...current,
-        questions: current.questions.filter((q) => q.id !== id),
+        questions: current.questions.filter((q) => q.id !== qId),
       }));
     },
 
     updateQuestionText: (questionId: string, text: string) => {
-      const id = parseInt(questionId);
+      const qId = parseInt(questionId);
       updateQuizState((current) => ({
         ...current,
         questions: current.questions.map((q) =>
-          q.id === id ? { ...q, questionText: text } : q
+          q.id === qId ? { ...q, questionText: text } : q
         ),
       }));
     },
 
     addAnswer: (questionId: string) => {
-      const id = parseInt(questionId);
+      const qId = parseInt(questionId);
       updateQuizState((current) => ({
         ...current,
         questions: current.questions.map((q) =>
-          q.id === id ? { ...q, options: [...q.options, ""] } : q
+          q.id === qId ? { ...q, options: [...q.options, ""] } : q
         ),
       }));
     },
 
     deleteAnswer: (questionId: string, answerId: string) => {
       const qId = parseInt(questionId);
-      const answerIndex = parseInt(answerId.split("-")[1]);
+      const answerIndex = getAnswerIndex(answerId);
 
       updateQuizState((current) => ({
         ...current,
@@ -150,7 +164,7 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
 
     updateAnswerText: (questionId: string, answerId: string, text: string) => {
       const qId = parseInt(questionId);
-      const answerIndex = parseInt(answerId.split("-")[1]);
+      const answerIndex = getAnswerIndex(answerId);
 
       updateQuizState((current) => ({
         ...current,
@@ -169,7 +183,7 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
 
     toggleCorrectAnswer: (questionId: string, answerId: string) => {
       const qId = parseInt(questionId);
-      const answerIndex = parseInt(answerId.split("-")[1]);
+      const answerIndex = getAnswerIndex(answerId);
 
       updateQuizState((current) => ({
         ...current,
@@ -240,20 +254,27 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
 
     try {
       if (isEditMode && existingQuiz) {
-        console.log("Updating quiz:", {
-          quizName: currentQuiz.quizName,
-          questions: currentQuiz.questions,
-        });
+        // Convert negative IDs (new questions) to 0 for API
+        // Keep positive IDs (existing questions) as-is
+        const questionsForApi = currentQuiz.questions.map((q) => ({
+          ...q,
+          id: q.id < 0 ? 0 : q.id, // Negative → 0, Positive → keep
+        }));
+
+        // console.log("Updating quiz - BEFORE:", currentQuiz.questions);
+        // console.log("Updating quiz - AFTER:", questionsForApi);
+
         await updateQuizMutation.mutateAsync({
           quizId: existingQuiz.id,
           quiz: {
             quizName: currentQuiz.quizName,
-            questions: currentQuiz.questions,
+            questions: questionsForApi,
           },
           currentUserId: user?.id ?? 0,
         });
         toast.success("Quiz updated successfully!");
-        navigate("/edit-game");
+        // Navigate after a brief delay to ensure cache invalidation completes
+        setTimeout(() => navigate("/edit-game"), 150);
       } else {
         // For new quiz, set question IDs to 0 (API will assign real IDs)
         const questionsForApi = currentQuiz.questions.map((q) => ({
@@ -261,10 +282,10 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
           id: 0, // API assigns IDs on creation
         }));
 
-        console.log("Creating quiz:", {
-          quizName: currentQuiz.quizName,
-          questions: questionsForApi,
-        });
+        // console.log("Creating quiz:", {
+        //   quizName: currentQuiz.quizName,
+        //   questions: questionsForApi,
+        // });
         const newQuiz = await createQuizMutation.mutateAsync({
           quiz: { quizName: currentQuiz.quizName, questions: questionsForApi },
           creatorUserId: user?.id ?? 0,
@@ -292,9 +313,28 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
         `Failed to ${isEditMode ? "update" : "create"} quiz:`,
         error
       );
-      console.error("Error details:", error.response?.data || error.message);
-      const errorMessage =
-        error.response?.data?.message || error.message || "Please try again.";
+      console.error("Error status:", error.response?.status);
+      console.error("Error data:", error.response?.data);
+      console.error("Error message:", error.message);
+
+      // Extract meaningful error message
+      let errorMessage = "Please try again.";
+      if (error.response?.data) {
+        // Handle different error response formats
+        if (typeof error.response.data === "string") {
+          errorMessage = error.response.data;
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.data.title) {
+          errorMessage = error.response.data.title;
+        } else if (error.response.data.errors) {
+          // Validation errors object
+          errorMessage = JSON.stringify(error.response.data.errors);
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast.error(
         `Failed to ${isEditMode ? "update" : "create"} quiz: ${errorMessage}`
       );
