@@ -14,17 +14,32 @@ using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
-DotNetEnv.Env.Load();
-builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-    .AddEnvironmentVariables(); // Reads both system and Docker environment variables
 
-    // Print connection string (try ConnectionStrings:Connection, then "Connection" key, then environment variable)
-    var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Connection")
-        ?? "N/A";
+if (builder.Environment.EnvironmentName == "Development")
+{
+    DotNetEnv.Env.Load();
+}
+// builder.Configuration
+//     .SetBasePath(Directory.GetCurrentDirectory())
+//     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+//     .AddEnvironmentVariables(); // Reads both system and Docker environment variables
 
-    Console.WriteLine($"Connection String: {connectionString}");
+// Print connection string (try ConnectionStrings:Connection, then "Connection" key, then environment variable)
+var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Connection") ?? "N/A";
+Console.WriteLine($"Connection String: {connectionString}");
+
+// Print all environment variables containing "Connection" (case-insensitive)
+var envVars = Environment.GetEnvironmentVariables();
+Console.WriteLine("Environment variables containing 'Connection':");
+foreach (System.Collections.DictionaryEntry entry in envVars)
+{
+    var key = entry.Key?.ToString() ?? "";
+    if (key.IndexOf("Connection", StringComparison.OrdinalIgnoreCase) >= 0)
+    {
+        var value = entry.Value?.ToString() ?? "";
+        Console.WriteLine($"{key} = {value}");
+    }
+}
 
 // Register DbContext with the read connection string
 builder.Services.AddDbContext<PangoliviaDbContext>(options =>
@@ -33,7 +48,7 @@ builder.Services.AddDbContext<PangoliviaDbContext>(options =>
     if (connectionString == "")
     {
         Console.WriteLine("Connection string not found. Exiting program.");
-        Environment.Exit(1);
+        // Environment.Exit(1);
     }
     options.UseSqlServer(connectionString);
 });
