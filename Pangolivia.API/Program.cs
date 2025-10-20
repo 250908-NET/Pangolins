@@ -21,7 +21,7 @@ builder.Configuration
     .AddEnvironmentVariables(); // Reads both system and Docker environment variables
 
     // Print connection string (try ConnectionStrings:Connection, then "Connection" key, then environment variable)
-    var connectionString = Environment.GetEnvironmentVariable("Connection")
+    var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Connection")
         ?? "N/A";
 
     Console.WriteLine($"Connection String: {connectionString}");
