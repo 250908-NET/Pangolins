@@ -52,8 +52,9 @@ export const useCreateQuiz = () => {
   return useMutation({
     mutationFn: ({ quiz, creatorUserId }: { quiz: CreateQuizRequestDto; creatorUserId: number }) =>
       quizService.createQuiz(quiz, creatorUserId),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: quizKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: quizKeys.byUser(variables.creatorUserId) });
     },
   });
 };
@@ -74,6 +75,7 @@ export const useUpdateQuiz = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: quizKeys.detail(variables.quizId) });
       queryClient.invalidateQueries({ queryKey: quizKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: quizKeys.byUser(variables.currentUserId) });
     },
   });
 };
@@ -85,7 +87,8 @@ export const useDeleteQuiz = () => {
     mutationFn: ({ id, currentUserId }: { id: number; currentUserId: number }) =>
       quizService.deleteQuiz(id, currentUserId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: quizKeys.lists() });
+      // Invalidate all quiz-related queries to ensure UI updates
+      queryClient.invalidateQueries({ queryKey: quizKeys.all });
     },
   });
 };
