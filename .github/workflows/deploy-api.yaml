@@ -62,7 +62,8 @@ jobs:
         with:
           push: true
           tags: ghcr.io/pangolivia-api:latest
-          file: ./Pangolivia.API/Dockerfile
+          # file: ./Pangolivia.API/Dockerfile
+          context: ./Pangolivia.API
 
   deploy:
     permissions:
