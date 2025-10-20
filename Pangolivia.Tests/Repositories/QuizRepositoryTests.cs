@@ -6,7 +6,7 @@
 
      public QuizRepositoryTests()
      {
-         _repo = new QuizRepository(_context, null!);
+         _repo = new QuizRepository(_context);
      }
 
      //Helper method to seed user

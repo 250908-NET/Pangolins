@@ -1,14 +1,20 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { useNavigate } from 'react-router-dom'
-import { User, Trophy, Calendar } from 'lucide-react'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { User, Trophy, Calendar } from "lucide-react";
 
 export default function ProfilePage() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   return (
-    <section className="min-h-screen px-4 py-16">
-      <div className="mx-auto max-w-4xl">
+    <section className="min-h-[calc(100vh-5rem)] px-4 py-2 flex items-center justify-center">
+      <div className="w-full max-w-3xl">
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold">Profile</h1>
           <p className="text-muted-foreground">
@@ -31,7 +37,8 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground text-sm">
-                Profile functionality coming soon. Track your games, scores, and achievements.
+                Profile functionality coming soon. Track your games, scores, and
+                achievements.
               </p>
             </CardContent>
           </Card>
@@ -50,7 +57,8 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground text-sm">
-                Earn badges and trophies by playing games and achieving high scores.
+                Earn badges and trophies by playing games and achieving high
+                scores.
               </p>
             </CardContent>
           </Card>
@@ -71,7 +79,7 @@ export default function ProfilePage() {
               <p className="text-muted-foreground mb-4 text-sm">
                 View your past games, scores, and performance over time.
               </p>
-              <Button onClick={() => navigate('/start-game')}>
+              <Button onClick={() => navigate("/start-game")}>
                 Start a New Game
               </Button>
             </CardContent>
@@ -79,5 +87,5 @@ export default function ProfilePage() {
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
-using Microsoft.VisualBasic;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
@@ -8,10 +6,10 @@ using Pangolivia.API.Services;
 public class UserService : IUserService
 {
 
-    private UserRepository _context;
+    private IUserRepository _context;
 
 
-    public UserService(UserRepository context)
+    public UserService(IUserRepository context)
     {
         _context = context;
     }
@@ -25,15 +23,15 @@ public class UserService : IUserService
     {
         return _context.getUserModelById(id);
     }
-    public Task<UserModel> findUserByUsernameAsync(string username)
+    public Task<UserModel?> findUserByUsernameAsync(string username)
     {
         return _context.getUserModelByUsername(username);
     }
 
-    public Task<UserModel> createUserAsync(CreateUserDTO userDTO)
-    {
-        return _context.createUserModel(userDTO);
-    }
+    // public Task<UserModel> createUserAsync(CreateUserDTO userDTO)
+    // {
+    //     return _context.createUserModel(userDTO);
+    // }
 
     public Task<UserModel> updateUserAsync(int userId, object Obj)
     {

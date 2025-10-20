@@ -1,12 +1,10 @@
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
-using Pangolivia.Repositories.Interfaces;
-
 
 namespace Pangolivia.API.Services
 {
-    public class PlayerGameRecordService
+    public class PlayerGameRecordService: IPlayerGameRecordService
     {
         private readonly IPlayerGameRecordRepository _playerGameRecordRepository;
         private readonly IGameRecordRepository _gameRecordRepository;

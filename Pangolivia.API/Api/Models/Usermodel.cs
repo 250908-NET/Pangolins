@@ -17,6 +17,7 @@ public class UserModel
     [Required]
     [Column("username")]
     public string Username { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
 
     public ICollection<PlayerGameRecordModel> PlayerGameRecords { get; set; } = new List<PlayerGameRecordModel>();
     public ICollection<GameRecordModel> HostedGameRecords { get; set; } = new List<GameRecordModel>();
