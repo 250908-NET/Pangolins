@@ -99,4 +99,74 @@ public class GameSessionTests
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => session.RegisterPlayer(user, connectionId: "conn-2"));
     }
+
+    [Fact]
+    public void AdvanceQuestion_ThrowsWhenNoQuestions()
+    {
+        // Arrange
+        var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => session.AdvanceQuestion());
+    }
+
+    [Fact]
+    public void AdvanceQuestion_ReturnsQuestionWithShuffledAnswers()
+    {
+        // Arrange
+        var question = new QuestionModel
+        {
+            Id = 1,
+            QuizId = 1,
+            QuestionText = "Capital of France?",
+            CorrectAnswer = "Paris",
+            Answer2 = "London",
+            Answer3 = "Rome",
+            Answer4 = "Berlin",
+        };
+
+        var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+
+        // Precondition
+        Assert.True(session.HasNextQuestion());
+
+        // Act
+        var dto = session.AdvanceQuestion();
+
+        // Assert
+        Assert.True(session.HasGameStarted());
+        Assert.Equal(question.QuestionText, dto.QuestionText);
+        var answers = new[] { dto.Answer1, dto.Answer2, dto.Answer3, dto.Answer4 };
+        // All four original answers must be present after shuffle
+        Assert.Contains(question.CorrectAnswer, answers);
+        Assert.Contains(question.Answer2, answers);
+        Assert.Contains(question.Answer3, answers);
+        Assert.Contains(question.Answer4, answers);
+    }
+
+    [Fact]
+    public void AdvanceQuestion_ThrowsWhenActiveQuestion()
+    {
+        // Arrange: single question quiz
+        var question = new QuestionModel
+        {
+            Id = 2,
+            QuizId = 1,
+            QuestionText = "1+1?",
+            CorrectAnswer = "2",
+            Answer2 = "1",
+            Answer3 = "3",
+            Answer4 = "4",
+        };
+        var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+
+        // Act: advance to start the active question
+        var dto = session.AdvanceQuestion();
+
+        // Attempting to advance again while active should throw
+        Assert.Throws<InvalidOperationException>(() => session.AdvanceQuestion());
+    }
 }
