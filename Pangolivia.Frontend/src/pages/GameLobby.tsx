@@ -57,10 +57,7 @@ export default function GameLobbyPage() {
       !storedPlayers.find((p: Player) => p.id === playerData.id)
     ) {
       storedPlayers.push(playerData);
-      localStorage.setItem(
-        `players_${quizId}`,
-        JSON.stringify(storedPlayers)
-      );
+      localStorage.setItem(`players_${quizId}`, JSON.stringify(storedPlayers));
     }
 
     setPlayers(storedPlayers);
@@ -90,10 +87,7 @@ export default function GameLobbyPage() {
     if (quizId && currentPlayer) {
       // Remove player from players list
       const updatedPlayers = players.filter((p) => p.id !== currentPlayer.id);
-      localStorage.setItem(
-        `players_${quizId}`,
-        JSON.stringify(updatedPlayers)
-      );
+      localStorage.setItem(`players_${quizId}`, JSON.stringify(updatedPlayers));
       localStorage.removeItem("currentPlayer");
     }
     navigate("/join-game");
@@ -202,9 +196,7 @@ export default function GameLobbyPage() {
             {/* Game Info */}
             <div className="rounded-lg border bg-zinc-50 p-4 dark:bg-zinc-900">
               <p className="text-muted-foreground text-sm">
-                <span className="font-semibold">
-                  {quiz.questions.length}
-                </span>{" "}
+                <span className="font-semibold">{quiz.questions.length}</span>{" "}
                 questions ready
               </p>
             </div>

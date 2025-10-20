@@ -191,7 +191,7 @@ export default function GameActivePage() {
 
   if (loadingQuiz) {
     return (
-      <section className="flex min-h-screen items-center justify-center px-4 py-16">
+      <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4">
         <div className="flex items-center gap-2">
           <Loader2 className="h-8 w-8 animate-spin" />
           <span className="text-lg">Loading quiz...</span>
@@ -210,7 +210,7 @@ export default function GameActivePage() {
 
   if (state.gameFinished) {
     return (
-      <section className="flex min-h-screen items-center justify-center px-4 py-16">
+      <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4 py-2">
         <div className="w-full max-w-2xl">
           <Card>
             <CardHeader className="text-center">
@@ -285,7 +285,7 @@ export default function GameActivePage() {
   }
 
   return (
-    <section className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-16 dark:bg-transparent">
+    <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4 py-2">
       <div className="w-full max-w-2xl">
         <Card>
           <CardHeader>

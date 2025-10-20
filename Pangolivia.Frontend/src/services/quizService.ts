@@ -1,11 +1,12 @@
-import { api } from '../lib/api';
+import { api } from "../lib/api";
 import type {
   QuizSummaryDto,
   QuizDetailDto,
   CreateQuizRequestDto,
   UpdateQuizRequestDto,
-} from '../types/api';
-import { MOCK_QUIZZES, MOCK_QUIZ_SUMMARIES } from '../lib/mockData';
+  GenerateQuizAiRequestDto,
+} from "../types/api";
+import { MOCK_QUIZZES, MOCK_QUIZ_SUMMARIES } from "../lib/mockData";
 
 // Toggle between mock and real API
 const USE_MOCK = false;
@@ -16,7 +17,7 @@ export const quizService = {
     if (USE_MOCK) {
       return Promise.resolve(MOCK_QUIZ_SUMMARIES);
     }
-    const response = await api.get<QuizSummaryDto[]>('/Quiz');
+    const response = await api.get<QuizSummaryDto[]>("/Quiz");
     return response.data;
   },
 
@@ -24,7 +25,7 @@ export const quizService = {
   getQuizById: async (quizId: number): Promise<QuizDetailDto> => {
     if (USE_MOCK) {
       const quiz = MOCK_QUIZZES.find((q) => q.id === quizId);
-      if (!quiz) throw new Error('Quiz not found');
+      if (!quiz) throw new Error("Quiz not found");
       return Promise.resolve(quiz);
     }
     const response = await api.get<QuizDetailDto>(`/Quiz/${quizId}`);
@@ -35,7 +36,8 @@ export const quizService = {
   getQuizzesByUserId: async (userId: number): Promise<QuizSummaryDto[]> => {
     if (USE_MOCK) {
       const userQuizzes = MOCK_QUIZ_SUMMARIES.filter(
-        (q) => MOCK_QUIZZES.find((mq) => mq.id === q.id)?.createdByUserId === userId
+        (q) =>
+          MOCK_QUIZZES.find((mq) => mq.id === q.id)?.createdByUserId === userId
       );
       return Promise.resolve(userQuizzes);
     }
@@ -51,7 +53,7 @@ export const quizService = {
       );
       return Promise.resolve(filtered);
     }
-    const response = await api.get<QuizSummaryDto[]>('/Quiz/search', {
+    const response = await api.get<QuizSummaryDto[]>("/Quiz/search", {
       params: { query },
     });
     return response.data;
@@ -67,13 +69,13 @@ export const quizService = {
         id: MOCK_QUIZZES.length + 1,
         quizName: quiz.quizName,
         createdByUserId: creatorUserId,
-        creatorUsername: 'mock_user',
+        creatorUsername: "mock_user",
         questions: quiz.questions,
       };
       MOCK_QUIZZES.push(newQuiz);
       return Promise.resolve(newQuiz);
     }
-    const response = await api.post<QuizDetailDto>('/Quiz', quiz, {
+    const response = await api.post<QuizDetailDto>("/Quiz", quiz, {
       params: { creatorUserId },
     });
     return response.data;
@@ -87,7 +89,7 @@ export const quizService = {
   ): Promise<QuizDetailDto> => {
     if (USE_MOCK) {
       const index = MOCK_QUIZZES.findIndex((q) => q.id === quizId);
-      if (index === -1) throw new Error('Quiz not found');
+      if (index === -1) throw new Error("Quiz not found");
       const updated = {
         ...MOCK_QUIZZES[index],
         quizName: quiz.quizName,
@@ -114,5 +116,13 @@ export const quizService = {
     await api.delete(`/Quiz/${id}`, {
       params: { currentUserId },
     });
+  },
+
+  // POST: api/Quiz/ai/generate
+  generateAiQuestions: async (
+    payload: GenerateQuizAiRequestDto
+  ): Promise<QuizDetailDto["questions"]> => {
+    const response = await api.post(`/Quiz/ai/generate`, payload);
+    return response.data as QuizDetailDto["questions"];
   },
 };
