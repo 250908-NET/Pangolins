@@ -7,7 +7,7 @@ on:
     branches: [ "*" ]
 
 jobs:
-  build:
+  backend:
     runs-on: ubuntu-latest
     
     # TODO: Add CICD testing for .NET
@@ -18,7 +18,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x' # or your required version
+          dotnet-version: '9.0.x' # or your required version
 
       - name: Restore dependencies
         run: dotnet restore Pangolins.sln
@@ -29,11 +29,62 @@ jobs:
       - name: Run tests
         run: dotnet test Pangolins.sln --no-build --configuration Release
 
-    # TODO: Add CICD testing for NextJS
+      - name: Install dotnet-format
+        run: dotnet tool install -g dotnet-format
 
-    # TODO: Docker image build
-      # - name: Test build NextJS Docker image
-      #   run: docker build -t test-nextjs ./frontend -f ./pangolivia.frontend/Dockerfile
+      - name: Run dotnet format check
+        run: dotnet format --verify-no-changes Pangolins.sln
 
-      # - name: Test build .NET API Docker image
-      #   run: docker build -t test-dotnet-api ./backend/app -f ./backend/app/Dockerfile
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './Pangolivia.Frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./Pangolivia.Frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./Pangolivia.Frontend
+        run: npm run lint
+
+      # Optional: Add TypeScript type checking
+      - name: Type check
+        working-directory: ./Pangolivia.Frontend
+        run: npm run typecheck
+
+  docker:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Test build Frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Pangolivia.Frontend
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+          tags: test-frontend:latest
+
+      - name: Test build .NET API Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Pangolivia.API
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+          tags: test-dotnet-api:latest
