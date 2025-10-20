@@ -42,17 +42,11 @@ export default function LoginPage() {
         <section className="flex min-h-[calc(100vh-5rem)] px-4">
             <form
                 onSubmit={handleSubmit}
-                className="bg-muted m-auto h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.125rem)] border shadow-md shadow-zinc-950/5 dark:[--color-muted:var(--color-zinc-900)]">
-                <div className="bg-card -m-px rounded-[calc(var(--radius)+.125rem)] border p-8 pb-6">
-                    <div className="text-center">
-                        <Link
-                            to="/"
-                            aria-label="go home"
-                            className="mx-auto block w-fit">
-                            <LogoIcon />
-                        </Link>
-                        <h1 className="mb-1 mt-4 text-xl font-semibold">Login to Pangolivia</h1>
-                        <p className="text-sm">Welcome back!</p>
+                className="bg-zinc-900 m-auto h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.125rem)] shadow-md shadow-zinc-950/10 border border-zinc-800">
+                <div className="bg-zinc-800 -m-px rounded-[calc(var(--radius)+.125rem)] p-8 pb-6 border border-zinc-700">
+                        <div className="text-center text-white">
+                        <h1 className="mb-1 mt-4 text-xl font-semibold text-white">Login to Pangolivia</h1>
+                        <p className="text-sm text-zinc-200">Welcome back!</p>
                     </div>
 
                     <div className="mt-6 space-y-6">
@@ -65,7 +59,7 @@ export default function LoginPage() {
                         <div className="space-y-2">
                             <Label
                                 htmlFor="username"
-                                className="block text-sm">
+                                className="block text-sm text-white">
                                 Username
                             </Label>
                             <Input
@@ -75,6 +69,8 @@ export default function LoginPage() {
                                 id="username"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
+                                className="bg-zinc-900 text-white placeholder-zinc-300 border-zinc-700 focus:border-yellow-400"
+                                placeholder="Username"
                             />
                         </div>
 
@@ -82,16 +78,17 @@ export default function LoginPage() {
                             <div className="flex items-center justify-between">
                                 <Label
                                     htmlFor="pwd"
-                                    className="text-sm">
+                                    className="text-sm text-white">
                                     Password
                                 </Label>
                                 <Button
                                     asChild
                                     variant="link"
-                                    size="sm">
+                                    size="sm"
+                                    className="text-yellow-400 hover:text-yellow-300 focus:underline">
                                     <Link
                                         to="#"
-                                        className="link intent-info variant-ghost text-sm">
+                                        className="text-yellow-400 hover:text-yellow-300 text-sm">
                                         Forgot your Password ?
                                     </Link>
                                 </Button>
@@ -103,24 +100,27 @@ export default function LoginPage() {
                                 id="pwd"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                className="bg-zinc-900 text-white placeholder-zinc-300 border-zinc-700 focus:border-yellow-400"
+                                placeholder="Password"
                             />
                         </div>
 
-                        <Button type="submit" className="w-full" disabled={loading}>
+                        <Button type="submit" className="w-full bg-yellow-400 text-black font-semibold hover:bg-yellow-500" disabled={loading}>
                             {loading ? 'Logging in...' : 'Login'}
                         </Button>
                     </div>
 
                     <div className="my-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                        <hr className="border-dashed" />
-                        <span className="text-muted-foreground text-xs">Or continue With</span>
-                        <hr className="border-dashed" />
+                        <hr className="border-dashed border-zinc-700" />
+                        <span className="text-xs text-zinc-200">Or continue with</span>
+                        <hr className="border-dashed border-zinc-700" />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                         <Button
                             type="button"
-                            variant="outline">
+                            variant="outline"
+                            className="bg-zinc-900 text-white border-zinc-600 hover:bg-zinc-800 focus:ring-2 focus:ring-yellow-400">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="0.98em"
@@ -139,11 +139,12 @@ export default function LoginPage() {
                                     fill="#eb4335"
                                     d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"></path>
                             </svg>
-                            <span>Google</span>
+                            <span className="text-white">Google</span>
                         </Button>
                         <Button
                             type="button"
-                            variant="outline">
+                            variant="outline"
+                            className="bg-zinc-900 text-white border-zinc-600 hover:bg-zinc-800 focus:ring-2 focus:ring-yellow-400">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="1em"
@@ -162,18 +163,18 @@ export default function LoginPage() {
                                     fill="#fbbc09"
                                     d="M256 256.002H134.335V134.336H256z"></path>
                             </svg>
-                            <span>Microsoft</span>
+                            <span className="text-white">Microsoft</span>
                         </Button>
                     </div>
                 </div>
 
                 <div className="p-3">
-                    <p className="text-accent-foreground text-center text-sm">
+                    <p className="text-center text-sm text-zinc-200">
                         {"Don't have an account ?"} 
                         <Button
                             asChild
                             variant="link"
-                            className="px-2">
+                            className="px-2 text-yellow-400 hover:text-yellow-300 focus:underline">
                             <Link to="/sign-up">Sign Up</Link>
                         </Button>
                     </p>

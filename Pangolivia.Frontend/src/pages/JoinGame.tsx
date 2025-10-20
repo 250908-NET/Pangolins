@@ -88,16 +88,16 @@ export default function JoinGamePage() {
   return (
     <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <Card>
+        <Card className="bg-zinc-800 border border-zinc-700">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl">Join Game</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-3xl text-white">Join Game</CardTitle>
+            <CardDescription className="text-zinc-200">
               Enter your name and the Quiz ID to join
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="playerName" className="text-base">
+              <Label htmlFor="playerName" className="text-base text-white">
                 Your Name
               </Label>
               <Input
@@ -107,11 +107,12 @@ export default function JoinGamePage() {
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
                 onKeyPress={handleKeyPress}
+                className="bg-zinc-900 text-white placeholder-zinc-300 border-zinc-700"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quizId" className="text-base">
+              <Label htmlFor="quizId" className="text-base text-white">
                 Quiz ID
               </Label>
               <Input
@@ -122,8 +123,9 @@ export default function JoinGamePage() {
                 value={quizId}
                 onChange={(e) => handleQuizIdChange(e.target.value)}
                 onKeyPress={handleKeyPress}
+                className="bg-zinc-900 text-white placeholder-zinc-300 border-zinc-700"
               />
-              <p className="text-muted-foreground text-xs">
+              <p className="text-xs text-zinc-200">
                 Ask the host for the Quiz ID
               </p>
             </div>
@@ -138,7 +140,7 @@ export default function JoinGamePage() {
             <Button
               onClick={handleJoinGame}
               disabled={!playerName.trim() || !quizId || joinGameMutation.isPending}
-              className="w-full"
+              className="w-full bg-yellow-400 text-black font-semibold hover:bg-yellow-500 focus:ring-2 focus:ring-yellow-400"
               size="lg"
             >
               {joinGameMutation.isPending ? (
@@ -155,11 +157,11 @@ export default function JoinGamePage() {
             </Button>
 
             <div className="text-center">
-              <p className="text-muted-foreground text-sm">
+              <p className="text-sm text-zinc-200">
                 {"Don't have a room code?"}{' '}
                 <Link
                   to="/create-game"
-                  className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                  className="font-semibold text-yellow-400 hover:underline"
                 >
                   Create a game
                 </Link>

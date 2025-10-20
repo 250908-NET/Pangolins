@@ -24,7 +24,7 @@ const ProtectedRoutesLayout = () => (
 
 function App() {
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
+    <div className="min-h-screen text-foreground antialiased">
       <Header />
       <main className="pt-20">
         <Routes>
