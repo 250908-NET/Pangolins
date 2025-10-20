@@ -20,6 +20,12 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables(); // Reads both system and Docker environment variables
 
+    // Print connection string (try ConnectionStrings:Connection, then "Connection" key, then environment variable)
+    var connectionString = Environment.GetEnvironmentVariable("Connection")
+        ?? "N/A";
+
+    Console.WriteLine($"Connection String: {connectionString}");
+
 // Register DbContext with the read connection string
 builder.Services.AddDbContext<PangoliviaDbContext>(options =>
 {
