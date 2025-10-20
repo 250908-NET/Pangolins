@@ -54,7 +54,7 @@ jobs:
         uses: azure/container-apps-deploy-action@v1
         with:
           resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          containerAppName: ${{ secrets.API_APP_NAME }}
+          containerAppName: ${{ vars.API_APP_NAME }}
           imageToDeploy: ${{ secrets.AZURE_CONTAINER_REGISTRY }}.azurecr.io/api:latest
           environmentVariables: |
             ConnectionStrings__Connection=${{ secrets.DB_CONNECTION_STRING }}
@@ -62,7 +62,7 @@ jobs:
       # Get API URL
       - name: Get API URL
         run: |
-          API_URL=$(az containerapp show -n ${{ secrets.API_APP_NAME }} -g ${{ secrets.AZURE_RESOURCE_GROUP }} --query properties.configuration.ingress.fqdn -o tsv)
+          API_URL=$(az containerapp show -n ${{ vars.API_APP_NAME }} -g ${{ secrets.AZURE_RESOURCE_GROUP }} --query properties.configuration.ingress.fqdn -o tsv)
           echo "VITE_API_URL=https://$API_URL/api" >> "$GITHUB_ENV"
 
       # Build and push frontend with API URL
@@ -82,5 +82,5 @@ jobs:
         uses: azure/container-apps-deploy-action@v1
         with:
           resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          containerAppName: ${{ secrets.FRONTEND_APP_NAME }}
+          containerAppName: ${{ vars.FRONTEND_APP_NAME }}
           imageToDeploy: ${{ secrets.AZURE_CONTAINER_REGISTRY }}.azurecr.io/frontend:latest
