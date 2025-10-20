@@ -8,6 +8,8 @@ using Pangolivia.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Pangolivia.API.Options;
+using System;
 
 DotNetEnv.Env.Load();
 
@@ -37,6 +39,7 @@ builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IGameRecordService, GameRecordService>();
 builder.Services.AddScoped<IPlayerGameRecordService, PlayerGameRecordService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAiQuizService, AiQuizService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
@@ -72,6 +75,20 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// OpenAI configuration & services
+builder.Services.Configure<OpenAiOptions>(builder.Configuration.GetSection("OpenAI"));
+builder.Services.PostConfigure<OpenAiOptions>(o =>
+{
+    if (string.IsNullOrWhiteSpace(o.ApiKey))
+    {
+        o.ApiKey = builder.Configuration["OPENAI_API_KEY"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty;
+    }
+});
+builder.Services.AddHttpClient("OpenAI", c =>
+{
+    c.BaseAddress = new Uri("https://api.openai.com/");
+});
 
 var app = builder.Build();
 

@@ -55,3 +55,9 @@ export interface GameRecordDto {
   quizName?: string;
   datetimeCompleted: string;
 }
+
+export interface GenerateQuizAiRequestDto {
+  topic: string;
+  numberOfQuestions: number;
+  difficulty: string;
+}

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { quizService } from '../services/quizService';
-import type { CreateQuizRequestDto, UpdateQuizRequestDto } from '../types/api';
+import type { CreateQuizRequestDto, UpdateQuizRequestDto, GenerateQuizAiRequestDto } from '../types/api';
 
 // Query keys
 export const quizKeys = {
@@ -18,6 +18,13 @@ export const useQuizzes = () => {
   return useQuery({
     queryKey: quizKeys.lists(),
     queryFn: () => quizService.getAllQuizzes(),
+  });
+};
+
+export const useGenerateAiQuestions = () => {
+  return useMutation({
+    mutationFn: (payload: GenerateQuizAiRequestDto) =>
+      quizService.generateAiQuestions(payload),
   });
 };
 
