@@ -208,9 +208,6 @@ public class GameSession
     {
         Status = GameStatus.Ended;
 
-        if (Players == null || Players.IsEmpty)
-            throw new InvalidOperationException("Cannot end game with no players.");
-
         var gameRecordDto = new GameRecordDto
         {
             QuizId = Quiz.Id,
