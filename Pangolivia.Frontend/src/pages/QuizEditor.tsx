@@ -58,7 +58,7 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
 
   // AI generation controls
   const [aiTopic, setAiTopic] = useState<string>("");
-  const [aiCount, setAiCount] = useState<number>();
+  const [aiCount, setAiCount] = useState<number>(0);
   const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium"
   );
