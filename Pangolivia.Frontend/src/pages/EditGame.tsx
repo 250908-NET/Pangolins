@@ -68,7 +68,7 @@ export default function EditGamePage() {
 
   if (loadingQuizzes) {
     return (
-      <section className="min-h-[calc(100vh-5rem)] px-4 flex items-center justify-center">
+      <section className="min-h-[calc(100vh-5rem)] px-4 py-2 flex items-center justify-center">
         <div className="w-full max-w-3xl">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
@@ -77,7 +77,7 @@ export default function EditGamePage() {
   }
 
   return (
-    <section className="min-h-[calc(100vh-5rem)] px-4 flex items-center justify-center">
+    <section className="min-h-[calc(100vh-5rem)] px-4 py-2 flex items-center justify-center">
       <div className="w-full max-w-3xl">
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold">Edit Games</h1>

@@ -41,7 +41,7 @@ export default function StartGamePage() {
   }
 
   return (
-    <section className="min-h-[calc(100vh-5rem)] px-4 flex justify-center items-center">
+    <section className="min-h-[calc(100vh-5rem)] px-4 py-2 flex justify-center items-center">
       <div className="w-full max-w-3xl">
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold">Start a Game</h1>

@@ -359,7 +359,7 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
   const localQuestions = toLocalQuestions(currentQuiz.questions);
 
   return (
-    <section className="flex justify-center items-center min-h-screen px-4 ">
+    <section className="flex justify-center items-center min-h-[calc(100vh-5rem)] px-4 py-2">
       <div className="w-full max-w-3xl">
         <QuizHeader
           isEditMode={isEditMode}

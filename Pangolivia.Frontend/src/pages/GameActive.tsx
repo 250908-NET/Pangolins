@@ -210,7 +210,7 @@ export default function GameActivePage() {
 
   if (state.gameFinished) {
     return (
-      <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4">
+      <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4 py-2">
         <div className="w-full max-w-2xl">
           <Card>
             <CardHeader className="text-center">
@@ -285,7 +285,7 @@ export default function GameActivePage() {
   }
 
   return (
-    <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4">
+    <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4 py-2">
       <div className="w-full max-w-2xl">
         <Card>
           <CardHeader>
