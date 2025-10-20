@@ -2,7 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useCreateQuiz, useQuiz, useUpdateQuiz } from "@/hooks/useQuizzes";
+import {
+  useCreateQuiz,
+  useQuiz,
+  useUpdateQuiz,
+  useGenerateAiQuestions,
+} from "@/hooks/useQuizzes";
 import type { QuestionDto, QuizDetailDto } from "@/types/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -10,6 +15,7 @@ import {
   QuizHeader,
   QuizDetailsCard,
   QuestionsList,
+  AiGeneratorCard,
 } from "@/features/quiz-editor/components";
 import type { Question } from "@/features/quiz-editor/components";
 
@@ -48,6 +54,14 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
   );
   const createQuizMutation = useCreateQuiz();
   const updateQuizMutation = useUpdateQuiz();
+  const generateAiMutation = useGenerateAiQuestions();
+
+  // AI generation controls
+  const [aiTopic, setAiTopic] = useState<string>("");
+  const [aiCount, setAiCount] = useState<number>();
+  const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">(
+    "medium"
+  );
 
   // Local state for draft quiz and host name
   const [hostName, setHostName] = useState<string>("");
@@ -192,6 +206,47 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
         ),
       }));
     },
+  };
+
+  const handleGenerateAi = async () => {
+    const topic = aiTopic.trim();
+    if (!topic) {
+      toast.error("Please enter a topic for AI generation");
+      return;
+    }
+    if (aiCount < 1 || aiCount > 50) {
+      toast.error("Number of questions must be between 1 and 50");
+      return;
+    }
+
+    try {
+      const aiQuestions = await generateAiMutation.mutateAsync({
+        topic,
+        numberOfQuestions: aiCount,
+        difficulty: aiDifficulty,
+      });
+
+      if (!aiQuestions || aiQuestions.length === 0) {
+        toast("No questions generated. Try a different topic or difficulty.");
+        return;
+      }
+
+      updateQuizState((current) => {
+        const mapped: QuestionDto[] = aiQuestions.map((q) => ({
+          id: nextQuestionIdRef.current--,
+          questionText: q.questionText,
+          options: q.options.slice(0, 4),
+          correctOptionIndex: Math.min(Math.max(q.correctOptionIndex, 0), 3),
+        }));
+        return { ...current, questions: [...current.questions, ...mapped] };
+      });
+
+      toast.success(`Added ${aiQuestions.length} AI-generated question(s).`);
+    } catch (error: any) {
+      const msg =
+        error?.response?.data ?? error?.message ?? "Failed to generate with AI";
+      toast.error(typeof msg === "string" ? msg : "Failed to generate with AI");
+    }
   };
 
   const validateForm = () => {
@@ -375,6 +430,17 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
           onHostNameChange={actions.setHostName}
         />
 
+        <AiGeneratorCard
+          topic={aiTopic}
+          count={aiCount}
+          difficulty={aiDifficulty}
+          isGenerating={generateAiMutation.isPending}
+          onTopicChange={setAiTopic}
+          onCountChange={setAiCount}
+          onDifficultyChange={setAiDifficulty}
+          onGenerate={handleGenerateAi}
+        />
+        
         <QuestionsList
           questions={localQuestions}
           onAddQuestion={actions.addQuestion}
