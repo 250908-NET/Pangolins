@@ -44,10 +44,10 @@ export const useJoinGame = () => {
 
   return useMutation({
     mutationFn: async (roomCode: string) => {
-      const { quizId } = await gameService.getGameDetailsByRoomCode(roomCode);
-      return { quizId, roomCode, playerName: user!.name };
+      const gameDetails = await gameService.getGameDetailsByRoomCode(roomCode);
+      return { roomCode, playerName: user!.name };
     },
-    onSuccess: ({ quizId, roomCode, playerName }) => {
+    onSuccess: ({ roomCode, playerName }) => {
       // Set up local player data and navigate to the lobby
       const playerData = {
         id: user?.id,
@@ -55,7 +55,7 @@ export const useJoinGame = () => {
         isHost: false,
       };
       localStorage.setItem('currentPlayer', JSON.stringify(playerData));
-      navigate(`/game-lobby?roomCode=${roomCode.toUpperCase()}&quizId=${quizId}`);
+      navigate(`/game-lobby?roomCode=${roomCode.toUpperCase()}`);
     },
     onError: (err: any) => {
       console.error('Error joining game:', err);

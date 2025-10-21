@@ -53,7 +53,7 @@ namespace Pangolivia.API.Controllers
                 return NotFound("Game not found.");
             }
 
-            return Ok(new { quizId = session.QuizId });
+            return Ok(new {});
         }
     }
 }
