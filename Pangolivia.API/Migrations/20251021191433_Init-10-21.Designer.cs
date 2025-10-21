@@ -12,8 +12,8 @@ using Pangolivia.API.Data;
 namespace Pangolivia.API.Migrations
 {
     [DbContext(typeof(PangoliviaDbContext))]
-    [Migration("20251021175121_Updates_10_21")]
-    partial class Updates_10_21
+    [Migration("20251021191433_Init-10-21")]
+    partial class Init1021
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -206,7 +206,7 @@ namespace Pangolivia.API.Migrations
                     b.HasOne("Pangolivia.API.Models.UserModel", "User")
                         .WithMany("PlayerGameRecords")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("GameRecord");
