@@ -1,12 +1,13 @@
 using Pangolivia.API.Models;
 
-namespace Pangolivia.API.Repositories;
-
-public interface IGameRecordRepository
+namespace Pangolivia.Repositories.Interfaces
 {
-    Task<List<GameRecordModel>> GetAllGameRecordsAsync();
-    Task<GameRecordModel?> GetGameRecordByIdAsync(int gameRecordId);
-    Task<GameRecordModel> CreateGameRecordAsync(GameRecordModel gameRecord);
-    Task<GameRecordModel> UpdateGameRecordAsync(GameRecordModel gameRecord);
-    Task<bool> DeleteGameRecordAsync(int gameRecordId);
+    public interface IGameRecordRepository
+    {
+        Task<List<GameRecordModel>> GetAllGameRecordsAsync();
+        Task<GameRecordModel?> GetGameRecordByIdAsync(int gameRecordId);
+        Task<GameRecordModel> CreateGameRecordAsync(GameRecordModel gameRecord);
+        Task<GameRecordModel> UpdateGameRecordAsync(GameRecordModel gameRecord);
+        Task<bool> DeleteGameRecordAsync(int gameRecordId);
+    }
 }

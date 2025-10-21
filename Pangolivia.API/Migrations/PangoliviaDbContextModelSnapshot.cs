@@ -159,6 +159,10 @@ namespace Pangolivia.API.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("auth_uuid");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -212,7 +216,7 @@ namespace Pangolivia.API.Migrations
                     b.HasOne("Pangolivia.API.Models.QuizModel", "Quiz")
                         .WithMany("Questions")
                         .HasForeignKey("QuizId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Quiz");
