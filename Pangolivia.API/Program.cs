@@ -4,12 +4,12 @@ using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
 using Pangolivia.API.Models;
 using Pangolivia.API.Middleware;
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Pangolivia.API.Options;
 using System;
+using System.Threading.Tasks; // Required for Task.CompletedTask
 
 DotNetEnv.Env.Load();
 
@@ -57,6 +57,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+
+        // *** ADD THIS SECTION TO HANDLE SIGNALR AUTHENTICATION FROM QUERY STRING ***
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                // If the request is for our hub...
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/gamehub"))
+                {
+                    // Read the token from the query string
+                    context.Token = accessToken;
+                }
+                
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -117,7 +136,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAnonymous");
+app.UseCors("AllowAuthenticated"); // Use the authenticated policy globally now that SignalR needs it
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -156,52 +175,11 @@ using (var scope = app.Services.CreateScope())
         // Create 5 sample questions
         var questions = new List<QuestionModel>
         {
-            new QuestionModel
-            {
-                QuizId = quiz.Id,
-                QuestionText = "What is the capital of France?",
-                CorrectAnswer = "Paris",
-                Answer2 = "London",
-                Answer3 = "Berlin",
-                Answer4 = "Madrid"
-            },
-            
-            new QuestionModel
-            {
-                QuizId = quiz.Id,
-                QuestionText = "Which planet is known as the Red Planet?",
-                CorrectAnswer = "Mars",
-                Answer2 = "Venus",
-                Answer3 = "Jupiter",
-                Answer4 = "Saturn"
-            },
-            new QuestionModel
-            {
-                QuizId = quiz.Id,
-                QuestionText = "What is the primary goal of the player at the start of Stardew Valley?",
-                CorrectAnswer = "Restore and manage a neglected farm inherited from their grandfather",
-                Answer2 = "Build the largest house in Pelican Town",
-                Answer3 = "Defeat monsters in the Skull Cavern",
-                Answer4 = "Become the mayor of Stardew Valley"
-            },
-            new QuestionModel
-            {
-                QuizId = quiz.Id,
-                QuestionText = "What is the largest ocean on Earth?",
-                CorrectAnswer = "Pacific Ocean",
-                Answer2 = "Atlantic Ocean",
-                Answer3 = "Indian Ocean",
-                Answer4 = "Arctic Ocean"
-            },
-            new QuestionModel
-            {
-                QuizId = quiz.Id,
-                QuestionText = "What is the chemical symbol for Gold?",
-                CorrectAnswer = "Au",
-                Answer2 = "Ag",
-                Answer3 = "Fe",
-                Answer4 = "Cu"
-            }
+            new QuestionModel { QuizId = quiz.Id, QuestionText = "What is the capital of France?", CorrectAnswer = "Paris", Answer2 = "London", Answer3 = "Berlin", Answer4 = "Madrid" },
+            new QuestionModel { QuizId = quiz.Id, QuestionText = "Which planet is known as the Red Planet?", CorrectAnswer = "Mars", Answer2 = "Venus", Answer3 = "Jupiter", Answer4 = "Saturn" },
+            new QuestionModel { QuizId = quiz.Id, QuestionText = "What is the primary goal of the player at the start of Stardew Valley?", CorrectAnswer = "Restore and manage a neglected farm inherited from their grandfather", Answer2 = "Build the largest house in Pelican Town", Answer3 = "Defeat monsters in the Skull Cavern", Answer4 = "Become the mayor of Stardew Valley" },
+            new QuestionModel { QuizId = quiz.Id, QuestionText = "What is the largest ocean on Earth?", CorrectAnswer = "Pacific Ocean", Answer2 = "Atlantic Ocean", Answer3 = "Indian Ocean", Answer4 = "Arctic Ocean" },
+            new QuestionModel { QuizId = quiz.Id, QuestionText = "What is the chemical symbol for Gold?", CorrectAnswer = "Au", Answer2 = "Ag", Answer3 = "Fe", Answer4 = "Cu" }
         };
 
         context.Questions.AddRange(questions);
@@ -209,8 +187,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// *** APPLY THE AUTHENTICATED POLICY TO THE HUB ***
-app.MapHub<Pangolivia.API.Hubs.GameHub>("/gamehub")
-   .RequireCors("AllowAuthenticated");
+// Map the hub
+app.MapHub<Pangolivia.API.Hubs.GameHub>("/gamehub");
 
 app.Run();
