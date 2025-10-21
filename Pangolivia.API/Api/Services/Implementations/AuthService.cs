@@ -22,7 +22,6 @@ namespace Pangolivia.API.Services
         public async Task<UserModel> RegisterAsync(UserRegisterDto userRegisterDto)
         {
             var existingUser = await _userRepository.getUserModelByUsername(userRegisterDto.Username);
-           
 
             if (existingUser != null)
             {

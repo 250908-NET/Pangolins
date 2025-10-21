@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { LogIn, AlertCircle, Loader2 } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
 import { quizService } from '@/services/quizService'
+import { AxiosError } from 'axios'
 
 export default function JoinGamePage() {
   const navigate = useNavigate()
@@ -52,12 +53,13 @@ export default function JoinGamePage() {
       // Redirect to game lobby
       navigate(`/game-lobby?quiz=${quizId}`)
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       console.error('Error joining game:', err)
-      if (err.response?.status === 404) {
+      const error = err as AxiosError
+      if (error.response?.status === 404) {
         setError('Quiz not found. Please check the Quiz ID.')
-      } else if (err.message) {
-        setError(err.message)
+      } else if (error.message) {
+        setError(error.message)
       } else {
         setError('Failed to join game. Please try again.')
       }
