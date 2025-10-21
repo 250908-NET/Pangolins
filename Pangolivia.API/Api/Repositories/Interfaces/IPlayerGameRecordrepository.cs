@@ -1,4 +1,5 @@
 using Pangolivia.API.Models;
+namespace Pangolivia.API.Repositories;
 
 public interface IPlayerGameRecordRepository
 {

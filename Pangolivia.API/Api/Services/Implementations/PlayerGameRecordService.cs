@@ -1,12 +1,11 @@
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
-using Pangolivia.Repositories.Interfaces;
 
 
 namespace Pangolivia.API.Services
 {
-    public class PlayerGameRecordService
+    public class PlayerGameRecordService : IPlayerGameRecordService
     {
         private readonly IPlayerGameRecordRepository _playerGameRecordRepository;
         private readonly IGameRecordRepository _gameRecordRepository;
@@ -26,7 +25,7 @@ namespace Pangolivia.API.Services
         public async Task<PlayerGameRecordDto> RecordScoreAsync(CreatePlayerGameRecordDto dto)
         {
             var game = await _gameRecordRepository.GetGameRecordByIdAsync(dto.GameRecordId);
-            var user = await _userRepository.GetByIdAsync(dto.UserId);
+            var user = await _userRepository.getUserModelById(dto.UserId);
 
             if (game == null)
                 throw new Exception($"Game record with ID {dto.GameRecordId} not found.");

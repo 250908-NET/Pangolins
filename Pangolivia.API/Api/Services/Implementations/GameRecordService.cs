@@ -1,11 +1,10 @@
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
-using Pangolivia.Repositories.Interfaces;
 
 namespace Pangolivia.API.Services
 {
-    public class GameRecordService
+    public class GameRecordService : IGameRecordService
     {
         private readonly IGameRecordRepository _gameRecordRepository;
         private readonly IUserRepository _userRepository;
@@ -24,7 +23,7 @@ namespace Pangolivia.API.Services
         // Create a new game session (host starts a quiz)
         public async Task<GameRecordDto> CreateGameAsync(CreateGameRecordDto dto)
         {
-            var host = await _userRepository.GetByIdAsync(dto.HostUserId);
+            var host = await _userRepository.getUserModelById(dto.HostUserId);
             var quiz = await _quizRepository.GetByIdAsync(dto.QuizId);
 
             if (host == null)
@@ -88,7 +87,7 @@ namespace Pangolivia.API.Services
                 throw new Exception($"Game with ID {gameId} not found.");
 
             game.datetimeCompleted = DateTime.UtcNow;
-            await _gameRecordRepository.CreateGameRecordAsync(game); // reuse for save/update
+            await _gameRecordRepository.UpdateGameRecordAsync(game); // reuse for save/update
 
             return new GameRecordDto
             {

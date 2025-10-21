@@ -22,8 +22,7 @@ public class UserRepository : IUserRepository
 
     public async Task<UserModel> getUserModelById(int id)
     {
-        var user = await _context.Users.Include(u => u.Username)
-                    .FirstOrDefaultAsync(user => user.Id == id);
+        var user = await _context.Users.FirstOrDefaultAsync(user => user.Id == id);
         if (user != null)
         {
             return user;
@@ -75,7 +74,7 @@ public class UserRepository : IUserRepository
         {
             GameRecordId = pgrDto.GameRecordId,
             UserId = pgrDto.UserId,
-            score = pgrDto.Score
+            score = pgrDto.score
         };
 
         user.PlayerGameRecords.Add(playerGameRecord);

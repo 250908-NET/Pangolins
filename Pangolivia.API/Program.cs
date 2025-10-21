@@ -23,9 +23,14 @@ builder.Services.AddDbContext<PangoliviaDbContext>(options =>
 // Repositories
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
+builder.Services.AddScoped<IGameRecordRepository, GameRecordRepository>();
+builder.Services.AddScoped<IPlayerGameRecordRepository, PlayerGameRecordRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Services
 builder.Services.AddScoped<IQuizService, QuizService>();
+builder.Services.AddScoped<IGameRecordService, GameRecordService>();
+builder.Services.AddScoped<IPlayerGameRecordService, PlayerGameRecordService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
@@ -90,7 +95,7 @@ using (var scope = app.Services.CreateScope())
                 Answer3 = "Berlin",
                 Answer4 = "Madrid"
             },
-            
+
             new QuestionModel
             {
                 QuizId = quiz.Id,
@@ -131,6 +136,11 @@ using (var scope = app.Services.CreateScope())
 
         context.Questions.AddRange(questions);
         context.SaveChanges();
+    }
+    
+    if(!context.GameRecords.Any() && !context.PlayerGameRecords.Any())
+    {
+        DbSeeder.Seed(context);
     }
 }
 

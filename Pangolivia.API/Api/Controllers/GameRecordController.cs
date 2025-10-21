@@ -1,13 +1,17 @@
+using Microsoft.AspNetCore.Mvc;
+using Pangolivia.API.Services;
+using Pangolivia.API.DTOs;
+
 namespace Pangolivia.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class GameRecordController : ControllerBase
     {
-        private readonly GameRecordService _gameRecordService;
+        private readonly IGameRecordService _gameRecordService;
         private readonly ILogger<GameRecordController> _logger;
 
-        public GameRecordController(GameRecordService gameRecordService, ILogger<GameRecordController> logger)
+        public GameRecordController(IGameRecordService gameRecordService, ILogger<GameRecordController> logger)
         {
             _gameRecordService = gameRecordService;
             _logger = logger;

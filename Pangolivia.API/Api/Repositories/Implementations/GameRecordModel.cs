@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pangolivia.API.Data;
 using Pangolivia.API.Models;
-using Pangolivia.Repositories.Interfaces;
 
 namespace Pangolivia.API.Repositories;
 
@@ -56,6 +55,23 @@ public class GameRecordRepository : IGameRecordRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating game record");
+            throw;
+        }
+    }
+
+    public async Task<GameRecordModel> UpdateGameRecordAsync(GameRecordModel gameRecord)
+    {
+        try
+        {
+            _context.GameRecords.Update(gameRecord);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Updated game record with ID {GameRecordId}", gameRecord.Id);
+            return gameRecord;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating game record");
             throw;
         }
     }
