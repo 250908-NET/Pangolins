@@ -7,7 +7,7 @@ services:
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - Jwt__Key=1234
-      - ConnectionString__Connection=${ConnectionString__Connection}
+      - SQLAZURECONNSTR_ConnectionStrings__Connection=${ConnectionString__Connection}
     ports:
       - "3001:80"
     
