@@ -4,3 +4,4 @@ export * from "./QuizDetailsCard";
 export * from "./QuestionsList";
 export * from "./QuestionCard";
 export * from "./AnswerItem";
+export * from "./AiGeneratorCard";

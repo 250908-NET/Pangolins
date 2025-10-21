@@ -8,10 +8,28 @@ using Pangolivia.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Pangolivia.API.Options;
+using System;
 
-DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Environment.EnvironmentName == "Development")
+{
+    DotNetEnv.Env.Load();
+}
+
+// Remap Azure SQL connection string to standard format
+if (Environment.GetEnvironmentVariable("SQLAZURECONNSTR_ConnectionStrings__Connection") is string sqlAzureConnStr)
+{
+    Environment.SetEnvironmentVariable("ConnectionStrings__Connection", sqlAzureConnStr);
+}
+
+// Load configuration values.
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddEnvironmentVariables();
 
 // Register DbContext with the read connection string
 builder.Services.AddDbContext<PangoliviaDbContext>(options =>
@@ -37,6 +55,7 @@ builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IGameRecordService, GameRecordService>();
 builder.Services.AddScoped<IPlayerGameRecordService, PlayerGameRecordService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAiQuizService, AiQuizService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
@@ -73,6 +92,20 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// OpenAI configuration & services
+builder.Services.Configure<OpenAiOptions>(builder.Configuration.GetSection("OpenAI"));
+builder.Services.PostConfigure<OpenAiOptions>(o =>
+{
+    if (string.IsNullOrWhiteSpace(o.ApiKey))
+    {
+        o.ApiKey = builder.Configuration["OPENAI_API_KEY"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty;
+    }
+});
+builder.Services.AddHttpClient("OpenAI", c =>
+{
+    c.BaseAddress = new Uri("https://api.openai.com/");
+});
+
 var app = builder.Build();
 
 // Middleware
@@ -94,6 +127,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<PangoliviaDbContext>();
+    context.Database.Migrate(); // Applies all pending EF Core migrations
 
     // Apply migrations automatically
     // context.Database.Migrate();
@@ -132,7 +166,7 @@ using (var scope = app.Services.CreateScope())
                 Answer3 = "Berlin",
                 Answer4 = "Madrid"
             },
-            
+
             new QuestionModel
             {
                 QuizId = quiz.Id,

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Pangolivia.API.Services;
 using Pangolivia.API.DTOs;
+using System.Net.Http;
+using System.Threading;
 
 
 namespace Pangolivia.API.Controllers
@@ -10,11 +12,13 @@ namespace Pangolivia.API.Controllers
     public class QuizController : ControllerBase
     {
         private readonly IQuizService _quizService;
+        private readonly IAiQuizService _aiQuizService;
         private readonly ILogger<QuizController> _logger;
 
-        public QuizController(IQuizService quizService, ILogger<QuizController> logger)
+        public QuizController(IQuizService quizService, IAiQuizService aiQuizService, ILogger<QuizController> logger)
         {
             _quizService = quizService;
+            _aiQuizService = aiQuizService;
             _logger = logger;
         }
 
@@ -110,6 +114,34 @@ namespace Pangolivia.API.Controllers
             _logger.LogInformation("Searching quizzes by name: {Query}.", query);
             var result = await _quizService.FindQuizzesByNameAsync(query);
             return Ok(result);
+        }
+
+        // POST: api/Quiz/ai/generate
+        [HttpPost("ai/generate")]
+        public async Task<ActionResult<List<QuestionDto>>> GenerateQuestionsWithAi([FromBody] GenerateQuizAiRequestDto requestDto, CancellationToken ct)
+        {
+            if (requestDto.NumberOfQuestions <= 0 || requestDto.NumberOfQuestions > 50)
+            {
+                return BadRequest("NumberOfQuestions must be between 1 and 50.");
+            }
+
+            _logger.LogInformation("Generating {Count} AI questions on topic '{Topic}' (difficulty: {Difficulty}).", requestDto.NumberOfQuestions, requestDto.Topic, requestDto.Difficulty);
+
+            try
+            {
+                var questions = await _aiQuizService.GenerateQuestionsAsync(requestDto.Topic, requestDto.NumberOfQuestions, requestDto.Difficulty, ct);
+                return Ok(questions);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "AI provider request failed");
+                return StatusCode(502, "AI provider error");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AI generation failed");
+                return StatusCode(500, "Failed to generate questions");
+            }
         }
     }
 }

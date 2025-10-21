@@ -2,7 +2,7 @@ import { LogoIcon } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
@@ -33,8 +33,9 @@ export default function SignUpPage() {
         try {
             await register(username, password)
             // Navigation to /login is handled in AuthContext
-        } catch (err: any) {
-            setError(err.message || 'An unexpected error occurred.')
+        } catch (err) {
+            const error = err as Error
+            setError(error.message || 'An unexpected error occurred.')
         } finally {
             setLoading(false)
         }
