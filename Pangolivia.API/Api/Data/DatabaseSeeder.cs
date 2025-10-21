@@ -89,19 +89,19 @@ namespace Pangolivia.API.Data
                     {
                         HostUserId = users[0].Id,
                         QuizId = quizzes[0].Id,
-                        datetimeCompleted = DateTime.UtcNow.AddDays(-1)
+                        dateTimeCompleted = DateTime.UtcNow.AddDays(-1)
                     },
                     new GameRecordModel
                     {
                         HostUserId = users[1].Id,
                         QuizId = quizzes[1].Id,
-                        datetimeCompleted = DateTime.UtcNow.AddHours(-5)
+                        dateTimeCompleted = DateTime.UtcNow.AddHours(-5)
                     },
                     new GameRecordModel
                     {
                         HostUserId = users[2].Id,
                         QuizId = quizzes[2].Id,
-                        datetimeCompleted = DateTime.UtcNow.AddHours(-2)
+                        dateTimeCompleted = DateTime.UtcNow.AddHours(-2)
                     }
                 };
                 context.GameRecords.AddRange(games);
@@ -110,15 +110,15 @@ namespace Pangolivia.API.Data
                 // Player Game Records
                 var playerRecords = new List<PlayerGameRecordModel>
                 {
-                    new PlayerGameRecordModel { UserId = users[0].Id, GameRecordId = games[0].Id, score = 85.5 },
-                    new PlayerGameRecordModel { UserId = users[1].Id, GameRecordId = games[0].Id, score = 90.0 },
-                    new PlayerGameRecordModel { UserId = users[2].Id, GameRecordId = games[0].Id, score = 70.0 },
+                    new PlayerGameRecordModel { UserId = users[0].Id, GameRecordId = games[0].Id, Score = 85.5 },
+                    new PlayerGameRecordModel { UserId = users[1].Id, GameRecordId = games[0].Id, Score = 90.0 },
+                    new PlayerGameRecordModel { UserId = users[2].Id, GameRecordId = games[0].Id, Score = 70.0 },
 
-                    new PlayerGameRecordModel { UserId = users[1].Id, GameRecordId = games[1].Id, score = 92.5 },
-                    new PlayerGameRecordModel { UserId = users[3].Id, GameRecordId = games[1].Id, score = 88.0 },
+                    new PlayerGameRecordModel { UserId = users[1].Id, GameRecordId = games[1].Id, Score = 92.5 },
+                    new PlayerGameRecordModel { UserId = users[3].Id, GameRecordId = games[1].Id, Score = 88.0 },
 
-                    new PlayerGameRecordModel { UserId = users[0].Id, GameRecordId = games[2].Id, score = 75.0 },
-                    new PlayerGameRecordModel { UserId = users[2].Id, GameRecordId = games[2].Id, score = 82.0 },
+                    new PlayerGameRecordModel { UserId = users[0].Id, GameRecordId = games[2].Id, Score = 75.0 },
+                    new PlayerGameRecordModel { UserId = users[2].Id, GameRecordId = games[2].Id, Score = 82.0 },
                 };
                 context.PlayerGameRecords.AddRange(playerRecords);
                 context.SaveChanges();
