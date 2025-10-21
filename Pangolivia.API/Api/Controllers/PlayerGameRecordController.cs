@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Pangolivia.API.Services;
 using Pangolivia.API.DTOs;
+using Pangolivia.API.Services;
 
 namespace Pangolivia.API.Controllers
 {
@@ -26,7 +26,11 @@ namespace Pangolivia.API.Controllers
             try
             {
                 var result = await _playerGameRecordService.RecordScoreAsync(dto);
-                return CreatedAtAction(nameof(GetPlayerHistory), new { userId = result.UserId }, result);
+                return CreatedAtAction(
+                    nameof(GetPlayerHistory),
+                    new { userId = result.UserId },
+                    result
+                );
             }
             catch (Exception ex)
             {
@@ -64,7 +68,10 @@ namespace Pangolivia.API.Controllers
         // PUT: api/PlayerGameRecord/{recordId}
         // Update a player's score
         [HttpPut("{recordId}")]
-        public async Task<IActionResult> UpdateScore(int recordId, [FromBody] UpdatePlayerGameRecordDto dto)
+        public async Task<IActionResult> UpdateScore(
+            int recordId,
+            [FromBody] UpdatePlayerGameRecordDto dto
+        )
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

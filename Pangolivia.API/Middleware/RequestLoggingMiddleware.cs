@@ -29,11 +29,21 @@ public class RequestLoggingMiddleware
 
             if (context.Response.StatusCode >= 400)
             {
-                _logger.LogWarning("Method: ({Method}), Path: ({Path}), Response Time: ({Elapsed} ms)", method, path, elapsed);
+                _logger.LogWarning(
+                    "Method: ({Method}), Path: ({Path}), Response Time: ({Elapsed} ms)",
+                    method,
+                    path,
+                    elapsed
+                );
             }
             else
             {
-                _logger.LogInformation("Method: ({Method}), Path: ({Path}), Response Time: ({Elapsed} ms)", method, path, elapsed);
+                _logger.LogInformation(
+                    "Method: ({Method}), Path: ({Path}), Response Time: ({Elapsed} ms)",
+                    method,
+                    path,
+                    elapsed
+                );
             }
         }
     }

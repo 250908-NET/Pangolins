@@ -13,7 +13,8 @@ namespace Pangolivia.API.Services
         public GameRecordService(
             IGameRecordRepository gameRecordRepository,
             IUserRepository userRepository,
-            IQuizRepository quizRepository)
+            IQuizRepository quizRepository
+        )
         {
             _gameRecordRepository = gameRecordRepository;
             _userRepository = userRepository;
@@ -35,7 +36,7 @@ namespace Pangolivia.API.Services
             {
                 HostUserId = dto.HostUserId,
                 QuizId = dto.QuizId,
-                dateTimeCompleted = DateTime.UtcNow
+                dateTimeCompleted = DateTime.UtcNow,
             };
 
             var createdGame = await _gameRecordRepository.CreateGameRecordAsync(gameRecord);
@@ -47,7 +48,7 @@ namespace Pangolivia.API.Services
                 HostUsername = host.Username,
                 QuizId = createdGame.QuizId,
                 QuizName = quiz.QuizName,
-                dateTimeCompleted = createdGame.dateTimeCompleted
+                dateTimeCompleted = createdGame.dateTimeCompleted,
             };
         }
 
@@ -62,7 +63,7 @@ namespace Pangolivia.API.Services
                 HostUsername = g.HostUser?.Username ?? "Unknown",
                 QuizId = g.QuizId,
                 QuizName = g.Quiz?.QuizName ?? "Unknown",
-                dateTimeCompleted = g.dateTimeCompleted
+                dateTimeCompleted = g.dateTimeCompleted,
             });
         }
 
@@ -80,7 +81,7 @@ namespace Pangolivia.API.Services
                 HostUsername = game.HostUser?.Username ?? "Unknown",
                 QuizId = game.QuizId,
                 QuizName = game.Quiz?.QuizName ?? "Unknown",
-                dateTimeCompleted = game.dateTimeCompleted
+                dateTimeCompleted = game.dateTimeCompleted,
             };
         }
 
@@ -101,7 +102,7 @@ namespace Pangolivia.API.Services
                 HostUsername = game.HostUser?.Username ?? "Unknown",
                 QuizId = game.QuizId,
                 QuizName = game.Quiz?.QuizName ?? "Unknown",
-                dateTimeCompleted = game.dateTimeCompleted
+                dateTimeCompleted = game.dateTimeCompleted,
             };
         }
 
@@ -126,7 +127,7 @@ namespace Pangolivia.API.Services
                     HostUsername = g.HostUser?.Username ?? "Unknown",
                     QuizId = g.QuizId,
                     QuizName = g.Quiz?.QuizName ?? "Unknown",
-                    dateTimeCompleted = g.dateTimeCompleted
+                    dateTimeCompleted = g.dateTimeCompleted,
                 });
 
             return filtered;
@@ -145,7 +146,7 @@ namespace Pangolivia.API.Services
                     HostUsername = g.HostUser?.Username ?? "Unknown",
                     QuizId = g.QuizId,
                     QuizName = g.Quiz?.QuizName ?? "Unknown",
-                    dateTimeCompleted = g.dateTimeCompleted
+                    dateTimeCompleted = g.dateTimeCompleted,
                 });
 
             return filtered;

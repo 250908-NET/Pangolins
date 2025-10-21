@@ -1,16 +1,14 @@
+using System;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Pangolivia.API.Data;
+using Pangolivia.API.Middleware;
+using Pangolivia.API.Models;
+using Pangolivia.API.Options;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
-using Pangolivia.API.Models;
-using Pangolivia.API.Middleware;
-
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Pangolivia.API.Options;
-using System;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,14 +18,17 @@ if (builder.Environment.EnvironmentName == "Development")
 }
 
 // Remap Azure SQL connection string to standard format
-if (Environment.GetEnvironmentVariable("SQLAZURECONNSTR_ConnectionStrings__Connection") is string sqlAzureConnStr)
+if (
+    Environment.GetEnvironmentVariable("SQLAZURECONNSTR_ConnectionStrings__Connection")
+    is string sqlAzureConnStr
+)
 {
     Environment.SetEnvironmentVariable("ConnectionStrings__Connection", sqlAzureConnStr);
 }
 
 // Load configuration values.
-builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
+builder
+    .Configuration.SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
 
@@ -61,8 +62,8 @@ builder.Services.AddScoped<IAiQuizService, AiQuizService>();
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder
+    .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -73,19 +74,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+            ),
         };
     });
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
+    options.AddPolicy(
+        "AllowAll",
         policy =>
         {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        });
+            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        }
+    );
 });
 
 // Controllers + Swagger
@@ -99,13 +102,19 @@ builder.Services.PostConfigure<OpenAiOptions>(o =>
 {
     if (string.IsNullOrWhiteSpace(o.ApiKey))
     {
-        o.ApiKey = builder.Configuration["OPENAI_API_KEY"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty;
+        o.ApiKey =
+            builder.Configuration["OPENAI_API_KEY"]
+            ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+            ?? string.Empty;
     }
 });
-builder.Services.AddHttpClient("OpenAI", c =>
-{
-    c.BaseAddress = new Uri("https://api.openai.com/");
-});
+builder.Services.AddHttpClient(
+    "OpenAI",
+    c =>
+    {
+        c.BaseAddress = new Uri("https://api.openai.com/");
+    }
+);
 
 var app = builder.Build();
 
@@ -135,7 +144,6 @@ using (var scope = app.Services.CreateScope())
 
     //Seed DB
     DbSeeder.Seed(context);
-
 }
 
 app.Run();

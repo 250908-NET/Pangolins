@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Pangolivia.API.Services;
 using Pangolivia.API.DTOs;
+using Pangolivia.API.Services;
 
 namespace Pangolivia.API.Controllers
 {
@@ -24,7 +24,7 @@ namespace Pangolivia.API.Controllers
             var result = await _userService.getAllUsersAsync();
             return Ok(result);
         }
-        
+
         [HttpGet("ById/{id}")]
         public async Task<ActionResult<UserDetailDto>> GetUserByID(int id)
         {
@@ -37,7 +37,7 @@ namespace Pangolivia.API.Controllers
             }
             return Ok(result);
         }
-        
+
         [HttpGet("{username}")]
         public async Task<ActionResult<UserDetailDto>> GetUserByUsername(string username)
         {
@@ -62,7 +62,10 @@ namespace Pangolivia.API.Controllers
             }
             catch (KeyNotFoundException)
             {
-                _logger.LogWarning("Attempted to delete non-existent user with ID {userID}", userID);
+                _logger.LogWarning(
+                    "Attempted to delete non-existent user with ID {userID}",
+                    userID
+                );
                 return NotFound(new { message = $"User with id:{userID} not found." });
             }
         }

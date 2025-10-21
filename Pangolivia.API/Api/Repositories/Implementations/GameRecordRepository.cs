@@ -36,7 +36,11 @@ public class GameRecordRepository : IGameRecordRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving game record with ID {GameRecordId}", gameRecordId);
+            _logger.LogError(
+                ex,
+                "Error retrieving game record with ID {GameRecordId}",
+                gameRecordId
+            );
             throw;
         }
     }
@@ -83,7 +87,10 @@ public class GameRecordRepository : IGameRecordRepository
             var gameRecord = await _context.GameRecords.FindAsync(gameRecordId);
             if (gameRecord == null)
             {
-                _logger.LogWarning("Game record with ID {GameRecordId} not found for deletion", gameRecordId);
+                _logger.LogWarning(
+                    "Game record with ID {GameRecordId} not found for deletion",
+                    gameRecordId
+                );
                 return false;
             }
 

@@ -13,8 +13,10 @@ public class Player
 
     public Player(UserDto user, string connectionId)
     {
-        if (user == null) throw new ArgumentNullException(nameof(user));
-        if (connectionId == null) throw new ArgumentNullException(nameof(connectionId));
+        if (user == null)
+            throw new ArgumentNullException(nameof(user));
+        if (connectionId == null)
+            throw new ArgumentNullException(nameof(connectionId));
 
         UserId = user.Id;
         Username = user.Username;
@@ -24,5 +26,6 @@ public class Player
     }
 
     public void ResetAnswer() => AnswerToCurrentQuestion = null;
+
     public void AddPoints(int points) => CurrentScore += points;
 }

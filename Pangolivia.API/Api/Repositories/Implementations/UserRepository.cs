@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Pangolivia.API.Data;
 using Pangolivia.API.Models;
+
 namespace Pangolivia.API.Repositories;
 
 public class UserRepository : IUserRepository
 {
     private readonly PangoliviaDbContext _context; // Changed to readonly for best practice
+
     public UserRepository(PangoliviaDbContext context)
     {
         _context = context;
@@ -13,20 +15,20 @@ public class UserRepository : IUserRepository
 
     public async Task<List<UserModel>> getAllUserModels()
     {
-        return await _context.Users
-            .Include(u => u.CreatedQuizzes)
-                .ThenInclude(q => q.Questions)
+        return await _context
+            .Users.Include(u => u.CreatedQuizzes)
+            .ThenInclude(q => q.Questions)
             .Include(u => u.PlayerGameRecords)
-                .ThenInclude(pgr => pgr.GameRecord)
+            .ThenInclude(pgr => pgr.GameRecord)
             .Include(u => u.HostedGameRecords)
-                .ThenInclude(gr => gr.Quiz)
+            .ThenInclude(gr => gr.Quiz)
             .ToListAsync();
     }
 
     public async Task<UserModel?> getUserModelById(int id)
     {
-        return await _context.Users
-            .Include(u => u.CreatedQuizzes)
+        return await _context
+            .Users.Include(u => u.CreatedQuizzes)
             .Include(u => u.HostedGameRecords)
             .Include(u => u.PlayerGameRecords)
             .FirstOrDefaultAsync(user => user.Id == id);
@@ -34,8 +36,8 @@ public class UserRepository : IUserRepository
 
     public async Task<UserModel?> getUserModelByUsername(string username)
     {
-        return await _context.Users
-            .Include(u => u.CreatedQuizzes)
+        return await _context
+            .Users.Include(u => u.CreatedQuizzes)
             .Include(u => u.HostedGameRecords)
             .Include(u => u.PlayerGameRecords)
             .FirstOrDefaultAsync(u => u.Username == username);
@@ -50,8 +52,8 @@ public class UserRepository : IUserRepository
 
     public async Task removeUserModel(int id)
     {
-        UserModel? user = await _context.Users
-            .Include(u => u.CreatedQuizzes)
+        UserModel? user = await _context
+            .Users.Include(u => u.CreatedQuizzes)
             .Include(u => u.PlayerGameRecords)
             .Include(u => u.HostedGameRecords)
             .FirstOrDefaultAsync(u => u.Id == id);
@@ -60,7 +62,7 @@ public class UserRepository : IUserRepository
         {
             throw new KeyNotFoundException($"UserModel with id {id} not found.");
         }
-        
+
         // EF Core with cascade delete should handle this, but being explicit can be safer depending on configuration.
         // The existing logic is fine.
         _context.Quizzes.RemoveRange(user.CreatedQuizzes);
