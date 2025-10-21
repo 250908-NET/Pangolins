@@ -76,7 +76,7 @@ namespace Pangolivia.Tests.Services
         {
             var games = new List<GameRecordModel>
             {
-                new GameRecordModel { Id = 1, HostUserId = 1, QuizId = 2, datetimeCompleted = DateTime.UtcNow }
+                new GameRecordModel { Id = 1, HostUserId = 1, QuizId = 2, dateTimeCompleted = DateTime.UtcNow }
             };
             _gameRecordRepoMock.Setup(r => r.GetAllGameRecordsAsync())
                 .ReturnsAsync(games);
@@ -90,7 +90,7 @@ namespace Pangolivia.Tests.Services
         [Fact]
         public async Task GetGameByIdAsync_ShouldReturnGame_WhenFound()
         {
-            var game = new GameRecordModel { Id = 5, HostUserId = 2, QuizId = 3, datetimeCompleted = DateTime.UtcNow };
+            var game = new GameRecordModel { Id = 5, HostUserId = 2, QuizId = 3, dateTimeCompleted = DateTime.UtcNow };
             _gameRecordRepoMock.Setup(r => r.GetGameRecordByIdAsync(5))
                 .ReturnsAsync(game);
 
@@ -119,14 +119,14 @@ namespace Pangolivia.Tests.Services
             _gameRecordRepoMock.Setup(r => r.GetGameRecordByIdAsync(1))
                 .ReturnsAsync(game);
 
-            _gameRecordRepoMock.Setup(r => r.CreateGameRecordAsync(It.IsAny<GameRecordModel>()))
-                .ReturnsAsync(game);
+            _gameRecordRepoMock.Setup(r => r.UpdateGameRecordAsync(It.IsAny<GameRecordModel>()))
+                .ReturnsAsync((GameRecordModel g) => g);
 
             var result = await _service.CompleteGameAsync(1);
 
             Assert.NotNull(result);
             Assert.Equal(1, result!.Id);
-            _gameRecordRepoMock.Verify(r => r.CreateGameRecordAsync(It.IsAny<GameRecordModel>()), Times.Once);
+            _gameRecordRepoMock.Verify(r => r.UpdateGameRecordAsync(It.IsAny<GameRecordModel>()), Times.Once);
         }
 
         [Fact]
