@@ -119,14 +119,14 @@ namespace Pangolivia.Tests.Services
             _gameRecordRepoMock.Setup(r => r.GetGameRecordByIdAsync(1))
                 .ReturnsAsync(game);
 
-            _gameRecordRepoMock.Setup(r => r.CreateGameRecordAsync(It.IsAny<GameRecordModel>()))
-                .ReturnsAsync(game);
+            _gameRecordRepoMock.Setup(r => r.UpdateGameRecordAsync(It.IsAny<GameRecordModel>()))
+                .ReturnsAsync((GameRecordModel g) => g);
 
             var result = await _service.CompleteGameAsync(1);
 
             Assert.NotNull(result);
             Assert.Equal(1, result!.Id);
-            _gameRecordRepoMock.Verify(r => r.CreateGameRecordAsync(It.IsAny<GameRecordModel>()), Times.Once);
+            _gameRecordRepoMock.Verify(r => r.UpdateGameRecordAsync(It.IsAny<GameRecordModel>()), Times.Once);
         }
 
         [Fact]

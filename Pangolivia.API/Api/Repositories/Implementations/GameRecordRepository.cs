@@ -59,6 +59,23 @@ public class GameRecordRepository : IGameRecordRepository
         }
     }
 
+    public async Task<GameRecordModel> UpdateGameRecordAsync(GameRecordModel gameRecord)
+    {
+        try
+        {
+            _context.GameRecords.Update(gameRecord);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Updated game record with ID {GameRecordId}", gameRecord.Id);
+            return gameRecord;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating game record");
+            throw;
+        }
+    }
+
     public async Task<bool> DeleteGameRecordAsync(int gameRecordId)
     {
         try

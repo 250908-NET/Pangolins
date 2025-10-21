@@ -92,7 +92,7 @@ namespace Pangolivia.API.Services
                 throw new Exception($"Game with ID {gameId} not found.");
 
             game.dateTimeCompleted = DateTime.UtcNow;
-            await _gameRecordRepository.CreateGameRecordAsync(game); // reuse for save/update
+            await _gameRecordRepository.UpdateGameRecordAsync(game);
 
             return new GameRecordDto
             {
