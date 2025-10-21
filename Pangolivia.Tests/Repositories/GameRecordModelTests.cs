@@ -1,6 +1,6 @@
 namespace Pangolivia.Tests.Repositories;
 
-public class GameRecordModelTests: RepositoryTestBase 
+public class GameRecordModelTests : RepositoryTestBase
 {
     private readonly GameRecordRepository _repo;
     private readonly ILogger<GameRecordRepository> _repoLogger;
@@ -45,7 +45,7 @@ public class GameRecordModelTests: RepositoryTestBase
         result.Should().BeEmpty();
     }
 
-    [Fact] 
+    [Fact]
     public async Task GetAllGameRecordsAsync_WhenGameRecordsExist_ReturnsList()
     {
         //Arrange
@@ -125,7 +125,7 @@ public class GameRecordModelTests: RepositoryTestBase
         created.HostUserId.Should().Be(userId);
         created.QuizId.Should().Be(quizId);
         created.datetimeCompleted.Should().BeOnOrAfter(DateTime.UtcNow.AddSeconds(-1));
-        created.datetimeCompleted.Should().BeOnOrBefore(DateTime.UtcNow.AddSeconds(1));     
+        created.datetimeCompleted.Should().BeOnOrBefore(DateTime.UtcNow.AddSeconds(1));
 
         var fromDb = await _repo.GetGameRecordByIdAsync(created.Id);
         fromDb.Should().NotBeNull();
