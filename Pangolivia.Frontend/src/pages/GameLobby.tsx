@@ -8,13 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Users, Play, Copy, Check, Loader2 } from "lucide-react";
+import { Users, Play, Copy, Check, Loader2, Crown } from "lucide-react"; // Import Crown icon
 import { useSignalR } from "@/hooks/useSignalR";
 import { toast } from "sonner";
 
 interface Player {
   userId: number;
   username: string;
+  isHost: boolean; // Add isHost property
 }
 
 interface LobbyDetails {
@@ -27,11 +28,11 @@ export default function GameLobbyPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const roomCode = searchParams.get("roomCode");
-  // const quizIdParam = searchParams.get("quizId");
-  // const quizId = quizIdParam ? parseInt(quizIdParam) : 0;
 
   const { connection, connectToHub, disconnect } = useSignalR();
 
+  // State to hold host and players separately
+  const [host, setHost] = useState<Player | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [lobbyDetails, setLobbyDetails] = useState<LobbyDetails | null>(null);
   const [copied, setCopied] = useState(false);
@@ -71,10 +72,13 @@ export default function GameLobbyPage() {
         setLobbyDetails(details);
       });
       
-      // 3. Listen for full player list updates.
+      // 3. Listen for full player list updates and separate host from players.
       connection.on("UpdatePlayerList", (playerList: Player[]) => {
         console.log("Received updated player list:", playerList);
-        setPlayers(playerList);
+        const hostPlayer = playerList.find((p) => p.isHost);
+        const otherPlayers = playerList.filter((p) => !p.isHost);
+        setHost(hostPlayer || null);
+        setPlayers(otherPlayers);
       });
 
       // 4. Listen for errors from the hub
@@ -124,6 +128,8 @@ export default function GameLobbyPage() {
     );
   }
 
+  const totalPlayers = players.length + (host ? 1 : 0);
+
   return (
     <section className="flex min-h-screen items-center justify-center px-4 py-16">
       <div className="w-full max-w-2xl">
@@ -131,7 +137,7 @@ export default function GameLobbyPage() {
           <CardHeader>
             <CardTitle className="text-3xl">{lobbyDetails.quizName}</CardTitle>
             <CardDescription>
-              Created by {lobbyDetails.creatorUsername} â€¢ {lobbyDetails.questionCount} questions
+              Created by {lobbyDetails.creatorUsername} | {lobbyDetails.questionCount} questions
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -149,18 +155,44 @@ export default function GameLobbyPage() {
             </div>
 
             <div>
-              <div className="mb-3 flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                <h3 className="text-lg font-semibold">Players ({players.length})</h3>
+              {/* Host Section */}
+              <div className="mb-2 flex items-center gap-2">
+                <Crown className="h-5 w-5 text-yellow-500" />
+                <h3 className="text-lg font-semibold">Host</h3>
               </div>
-              <div className="space-y-2">
-                {players.map((player) => (
-                  <div key={player.userId} className="flex items-center justify-between rounded-lg border p-3">
-                    <p className="font-medium">{player.username}</p>
-                  </div>
-                ))}
+              {host ? (
+                <div className="flex items-center justify-between rounded-lg border-2 border-yellow-500 bg-yellow-50 p-3 dark:bg-yellow-900/20">
+                  <p className="font-bold">{host.username}</p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Waiting for host...</p>
+              )}
+
+              {/* Players Section */}
+              <div className="mt-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">Players ({totalPlayers})</h3>
+                </div>
+                <div className="space-y-2">
+                  {players.length > 0 ? (
+                    players.map((player) => (
+                      <div
+                        key={player.userId}
+                        className="flex items-center justify-between rounded-lg border p-3"
+                      >
+                        <p className="font-medium">{player.username}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No other players have joined yet.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
+
 
             <div className="flex gap-3">
               <Button variant="outline" onClick={handleLeaveGame} className="flex-1">

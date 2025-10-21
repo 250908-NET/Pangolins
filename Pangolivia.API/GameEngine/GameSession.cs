@@ -9,22 +9,25 @@ public class GameSession
     public int Id { get; }
     public string Name { get; }
     public int HostUserId { get; }
+    public string HostUsername { get; } // Add this property
     public QuizModel Quiz { get; }
 
     private int CurrentQuestionIndex = -1;
 
     private GameStatus Status { get; set; } = GameStatus.Pending;
+    public string? HostConnectionId { get; set; }
+    public readonly ConcurrentDictionary<int, Player> Players; // Made public for easier access from GameManager
 
-    private readonly ConcurrentDictionary<int, Player> Players;
-
-    public GameSession(int id, string name, int hostUserId, QuizModel quiz)
+    public GameSession(int id, string name, int hostUserId, string hostUsername, QuizModel quiz) // Add hostUsername
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(quiz);
+        ArgumentNullException.ThrowIfNull(hostUsername);
 
         Id = id;
         Name = name;
         HostUserId = hostUserId;
+        HostUsername = hostUsername; // Assign host username
         Quiz = quiz;
         Players = new ConcurrentDictionary<int, Player>();
     }

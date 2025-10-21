@@ -1,43 +1,13 @@
+/*C:\Users\Husan\Projects\Revature\Pangolins\Pangolivia.API\Api\Services\Implementations\GameManagerService.cs*/
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.DependencyInjection;
+using Pangolivia.API.DTOs;
+using Pangolivia.API.GameEngine;
 using Pangolivia.API.Hubs;
 using Pangolivia.API.Repositories;
 
 namespace Pangolivia.API.Services
 {
-    public class PlayerInfo
-    {
-        public int UserId { get; set; }
-        public string Username { get; set; } = string.Empty;
-        public string ConnectionId { get; set; } = string.Empty;
-    }
-
-    public class GameSession
-    {
-        public int QuizId { get; }
-        public int HostUserId { get; }
-        public string QuizName { get; }
-        public string CreatorUsername { get; }
-        public int QuestionCount { get; }
-        public ConcurrentDictionary<int, PlayerInfo> Players { get; } = new();
-
-        public GameSession(
-            int quizId,
-            int hostUserId,
-            string quizName,
-            string creatorUsername,
-            int questionCount
-        )
-        {
-            QuizId = quizId;
-            HostUserId = hostUserId;
-            QuizName = quizName;
-            CreatorUsername = creatorUsername;
-            QuestionCount = questionCount;
-        }
-    }
-
     public class GameManagerService
     {
         private readonly IHubContext<GameHub> _hubContext;
@@ -54,30 +24,38 @@ namespace Pangolivia.API.Services
             _serviceProvider = serviceProvider;
         }
 
-        public async Task<string> CreateGame(int quizId, int hostUserId)
+        public async Task<string> CreateGame(int quizId, int hostUserId, string hostUsername)
         {
             using (var scope = _serviceProvider.CreateScope())
             {
                 var quizRepository = scope.ServiceProvider.GetRequiredService<IQuizRepository>();
-                var quiz = await quizRepository.GetByIdWithDetailsAsync(quizId);
+                // The user repository is no longer needed here
 
+                var quiz = await quizRepository.GetByIdWithDetailsAsync(quizId);
                 if (quiz == null)
                 {
                     throw new Exception("Quiz not found.");
                 }
 
+                // The host user lookup is no longer necessary. We trust the claims from the token.
+                // var host = await userRepository.getUserModelById(hostUserId);
+                // if (host == null)
+                // {
+                //     throw new Exception("Host user not found.");
+                // }
+
                 var roomCode = GenerateUniqueRoomCode();
                 var newGameSession = new GameSession(
-                    quizId,
-                    hostUserId,
+                    quiz.Id,
                     quiz.QuizName,
-                    quiz.CreatedByUser?.Username ?? "Unknown",
-                    quiz.Questions.Count
+                    hostUserId,
+                    hostUsername, // Use the username passed directly from the controller
+                    quiz
                 );
 
                 _games.TryAdd(roomCode, newGameSession);
                 Console.WriteLine(
-                    $"[GameManager] Game created for QuizId {quizId} with Room Code: {roomCode}"
+                    $"[GameManager] Game created for QuizId {quizId} with Room Code: {roomCode} by host {hostUsername}"
                 );
                 return roomCode;
             }
@@ -102,28 +80,43 @@ namespace Pangolivia.API.Services
                 return false;
             }
 
-            var player = new PlayerInfo
+            if (gameSession.HasGameStarted())
             {
-                UserId = userId,
-                Username = username,
-                ConnectionId = connectionId,
-            };
-
-            gameSession.Players.AddOrUpdate(
-                userId,
-                player,
-                (key, existingPlayer) =>
-                {
-                    existingPlayer.ConnectionId = connectionId; // Update connection ID on reconnect
-                    return existingPlayer;
-                }
-            );
+                Console.WriteLine(
+                    $"[GameManager] Failed to join. Game in room {roomCode} has already started."
+                );
+                return false;
+            }
 
             _connectionToRoomMap[connectionId] = (roomCode.ToUpper(), userId);
 
-            Console.WriteLine(
-                $"[GameManager] Player {username} ({userId}) joined or reconnected to room {roomCode}."
-            );
+            // Handle host connection
+            if (userId == gameSession.HostUserId)
+            {
+                gameSession.HostConnectionId = connectionId;
+                Console.WriteLine(
+                    $"[GameManager] Host {username} ({userId}) connected to room {roomCode}."
+                );
+                return true;
+            }
+
+            // Handle player connection/reconnection
+            if (gameSession.Players.TryGetValue(userId, out var existingPlayer))
+            {
+                existingPlayer.ConnectionId = connectionId;
+                Console.WriteLine(
+                    $"[GameManager] Player {username} ({userId}) reconnected to room {roomCode}."
+                );
+            }
+            else
+            {
+                var userDto = new UserDto { Id = userId, Username = username };
+                gameSession.RegisterPlayer(userDto, connectionId);
+                Console.WriteLine(
+                    $"[GameManager] Player {username} ({userId}) joined room {roomCode}."
+                );
+            }
+
             return true;
         }
 
@@ -134,34 +127,38 @@ namespace Pangolivia.API.Services
                 var (roomCode, userId) = roomInfo;
                 if (_games.TryGetValue(roomCode, out var gameSession))
                 {
+                    // Handle host disconnection
                     if (
-                        gameSession.Players.TryGetValue(userId, out var playerInfo)
-                        && playerInfo.ConnectionId == connectionId
+                        userId == gameSession.HostUserId
+                        && gameSession.HostConnectionId == connectionId
                     )
                     {
-                        if (gameSession.Players.TryRemove(userId, out _))
-                        {
-                            Console.WriteLine(
-                                $"[GameManager] Player {playerInfo.Username} removed from room {roomCode}."
-                            );
+                        gameSession.HostConnectionId = null;
+                        Console.WriteLine($"[GameManager] Host disconnected from room {roomCode}.");
+                    }
+                    // Handle player disconnection
+                    else if (gameSession.Players.TryRemove(userId, out var removedPlayer))
+                    {
+                        Console.WriteLine(
+                            $"[GameManager] Player {removedPlayer.Username} removed from room {roomCode}."
+                        );
+                    }
 
-                            // Broadcast the new player list to everyone remaining.
-                            var playerList = gameSession
-                                .Players.Values.Select(p => new { p.UserId, p.Username })
-                                .ToList();
-                            await _hubContext
-                                .Clients.Group(roomCode)
-                                .SendAsync("UpdatePlayerList", playerList);
+                    // Broadcast the new player list to everyone remaining.
+                    var playerList = gameSession
+                        .Players.Values.Select(p => new { p.UserId, p.Username })
+                        .ToList();
+                    await _hubContext
+                        .Clients.Group(roomCode)
+                        .SendAsync("UpdatePlayerList", playerList);
 
-                            // If the room is now empty, close it.
-                            if (gameSession.Players.IsEmpty)
-                            {
-                                _games.TryRemove(roomCode, out _);
-                                Console.WriteLine(
-                                    $"[GameManager] Room {roomCode} is empty and has been closed."
-                                );
-                            }
-                        }
+                    // If the host is disconnected and no players are left, close the room.
+                    if (gameSession.HostConnectionId == null && gameSession.Players.IsEmpty)
+                    {
+                        _games.TryRemove(roomCode, out _);
+                        Console.WriteLine(
+                            $"[GameManager] Room {roomCode} is empty and has been closed."
+                        );
                     }
                 }
             }

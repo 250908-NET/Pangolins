@@ -1,3 +1,5 @@
+/*C:\Users\Husan\Projects\Revature\Pangolins\Pangolivia.API\Api\Hubs\GameHub.cs*/
+using System.Linq; // Required for .Select()
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -56,18 +58,40 @@ namespace Pangolivia.API.Hubs
                 {
                     var lobbyDetails = new
                     {
-                        gameSession.QuizName,
-                        gameSession.CreatorUsername,
-                        gameSession.QuestionCount,
+                        QuizName = gameSession.Quiz.QuizName,
+                        CreatorUsername = gameSession.Quiz.CreatedByUser?.Username ?? "Unknown",
+                        HostUsername = gameSession.HostUsername,
+                        QuestionCount = gameSession.Quiz.Questions.Count,
                     };
                     await Clients.Caller.SendAsync("ReceiveLobbyDetails", lobbyDetails);
 
+                    // *** MODIFIED SECTION START ***
+                    // Create a list of player DTOs from the session's player dictionary
                     var playerList = gameSession
-                        .Players.Values.Select(p => new { p.UserId, p.Username })
+                        .Players.Values.Select(p => new
+                        {
+                            p.UserId,
+                            p.Username,
+                            IsHost = false
+                        })
                         .ToList();
+
+                    // Manually add the host to the list so they appear in their own lobby
+                    playerList.Add(
+                        new
+                        {
+                            UserId = gameSession.HostUserId,
+                            Username = gameSession.HostUsername,
+                            IsHost = true
+                        }
+                    );
+
+                    // Broadcast the complete list (including the host)
                     await Clients.Group(roomCode).SendAsync("UpdatePlayerList", playerList);
+                    // *** MODIFIED SECTION END ***
+
                     _logger.LogInformation(
-                        "Player {Username} successfully joined room {RoomCode}. Sent updated player list to group.",
+                        "User {Username} successfully joined room {RoomCode}. Sent updated player list to group.",
                         username,
                         roomCode
                     );
