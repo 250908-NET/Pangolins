@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,12 +11,9 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { LogIn, AlertCircle, Loader2 } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
 import { useJoinGame } from '@/hooks/useGames'
 
 export default function JoinGamePage() {
-  const navigate = useNavigate()
-  const { user } = useAuth()
   const [roomCode, setRoomCode] = useState('')
   const [error, setError] = useState('')
 

@@ -14,7 +14,7 @@ export const useCreateGame = () => {
 
   return useMutation({
     mutationFn: (quizId: number) => gameService.createGame(quizId),
-    onSuccess: (data, quizId) => {
+    onSuccess: (data ) => {
       const { roomCode } = data;
       // Set the host as the current player for the lobby
       const hostPlayer = {
@@ -45,6 +45,7 @@ export const useJoinGame = () => {
   return useMutation({
     mutationFn: async (roomCode: string) => {
       const gameDetails = await gameService.getGameDetailsByRoomCode(roomCode);
+      console.info(gameDetails);
       return { roomCode, playerName: user!.name };
     },
     onSuccess: ({ roomCode, playerName }) => {
