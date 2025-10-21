@@ -10,7 +10,7 @@ namespace Pangolivia.Tests.TestUtilities;
 /// Base class for repository integration tests using a shared Sqlite in-memory database per test.
 /// Ensures proper creation and disposal of the DbContext and underlying connection.
 /// </summary>
-public abstract class RepositoryTestBase : IDisposable 
+public abstract class RepositoryTestBase : IDisposable
 {
     protected readonly PangoliviaDbContext _context;
     private readonly SqliteConnection _connection;

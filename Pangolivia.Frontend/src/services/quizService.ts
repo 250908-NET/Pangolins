@@ -4,6 +4,7 @@ import type {
   QuizDetailDto,
   CreateQuizRequestDto,
   UpdateQuizRequestDto,
+  GenerateQuizAiRequestDto,
 } from "../types/api";
 import { MOCK_QUIZZES, MOCK_QUIZ_SUMMARIES } from "../lib/mockData";
 
@@ -115,5 +116,13 @@ export const quizService = {
     await api.delete(`/Quiz/${id}`, {
       params: { currentUserId },
     });
+  },
+
+  // POST: api/Quiz/ai/generate
+  generateAiQuestions: async (
+    payload: GenerateQuizAiRequestDto
+  ): Promise<QuizDetailDto["questions"]> => {
+    const response = await api.post(`/Quiz/ai/generate`, payload);
+    return response.data as QuizDetailDto["questions"];
   },
 };

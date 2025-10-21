@@ -23,7 +23,6 @@ namespace Pangolivia.API.Services
         {
             var existingUser = await _userRepository.getUserModelByUsername(userRegisterDto.Username);
 
-
             if (existingUser != null)
             {
                 throw new ArgumentException("Username already exists.");

@@ -44,7 +44,6 @@ namespace Pangolivia.API.Controllers
                 _logger.LogWarning("Login failed for user {Username}.", userLoginDto.Username);
                 return Unauthorized(new { Message = "Invalid username or password." });
             }
-            
             _logger.LogInformation("User {Username} logged in successfully.", userLoginDto.Username);
             return Ok(loginResponse);
         }
