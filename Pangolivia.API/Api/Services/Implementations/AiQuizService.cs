@@ -90,8 +90,10 @@ public class AiQuizService : IAiQuizService
             validatedQuestions.Add(new QuestionDto
             {
                 QuestionText = aiQuestion.QuestionText ?? string.Empty,
-                Options = aiQuestion.Options,
-                CorrectOptionIndex = correctAnswerIndex
+                CorrectAnswer = aiQuestion.Options[correctAnswerIndex],
+                Answer2 = aiQuestion.Options[(correctAnswerIndex + 1) % 4],
+                Answer3 = aiQuestion.Options[(correctAnswerIndex + 2) % 4],
+                Answer4 = aiQuestion.Options[(correctAnswerIndex + 3) % 4],
             });
         }
 

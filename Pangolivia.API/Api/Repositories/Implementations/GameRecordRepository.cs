@@ -45,7 +45,7 @@ public class GameRecordRepository : IGameRecordRepository
     {
         try
         {
-            gameRecord.datetimeCompleted = DateTime.UtcNow;
+            gameRecord.dateTimeCompleted = DateTime.UtcNow;
             _context.GameRecords.Add(gameRecord);
             await _context.SaveChangesAsync();
 

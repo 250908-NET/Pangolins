@@ -33,7 +33,7 @@ public class PlayerGameRecordRepositoryTests : RepositoryTestBase
         {
             HostUserId = user.Id,
             QuizId = quiz.Id,
-            datetimeCompleted = DateTime.UtcNow
+            dateTimeCompleted = DateTime.UtcNow
         };
         _context.GameRecords.Add(gameRecord);
         _context.SaveChanges();
@@ -60,7 +60,7 @@ public class PlayerGameRecordRepositoryTests : RepositoryTestBase
         {
             UserId = userId,
             GameRecordId = gameRecordId,
-            score = 10.5
+            Score = 10.5
         };
         _context.PlayerGameRecords.Add(pgr);
         _context.SaveChanges();
@@ -73,7 +73,7 @@ public class PlayerGameRecordRepositoryTests : RepositoryTestBase
         var saved = result.Single();
         saved.User.Should().NotBeNull();
         saved.GameRecord.Should().NotBeNull();
-        saved.score.Should().Be(10.5); // Assuming 'score' property name is correct
+        saved.Score.Should().Be(10.5); // Assuming 'score' property name is correct
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class PlayerGameRecordRepositoryTests : RepositoryTestBase
         {
             UserId = userId,
             GameRecordId = gameRecordId,
-            score = 7
+            Score = 7
         };
         _context.PlayerGameRecords.Add(pgr);
         _context.SaveChanges();
@@ -123,7 +123,7 @@ public class PlayerGameRecordRepositoryTests : RepositoryTestBase
         {
             UserId = userId,
             GameRecordId = gameRecordId,
-            score = 42.3 // Assuming 'score' property name is correct
+            Score = 42.3 // Assuming 'score' property name is correct
         };
 
         //Act
@@ -133,11 +133,11 @@ public class PlayerGameRecordRepositoryTests : RepositoryTestBase
         created.Id.Should().BeGreaterThan(0);
         created.UserId.Should().Be(userId);
         created.GameRecordId.Should().Be(gameRecordId);
-        created.score.Should().Be(42.3);
+        created.Score.Should().Be(42.3);
 
         var fromDb = await _context.PlayerGameRecords.FindAsync(created.Id);
         fromDb.Should().NotBeNull();
-        fromDb!.score.Should().Be(42.3); // Verify from DB
+        fromDb!.Score.Should().Be(42.3); // Verify from DB
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public class PlayerGameRecordRepositoryTests : RepositoryTestBase
         {
             UserId = userId,
             GameRecordId = gameRecordId,
-            score = 1
+            Score = 1
         };
         _context.PlayerGameRecords.Add(pgr);
         _context.SaveChanges();
@@ -190,7 +190,7 @@ public class PlayerGameRecordRepositoryTests : RepositoryTestBase
         {
             UserId = userId,
             GameRecordId = gameRecordId,
-            score = 25
+            Score = 25
         };
         _context.PlayerGameRecords.Add(pgr);
         _context.SaveChanges();
@@ -201,7 +201,7 @@ public class PlayerGameRecordRepositoryTests : RepositoryTestBase
         result!.Id.Should().Be(pgr.Id);
         result.User.Should().NotBeNull();
         result.GameRecord.Should().NotBeNull();
-        result.score.Should().Be(25);
+        result.Score.Should().Be(25);
     }
 
 
@@ -215,13 +215,13 @@ public class PlayerGameRecordRepositoryTests : RepositoryTestBase
         {
             UserId = userId,
             GameRecordId = gameRecordId,
-            score = 5
+            Score = 5
         };
         _context.PlayerGameRecords.Add(pgr);
         _context.SaveChanges();
 
         // Modify the existing model
-        pgr.score = 99;
+        pgr.Score = 99;
         // pgr.SomeOtherProperty = "New Value"; // If you update other properties
 
         //Act
@@ -230,10 +230,10 @@ public class PlayerGameRecordRepositoryTests : RepositoryTestBase
         //Assert
         updatedRecord.Should().NotBeNull();
         updatedRecord.Id.Should().Be(pgr.Id);
-        updatedRecord.score.Should().Be(99);
+        updatedRecord.Score.Should().Be(99);
 
         var fromDb = await _context.PlayerGameRecords.FirstOrDefaultAsync(x => x.Id == pgr.Id);
         fromDb.Should().NotBeNull();
-        fromDb!.score.Should().Be(99);
+        fromDb!.Score.Should().Be(99);
     }
 }

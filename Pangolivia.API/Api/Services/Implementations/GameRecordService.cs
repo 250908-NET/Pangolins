@@ -35,7 +35,7 @@ namespace Pangolivia.API.Services
             {
                 HostUserId = dto.HostUserId,
                 QuizId = dto.QuizId,
-                datetimeCompleted = DateTime.UtcNow
+                dateTimeCompleted = DateTime.UtcNow
             };
 
             var createdGame = await _gameRecordRepository.CreateGameRecordAsync(gameRecord);
@@ -44,13 +44,14 @@ namespace Pangolivia.API.Services
             {
                 Id = createdGame.Id,
                 HostUserId = createdGame.HostUserId,
+                HostUsername = host.Username,
                 QuizId = createdGame.QuizId,
                 QuizName = quiz.QuizName,
-                datetimeCompleted = createdGame.datetimeCompleted
+                dateTimeCompleted = createdGame.dateTimeCompleted
             };
         }
 
-        // Get all games 
+        // Get all games
         public async Task<IEnumerable<GameRecordDto>> GetAllGamesAsync()
         {
             var games = await _gameRecordRepository.GetAllGameRecordsAsync();
@@ -58,8 +59,10 @@ namespace Pangolivia.API.Services
             {
                 Id = g.Id,
                 HostUserId = g.HostUserId,
+                HostUsername = g.HostUser?.Username ?? "Unknown",
                 QuizId = g.QuizId,
-                datetimeCompleted = g.datetimeCompleted
+                QuizName = g.Quiz?.QuizName ?? "Unknown",
+                dateTimeCompleted = g.dateTimeCompleted
             });
         }
 
@@ -74,8 +77,10 @@ namespace Pangolivia.API.Services
             {
                 Id = game.Id,
                 HostUserId = game.HostUserId,
+                HostUsername = game.HostUser?.Username ?? "Unknown",
                 QuizId = game.QuizId,
-                datetimeCompleted = game.datetimeCompleted
+                QuizName = game.Quiz?.QuizName ?? "Unknown",
+                dateTimeCompleted = game.dateTimeCompleted
             };
         }
 
@@ -86,15 +91,17 @@ namespace Pangolivia.API.Services
             if (game == null)
                 throw new Exception($"Game with ID {gameId} not found.");
 
-            game.datetimeCompleted = DateTime.UtcNow;
+            game.dateTimeCompleted = DateTime.UtcNow;
             await _gameRecordRepository.CreateGameRecordAsync(game); // reuse for save/update
 
             return new GameRecordDto
             {
                 Id = game.Id,
                 HostUserId = game.HostUserId,
+                HostUsername = game.HostUser?.Username ?? "Unknown",
                 QuizId = game.QuizId,
-                datetimeCompleted = game.datetimeCompleted
+                QuizName = game.Quiz?.QuizName ?? "Unknown",
+                dateTimeCompleted = game.dateTimeCompleted
             };
         }
 
@@ -116,8 +123,10 @@ namespace Pangolivia.API.Services
                 {
                     Id = g.Id,
                     HostUserId = g.HostUserId,
+                    HostUsername = g.HostUser?.Username ?? "Unknown",
                     QuizId = g.QuizId,
-                    datetimeCompleted = g.datetimeCompleted
+                    QuizName = g.Quiz?.QuizName ?? "Unknown",
+                    dateTimeCompleted = g.dateTimeCompleted
                 });
 
             return filtered;
@@ -133,8 +142,10 @@ namespace Pangolivia.API.Services
                 {
                     Id = g.Id,
                     HostUserId = g.HostUserId,
+                    HostUsername = g.HostUser?.Username ?? "Unknown",
                     QuizId = g.QuizId,
-                    datetimeCompleted = g.datetimeCompleted
+                    QuizName = g.Quiz?.QuizName ?? "Unknown",
+                    dateTimeCompleted = g.dateTimeCompleted
                 });
 
             return filtered;

@@ -3,8 +3,11 @@
 export interface QuestionDto {
   id: number;
   questionText: string;
-  options: string[];
-  correctOptionIndex: number;
+  // This interface now matches the C# backend DTO
+  correctAnswer: string;
+  answer2: string;
+  answer3: string;
+  answer4: string;
 }
 
 export interface QuizSummaryDto {
