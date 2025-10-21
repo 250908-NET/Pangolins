@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Users, Play, Copy, Check, Loader2 } from "lucide-react";
-import { useSignalR } from "@/contexts/SignalRContext";
+import { useSignalR } from "@/hooks/useSignalR";
 import { toast } from "sonner";
 
 interface Player {

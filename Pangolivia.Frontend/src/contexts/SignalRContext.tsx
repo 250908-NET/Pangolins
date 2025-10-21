@@ -1,6 +1,4 @@
-// src/contexts/SignalRContext.tsx
-
-import { createContext, useState, useContext } from 'react';
+import { createContext, useState } from 'react';
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 
 interface SignalRContextType {
@@ -55,10 +53,4 @@ export function SignalRProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useSignalR() {
-  const context = useContext(SignalRContext);
-  if (context === undefined) {
-    throw new Error('useSignalR must be used within a SignalRProvider');
-  }
-  return context;
-}
+export { SignalRContext }
