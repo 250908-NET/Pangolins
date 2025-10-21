@@ -1,5 +1,4 @@
 using Pangolivia.API.Models;
-namespace Pangolivia.API.Repositories;
 
 namespace Pangolivia.API.Repositories
 {
