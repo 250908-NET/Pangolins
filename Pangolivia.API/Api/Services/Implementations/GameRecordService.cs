@@ -4,7 +4,7 @@ using Pangolivia.API.Repositories;
 
 namespace Pangolivia.API.Services
 {
-    public class GameRecordService: IGameRecordService
+    public class GameRecordService : IGameRecordService
     {
         private readonly IGameRecordRepository _gameRecordRepository;
         private readonly IUserRepository _userRepository;

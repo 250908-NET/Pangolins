@@ -11,9 +11,25 @@ using Pangolivia.API.Options;
 using System;
 using System.Threading.Tasks; // Required for Task.CompletedTask
 
-DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Environment.EnvironmentName == "Development")
+{
+    DotNetEnv.Env.Load();
+}
+
+// Remap Azure SQL connection string to standard format
+if (Environment.GetEnvironmentVariable("SQLAZURECONNSTR_ConnectionStrings__Connection") is string sqlAzureConnStr)
+{
+    Environment.SetEnvironmentVariable("ConnectionStrings__Connection", sqlAzureConnStr);
+}
+
+// Load configuration values.
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddEnvironmentVariables();
 
 // Register DbContext with the read connection string
 builder.Services.AddDbContext<PangoliviaDbContext>(options =>
@@ -146,6 +162,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<PangoliviaDbContext>();
+    context.Database.Migrate(); // Applies all pending EF Core migrations
 
     // Apply migrations automatically
     // context.Database.Migrate();

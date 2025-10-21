@@ -8,7 +8,6 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-       
         // QUIZ mappings
         CreateMap<QuizModel, QuizDetailDto>()
             .ForMember(dest => dest.CreatorUsername, opt => opt.Ignore()); // handle username in service if needed
