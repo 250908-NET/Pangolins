@@ -8,7 +8,7 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-       
+
         // QUIZ mappings
         CreateMap<QuizModel, QuizDetailDto>()
             .ForMember(dest => dest.CreatorUsername, opt => opt.Ignore()); // handle username in service if needed
@@ -21,14 +21,6 @@ public class MappingProfile : Profile
         CreateMap<UpdateQuizRequestDto, QuizModel>();
 
         // QUESTION mappings
-        CreateMap<QuestionModel, QuestionDto>()
-            .ForMember(dest => dest.Options, opt => opt.MapFrom(src => new List<string>
-            {
-                src.CorrectAnswer,
-                src.Answer2,
-                src.Answer3,
-                src.Answer4
-            }))
-            .ForMember(dest => dest.CorrectOptionIndex, opt => opt.MapFrom(src => 0)); // CorrectAnswer is always at index 0
+        CreateMap<QuestionModel, QuestionDto>();
     }
 }
