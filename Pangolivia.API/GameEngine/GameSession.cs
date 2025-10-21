@@ -204,22 +204,22 @@ public class GameSession
     /// </summary>
     ///
     /// <returns>A GameRecordDto for the completed game.</returns>
-    public GameRecordDto EndGameAndGetFinalGameRecord()
+    public CreateGameRecordDto EndGameAndGetFinalGameRecord()
     {
         Status = GameStatus.Ended;
 
-        var gameRecordDto = new GameRecordDto
+        var gameRecordDto = new CreateGameRecordDto
         {
             QuizId = Quiz.Id,
             HostUserId = HostUserId,
             PlayerScores = Players.Values
-                .Select(p => new PlayerGameRecordDto
+                .Select(p => new CreatePlayerGameRecordDto
                 {
                     UserId = p.UserId,
                     Score = p.CurrentScore
                 })
                 .ToList(),
-            CompletedAt = DateTimeOffset.UtcNow,
+            dateTimeCompleted = DateTime.UtcNow,
         };
 
         return gameRecordDto;

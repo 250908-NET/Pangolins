@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pangolivia.API.Data;
 using Pangolivia.API.Models;
-using Pangolivia.Repositories.Interfaces;
 
 namespace Pangolivia.API.Repositories;
 
