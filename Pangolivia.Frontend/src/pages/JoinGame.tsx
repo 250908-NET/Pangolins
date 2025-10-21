@@ -3,84 +3,36 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { LogIn, AlertCircle, Loader2 } from 'lucide-react'
-import { useMutation } from '@tanstack/react-query'
-import { quizService } from '@/services/quizService'
+import { useAuth } from '@/contexts/AuthContext'
+import { useJoinGame } from '@/hooks/useGames'
 
 export default function JoinGamePage() {
   const navigate = useNavigate()
-  const [quizId, setQuizId] = useState('')
-  const [playerName, setPlayerName] = useState('')
+  const { user } = useAuth()
+  const [roomCode, setRoomCode] = useState('')
   const [error, setError] = useState('')
 
-  const handleQuizIdChange = (value: string) => {
-    // Only allow numbers
-    const numericValue = value.replace(/\D/g, '')
-    setQuizId(numericValue)
-    setError('')
-  }
-
-  // Mutation to validate quiz and join game
-  const joinGameMutation = useMutation({
-    mutationFn: async ({ quizId, playerName }: { quizId: number; playerName: string }) => {
-      // Verify quiz exists
-      const quiz = await quizService.getQuizById(quizId)
-      return { quiz, quizId, playerName }
-    },
-    onSuccess: ({ quizId, playerName }) => {
-      // Create player ID and store player info
-      const playerId = crypto.randomUUID()
-      const playerData = {
-        id: playerId,
-        name: playerName,
-        quizId: quizId,
-        isHost: false,
-        joinedAt: new Date().toISOString()
-      }
-
-      // Store current player data
-      localStorage.setItem('currentPlayer', JSON.stringify(playerData))
-
-      // Add player to the quiz's player list
-      const existingPlayers = JSON.parse(
-        localStorage.getItem(`players_${quizId}`) || '[]'
-      )
-      const updatedPlayers = [...existingPlayers, playerData]
-      localStorage.setItem(`players_${quizId}`, JSON.stringify(updatedPlayers))
-
-      // Redirect to game lobby
-      navigate(`/game-lobby?quiz=${quizId}`)
-    },
-    onError: (err: any) => {
-      console.error('Error joining game:', err)
-      if (err.response?.status === 404) {
-        setError('Quiz not found. Please check the Quiz ID.')
-      } else if (err.message) {
-        setError(err.message)
-      } else {
-        setError('Failed to join game. Please try again.')
-      }
-    },
-  })
+  const joinGameMutation = useJoinGame()
 
   const handleJoinGame = () => {
-    if (!playerName.trim()) {
-      setError('Please enter your name')
+    if (!roomCode.trim()) {
+      setError('Please enter a room code')
       return
     }
-
-    if (!quizId) {
-      setError('Please enter a quiz ID')
-      return
-    }
-
     setError('')
-    joinGameMutation.mutate({ quizId: parseInt(quizId), playerName })
+    joinGameMutation.mutate(roomCode.trim())
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && playerName.trim() && quizId && !joinGameMutation.isPending) {
+    if (e.key === 'Enter' && roomCode.trim() && !joinGameMutation.isPending) {
       handleJoinGame()
     }
   }
@@ -91,40 +43,24 @@ export default function JoinGamePage() {
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-3xl">Join Game</CardTitle>
-            <CardDescription>
-              Enter your name and the Quiz ID to join
-            </CardDescription>
+            <CardDescription>Enter the Room Code to join</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="playerName" className="text-base">
-                Your Name
+              <Label htmlFor="roomCode" className="text-base">
+                Room Code
               </Label>
               <Input
-                id="playerName"
+                id="roomCode"
                 type="text"
-                placeholder="Enter your name..."
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="Enter 6-letter room code..."
+                value={roomCode}
+                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                 onKeyPress={handleKeyPress}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="quizId" className="text-base">
-                Quiz ID
-              </Label>
-              <Input
-                id="quizId"
-                type="text"
-                inputMode="numeric"
-                placeholder="Enter Quiz ID..."
-                value={quizId}
-                onChange={(e) => handleQuizIdChange(e.target.value)}
-                onKeyPress={handleKeyPress}
+                maxLength={6}
               />
               <p className="text-muted-foreground text-xs">
-                Ask the host for the Quiz ID
+                Ask the host for the Room Code
               </p>
             </div>
 
@@ -137,7 +73,7 @@ export default function JoinGamePage() {
 
             <Button
               onClick={handleJoinGame}
-              disabled={!playerName.trim() || !quizId || joinGameMutation.isPending}
+              disabled={!roomCode.trim() || joinGameMutation.isPending}
               className="w-full"
               size="lg"
             >
@@ -156,12 +92,12 @@ export default function JoinGamePage() {
 
             <div className="text-center">
               <p className="text-muted-foreground text-sm">
-                {"Don't have a room code?"}{' '}
+                Want to host?{' '}
                 <Link
-                  to="/create-game"
-                  className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                  to="/start-game"
+                  className="font-medium text-primary hover:underline"
                 >
-                  Create a game
+                  Start a game
                 </Link>
               </p>
             </div>

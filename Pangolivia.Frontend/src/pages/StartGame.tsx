@@ -1,43 +1,33 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Play, Users, Loader2 } from 'lucide-react'
 import { useQuizzes } from '@/hooks/useQuizzes'
+import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
-
+import { useCreateGame } from '@/hooks/useGames'
 
 export default function StartGamePage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { data: allQuizzes, isLoading } = useQuizzes()
-  const [hostName, setHostName] = useState('')
   const [selectedQuiz, setSelectedQuiz] = useState<number | null>(null)
 
+  const createGameMutation = useCreateGame()
+
   const handleStartGame = (quizId: number) => {
-    if (!hostName.trim()) {
-      toast.error('Please enter your name before starting the game')
+    if (!user) {
+      toast.error('You must be logged in to start a game.')
       return
     }
-
-    // Create host player
-    const hostPlayer = {
-      id: crypto.randomUUID(),
-      name: hostName,
-      quizId: quizId,
-      isHost: true,
-      joinedAt: new Date().toISOString()
-    }
-    
-    // Store host as current player
-    localStorage.setItem('currentPlayer', JSON.stringify(hostPlayer))
-    
-    // Initialize players list with host
-    localStorage.setItem(`players_${quizId}`, JSON.stringify([hostPlayer]))
-    
-    // Redirect to lobby
-    navigate(`/game-lobby?quiz=${quizId}`)
+    createGameMutation.mutate(quizId)
   }
 
   return (
@@ -46,27 +36,9 @@ export default function StartGamePage() {
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold">Start a Game</h1>
           <p className="text-muted-foreground">
-            {"Select a game you've created and start a new session"}
+            Select a game you've created and start a new session
           </p>
         </div>
-
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Your Name (Host)</CardTitle>
-            <CardDescription>Enter your name to host the game</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="hostName">Host Name</Label>
-              <Input
-                id="hostName"
-                placeholder="Enter your name..."
-                value={hostName}
-                onChange={(e) => setHostName(e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -87,19 +59,23 @@ export default function StartGamePage() {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Available Quizzes</h2>
             {allQuizzes.map((quiz) => (
-              <Card 
+              <Card
                 key={quiz.id}
-                className={`cursor-pointer transition-all ${
-                  selectedQuiz === quiz.id 
-                    ? 'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-900' 
+                className={`transition-all ${
+                  selectedQuiz === quiz.id
+                    ? 'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-900'
                     : 'hover:border-gray-400'
                 }`}
-                onClick={() => setSelectedQuiz(quiz.id)}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-xl">{quiz.quizName}</CardTitle>
+                    <div
+                      className="flex-1"
+                      onClick={() => setSelectedQuiz(quiz.id)}
+                    >
+                      <CardTitle className="text-xl">
+                        {quiz.quizName}
+                      </CardTitle>
                       <div className="mt-2 flex flex-wrap gap-3 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Users className="h-4 w-4" />
@@ -115,10 +91,15 @@ export default function StartGamePage() {
                         e.stopPropagation()
                         handleStartGame(quiz.id)
                       }}
-                      disabled={!hostName.trim()}
+                      disabled={createGameMutation.isPending}
                       size="lg"
                     >
-                      <Play className="mr-2 h-5 w-5" />
+                      {createGameMutation.isPending &&
+                      createGameMutation.variables === quiz.id ? (
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      ) : (
+                        <Play className="mr-2 h-5 w-5" />
+                      )}
                       Start Game
                     </Button>
                   </div>
@@ -127,7 +108,6 @@ export default function StartGamePage() {
             ))}
           </div>
         )}
-
         <div className="mt-6 flex gap-3">
           <Button
             variant="outline"

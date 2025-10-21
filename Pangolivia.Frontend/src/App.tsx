@@ -32,11 +32,11 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/sign-up" element={<SignUp />} />
-          <Route path="/join-game" element={<JoinGame />} />
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoutesLayout />}>
             <Route path="/create-game" element={<QuizEditor mode="create" />} />
+            <Route path="/join-game" element={<JoinGame />} />
             <Route path="/quiz/edit/:id" element={<QuizEditor mode="edit" />} />
             <Route path="/start-game" element={<StartGame />} />
             <Route path="/edit-game" element={<EditGame />} />
