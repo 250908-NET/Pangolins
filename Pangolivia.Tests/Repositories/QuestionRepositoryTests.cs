@@ -122,9 +122,9 @@ public class QuestionRepositoryTests : RepositoryTestBase
         result.Should().BeNull();
     }
 
-[Fact]
-public async Task GetByIdAsync_WhenFound_ReturnsQuestion()
-{
+    [Fact]
+    public async Task GetByIdAsync_WhenFound_ReturnsQuestion()
+    {
         //Arrange
         var (_, quizId) = SeedUserAndQuiz();
         var q = new QuestionModel

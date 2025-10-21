@@ -18,7 +18,7 @@ public class QuizModel
     [Required]
     [Column("created_by_user_id")]
     public int CreatedByUserId { get; set; }
-    
+
     [ForeignKey(nameof(CreatedByUserId))]
     public UserModel? CreatedByUser { get; set; }
 
