@@ -1,9 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { AxiosError } from 'axios';
 import { gameService } from '../services/gameService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
+
+type ApiErrorResponse = {
+  message: string;
+};
 /**
  * Mutation hook to create a new game session.
  * Handles navigation to the lobby on success.
@@ -27,7 +32,7 @@ export const useCreateGame = () => {
       toast.success(`Game created! Room code: ${roomCode}`);
       navigate(`/game-lobby?roomCode=${roomCode}`);
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       console.error('Failed to create game:', error);
       toast.error(error.response?.data?.message || 'Could not create the game. Please try again.');
     },
@@ -58,7 +63,7 @@ export const useJoinGame = () => {
       localStorage.setItem('currentPlayer', JSON.stringify(playerData));
       navigate(`/game-lobby?roomCode=${roomCode.toUpperCase()}`);
     },
-    onError: (err: any) => {
+    onError: (err: AxiosError<ApiErrorResponse>) => {
       console.error('Error joining game:', err);
       if (err.response?.status === 404) {
         toast.error('Game not found. Please check the Room Code.');

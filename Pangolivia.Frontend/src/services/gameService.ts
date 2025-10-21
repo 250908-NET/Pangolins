@@ -6,8 +6,8 @@ export const gameService = {
     return response.data;
   },
 
-  getGameDetailsByRoomCode: async (roomCode: string): Promise<{}> => {
-    const response = await api.get<{}>(`/games/${roomCode.toUpperCase()}/details`);
+  getGameDetailsByRoomCode: async (roomCode: string): Promise<object> => {
+    const response = await api.get<object>(`/games/${roomCode.toUpperCase()}/details`);
     return response.data;
   },
 };
