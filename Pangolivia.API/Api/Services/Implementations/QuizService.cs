@@ -38,10 +38,10 @@ public class QuizService : IQuizService
             {
                 QuestionText = questionDto.QuestionText,
                 QuizId = quiz.Id,
-                CorrectAnswer = questionDto.Options.ElementAtOrDefault(questionDto.CorrectOptionIndex) ?? string.Empty,
-                Answer2 = questionDto.Options.ElementAtOrDefault(questionDto.CorrectOptionIndex == 0 ? 1 : 0) ?? string.Empty,
-                Answer3 = questionDto.Options.ElementAtOrDefault(questionDto.CorrectOptionIndex <= 1 ? 2 : 1) ?? string.Empty,
-                Answer4 = questionDto.Options.ElementAtOrDefault(questionDto.CorrectOptionIndex <= 2 ? 3 : 2) ?? string.Empty
+                CorrectAnswer = questionDto.CorrectAnswer,
+                Answer2 = questionDto.Answer2,
+                Answer3 = questionDto.Answer3,
+                Answer4 = questionDto.Answer4,
             };
             await _questionRepository.AddAsync(question);
         }
@@ -52,7 +52,7 @@ public class QuizService : IQuizService
         return _mapper.Map<QuizDetailDto>(detailedQuiz);
     }
 
-    // UPDATE QUIZ 
+    // UPDATE QUIZ
     // Need to change since Question will be different
     public async Task<QuizDetailDto> UpdateQuizAsync(int quizId, UpdateQuizRequestDto requestDto, int currentUserId)
     {
@@ -87,10 +87,10 @@ public class QuizService : IQuizService
                 {
                     QuestionText = dto.QuestionText,
                     QuizId = quizId,
-                    CorrectAnswer = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex) ?? string.Empty,
-                    Answer2 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex == 0 ? 1 : 0) ?? string.Empty,
-                    Answer3 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex <= 1 ? 2 : 1) ?? string.Empty,
-                    Answer4 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex <= 2 ? 3 : 2) ?? string.Empty
+                    CorrectAnswer = dto.CorrectAnswer,
+                    Answer2 = dto.Answer2,
+                    Answer3 = dto.Answer3,
+                    Answer4 = dto.Answer4,
                 };
                 await _questionRepository.AddAsync(newQuestion);
             }
@@ -100,10 +100,10 @@ public class QuizService : IQuizService
                 if (existingQuestion != null)
                 {
                     existingQuestion.QuestionText = dto.QuestionText;
-                    existingQuestion.CorrectAnswer = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex) ?? string.Empty;
-                    existingQuestion.Answer2 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex == 0 ? 1 : 0) ?? string.Empty;
-                    existingQuestion.Answer3 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex <= 1 ? 2 : 1) ?? string.Empty;
-                    existingQuestion.Answer4 = dto.Options.ElementAtOrDefault(dto.CorrectOptionIndex <= 2 ? 3 : 2) ?? string.Empty;
+                    existingQuestion.CorrectAnswer = dto.CorrectAnswer;
+                    existingQuestion.Answer2 = dto.Answer2;
+                    existingQuestion.Answer3 = dto.Answer3;
+                    existingQuestion.Answer4 = dto.Answer4;
                     await _questionRepository.UpdateAsync(existingQuestion);
                 }
             }
@@ -158,4 +158,3 @@ public class QuizService : IQuizService
         return _mapper.Map<List<QuizSummaryDto>>(quizzes);
     }
 }
-

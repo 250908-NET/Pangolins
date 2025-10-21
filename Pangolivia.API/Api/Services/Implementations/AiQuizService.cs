@@ -81,17 +81,19 @@ public class AiQuizService : IAiQuizService
             // Skip null or invalid questions
             if (aiQuestion == null) continue;
             if (aiQuestion.Options == null || aiQuestion.Options.Count != 4) continue;
-            
+
             // Validate correct answer index is within valid range (0-3)
             var correctAnswerIndex = aiQuestion.CorrectOptionIndex;
             if (correctAnswerIndex < 0 || correctAnswerIndex > 3) continue;
-            
+
             // Add validated question to result list
             validatedQuestions.Add(new QuestionDto
             {
                 QuestionText = aiQuestion.QuestionText ?? string.Empty,
-                Options = aiQuestion.Options,
-                CorrectOptionIndex = correctAnswerIndex
+                CorrectAnswer = aiQuestion.Options[correctAnswerIndex],
+                Answer2 = aiQuestion.Options[(correctAnswerIndex + 1) % 4],
+                Answer3 = aiQuestion.Options[(correctAnswerIndex + 2) % 4],
+                Answer4 = aiQuestion.Options[(correctAnswerIndex + 3) % 4],
             });
         }
 
@@ -105,16 +107,16 @@ public class AiQuizService : IAiQuizService
     private static string TryExtractJsonArray(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return "[]";
-        
+
         // Find the first '[' and last ']' to extract the JSON array
         var arrayStartIndex = text.IndexOf('[');
         var arrayEndIndex = text.LastIndexOf(']');
-        
+
         if (arrayStartIndex >= 0 && arrayEndIndex > arrayStartIndex)
         {
             return text.Substring(arrayStartIndex, arrayEndIndex - arrayStartIndex + 1);
         }
-        
+
         // Return empty array if no valid JSON array found
         return "[]";
     }
