@@ -1,3 +1,0 @@
-Server=localhost,1433;Database=pangolivia;User Id=sa;Password=YourStrong@Pass123;TrustServerCertificate=True;
-
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=pangolivia;User Id=sa;Password=YourStrong@Pass123;TrustServerCertificate=True;"
