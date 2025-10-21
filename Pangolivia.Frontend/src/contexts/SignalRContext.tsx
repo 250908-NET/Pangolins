@@ -19,7 +19,7 @@ export function SignalRProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const hubUrl = `${import.meta.env.VITE_HUB_URL}${hubPath}`;
+      const hubUrl = `${import.meta.env.VITE_API_URL}${hubPath}`;
 
       const newConnection = new HubConnectionBuilder()
         .withUrl(hubUrl, {
