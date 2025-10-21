@@ -1,7 +1,7 @@
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.IdentityModel.Tokens;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
@@ -21,7 +21,9 @@ namespace Pangolivia.API.Services
 
         public async Task<UserModel> RegisterAsync(UserRegisterDto userRegisterDto)
         {
-            var existingUser = await _userRepository.getUserModelByUsername(userRegisterDto.Username);
+            var existingUser = await _userRepository.getUserModelByUsername(
+                userRegisterDto.Username
+            );
 
             if (existingUser != null)
             {
@@ -33,7 +35,7 @@ namespace Pangolivia.API.Services
                 Username = userRegisterDto.Username,
                 // We hash the password before saving
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(userRegisterDto.Password),
-                AuthUuid = Guid.NewGuid().ToString() // For local users, we can generate a UUID
+                AuthUuid = Guid.NewGuid().ToString(), // For local users, we can generate a UUID
             };
 
             // This now passes the complete user object with the hashed password
@@ -57,13 +59,15 @@ namespace Pangolivia.API.Services
             {
                 UserId = user.Id,
                 Username = user.Username,
-                Token = token
+                Token = token,
             };
         }
 
         private string GenerateJwtToken(UserModel user)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+            var securityKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!)
+            );
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
@@ -72,7 +76,7 @@ namespace Pangolivia.API.Services
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // Standard claim for user ID
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // Standard claim for user ID
                 new Claim(ClaimTypes.Name, user.Username), // Use ClaimTypes.Name for compatibility
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 
             var token = new JwtSecurityToken(
@@ -80,7 +84,8 @@ namespace Pangolivia.API.Services
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(30),
-                signingCredentials: credentials);
+                signingCredentials: credentials
+            );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

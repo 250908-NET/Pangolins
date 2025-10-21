@@ -1,14 +1,13 @@
-using Pangolivia.API.Services;
-using Pangolivia.API.DTOs;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using Pangolivia.API.DTOs;
 // Add this using statement
-using Pangolivia.API.Repositories; 
+using Pangolivia.API.Repositories;
+using Pangolivia.API.Services;
 
 namespace Pangolivia.API.Controllers
 {
-
     [ApiController]
     [Route("api/games")]
     [Authorize]
@@ -32,7 +31,7 @@ namespace Pangolivia.API.Controllers
             {
                 return Unauthorized("Invalid user identifier.");
             }
-            
+
             try
             {
                 var roomCode = await _gameManager.CreateGame(request.QuizId, userId);
@@ -53,7 +52,7 @@ namespace Pangolivia.API.Controllers
                 return NotFound("Game not found.");
             }
 
-            return Ok(new {});
+            return Ok(new { });
         }
     }
 }

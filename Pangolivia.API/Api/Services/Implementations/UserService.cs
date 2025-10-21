@@ -5,9 +5,7 @@ using Pangolivia.API.Services;
 
 public class UserService : IUserService
 {
-
     private IUserRepository _context;
-
 
     public UserService(IUserRepository context)
     {
@@ -23,6 +21,7 @@ public class UserService : IUserService
     {
         return _context.getUserModelById(id);
     }
+
     public Task<UserModel?> findUserByUsernameAsync(string username)
     {
         return _context.getUserModelByUsername(username);
@@ -44,7 +43,9 @@ public class UserService : IUserService
             case QuizModel quiz:
                 return _context.updateUserModelCreatedQuizzes(userId, quiz);
             default:
-                throw new ArgumentException("Unknown Type: should be type:PlayerGameRecordDto, GameRecordModel, QuizModel");
+                throw new ArgumentException(
+                    "Unknown Type: should be type:PlayerGameRecordDto, GameRecordModel, QuizModel"
+                );
         }
     }
 
@@ -52,6 +53,4 @@ public class UserService : IUserService
     {
         await _context.removeUserModel(id);
     }
-
-
 }

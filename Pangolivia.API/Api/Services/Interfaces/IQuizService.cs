@@ -1,12 +1,16 @@
-using Pangolivia.API.Models;
 using Pangolivia.API.DTOs;
+using Pangolivia.API.Models;
 
 namespace Pangolivia.API.Services;
 
 public interface IQuizService
 {
     Task<QuizDetailDto> CreateQuizAsync(CreateQuizRequestDto requestDto, int creatorUserId);
-    Task<QuizDetailDto> UpdateQuizAsync(int quizId, UpdateQuizRequestDto requestDto, int currentUserId);
+    Task<QuizDetailDto> UpdateQuizAsync(
+        int quizId,
+        UpdateQuizRequestDto requestDto,
+        int currentUserId
+    );
     Task DeleteQuizAsync(int id, int currentUserId);
     Task<List<QuizSummaryDto>> GetAllQuizzesAsync();
     Task<QuizDetailDto?> GetQuizByIdAsync(int quizId);

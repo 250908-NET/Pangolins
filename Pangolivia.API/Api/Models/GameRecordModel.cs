@@ -16,12 +16,14 @@ public class GameRecordModel
     [Required]
     [Column("host_user_id")]
     public int HostUserId { get; set; }
+
     [ForeignKey(nameof(HostUserId))]
     public UserModel? HostUser { get; set; }
 
     [Required]
     [Column("quiz_id")]
     public int QuizId { get; set; }
+
     [ForeignKey(nameof(QuizId))]
     public QuizModel? Quiz { get; set; }
 
@@ -29,5 +31,6 @@ public class GameRecordModel
     [Column("datetime_completed")]
     public DateTime datetimeCompleted { get; set; }
 
-    public ICollection<PlayerGameRecordModel> PlayerGameRecords { get; set; } = new List<PlayerGameRecordModel>();
+    public ICollection<PlayerGameRecordModel> PlayerGameRecords { get; set; } =
+        new List<PlayerGameRecordModel>();
 }

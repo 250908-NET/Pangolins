@@ -34,8 +34,7 @@ public class QuestionRepository : IQuestionRepository
 
     public async Task<QuestionModel?> GetByIdAsync(int id)
     {
-        return await _context.Questions
-            .FirstOrDefaultAsync(q => q.Id == id);
+        return await _context.Questions.FirstOrDefaultAsync(q => q.Id == id);
     }
 
     public async Task SaveChangesAsync()
