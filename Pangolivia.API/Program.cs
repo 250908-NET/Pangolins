@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Threading.Tasks; // Required for Task.CompletedTask
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -78,15 +79,49 @@ builder
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
             ),
         };
+
+        // *** ADD THIS SECTION TO HANDLE SIGNALR AUTHENTICATION FROM QUERY STRING ***
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                // If the request is for our hub...
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/gamehub"))
+                {
+                    // Read the token from the query string
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            },
+        };
     });
 
+// *** DEFINE MULTIPLE CORS POLICIES ***
 builder.Services.AddCors(options =>
 {
+    // Policy for public, anonymous API endpoints. No credentials allowed.
     options.AddPolicy(
-        "AllowAll",
+        "AllowAnonymous",
         policy =>
         {
             policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        }
+    );
+
+    // Policy for endpoints that require authentication (JWT token).
+    options.AddPolicy(
+        "AllowAuthenticated",
+        policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:5173") // Your frontend's specific origin
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials(); // Crucial for sending auth tokens
         }
     );
 });
@@ -116,6 +151,9 @@ builder.Services.AddHttpClient(
     }
 );
 
+builder.Services.AddSingleton<GameManagerService>();
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Middleware
@@ -128,8 +166,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowAuthenticated"); // Use the authenticated policy globally now that SignalR needs it
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
@@ -145,5 +184,8 @@ using (var scope = app.Services.CreateScope())
     //Seed DB
     DbSeeder.Seed(context);
 }
+
+// Map the hub
+app.MapHub<Pangolivia.API.Hubs.GameHub>("/gamehub");
 
 app.Run();

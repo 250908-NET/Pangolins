@@ -74,7 +74,8 @@ namespace Pangolivia.API.Services
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // Standard claim for user ID
-                new Claim(JwtRegisteredClaimNames.Name, user.Username),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // Standard claim for user ID
+                new Claim(ClaimTypes.Name, user.Username), // Use ClaimTypes.Name for compatibility
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 
