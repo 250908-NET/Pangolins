@@ -21,8 +21,7 @@ public class UserRepository : IUserRepository
 
     public async Task<UserModel> getUserModelById(int id)
     {
-        var user = await _context.Users.Include(u => u.Username)
-                    .FirstOrDefaultAsync(user => user.Id == id);
+        var user = await _context.Users.FirstOrDefaultAsync(user => user.Id == id);
         if (user != null)
         {
             return user;
@@ -51,11 +50,20 @@ public class UserRepository : IUserRepository
         return user;
     }
     // Update methods*********************************
-    public async Task<UserModel> updateUserModelPlayerGameRecord(int id, PlayerGameRecordDto pgrDto)
+    public async Task<UserModel> updateUserModelPlayerGameRecord(int id, CreatePlayerGameRecordDto pgrDto)
     {
+        if (pgrDto == null)
+        {
+            throw new ArgumentNullException(nameof(pgrDto), "CreatePlayerGameRecordDto cannot be null");
+        }
+        if (!pgrDto.GameRecordId.HasValue)
+        {
+            throw new ArgumentException("GameRecordId must have a value", nameof(pgrDto.GameRecordId));
+        }
+
         var user = await _context.Users
-    .Include(u => u.PlayerGameRecords)
-    .FirstOrDefaultAsync(u => u.Id == id);
+            .Include(u => u.PlayerGameRecords)
+            .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
         {
@@ -64,9 +72,9 @@ public class UserRepository : IUserRepository
 
         var playerGameRecord = new PlayerGameRecordModel
         {
-            GameRecordId = pgrDto.GameRecordId,
+            GameRecordId = pgrDto.GameRecordId.Value,
             UserId = pgrDto.UserId,
-            score = pgrDto.score
+            Score = pgrDto.Score
         };
 
         user.PlayerGameRecords.Add(playerGameRecord);
@@ -88,7 +96,7 @@ public class UserRepository : IUserRepository
         {
             throw new KeyNotFoundException($"UserModel with id {id} not found. HostedGameRecord NOT Updated");
         }
-        // Assign the foreign key 
+        // Assign the foreign key
         GRM.HostUserId = user.Id;
 
         user.HostedGameRecords.Add(GRM);

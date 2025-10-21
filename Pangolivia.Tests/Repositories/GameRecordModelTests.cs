@@ -54,7 +54,7 @@ public class GameRecordModelTests : RepositoryTestBase
         {
             HostUserId = userId,
             QuizId = quizId,
-            datetimeCompleted = DateTime.UtcNow
+            dateTimeCompleted = DateTime.UtcNow
         };
         _context.GameRecords.Add(gameRecord);
         _context.SaveChanges();
@@ -68,7 +68,7 @@ public class GameRecordModelTests : RepositoryTestBase
         var saved = result.Single();
         saved.HostUserId.Should().Be(gameRecord.HostUserId);
         saved.QuizId.Should().Be(gameRecord.QuizId);
-        saved.datetimeCompleted.Should().BeCloseTo(gameRecord.datetimeCompleted, TimeSpan.FromSeconds(1));
+        saved.dateTimeCompleted.Should().BeCloseTo(gameRecord.dateTimeCompleted, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class GameRecordModelTests : RepositoryTestBase
         {
             HostUserId = userId,
             QuizId = quizId,
-            datetimeCompleted = DateTime.UtcNow
+            dateTimeCompleted = DateTime.UtcNow
         };
         _context.GameRecords.Add(gameRecord);
         _context.SaveChanges();
@@ -114,7 +114,7 @@ public class GameRecordModelTests : RepositoryTestBase
         {
             HostUserId = userId,
             QuizId = quizId,
-            datetimeCompleted = DateTime.UtcNow
+            dateTimeCompleted = DateTime.UtcNow
         };
 
         //Act
@@ -124,8 +124,8 @@ public class GameRecordModelTests : RepositoryTestBase
         created.Id.Should().BeGreaterThan(0);
         created.HostUserId.Should().Be(userId);
         created.QuizId.Should().Be(quizId);
-        created.datetimeCompleted.Should().BeOnOrAfter(DateTime.UtcNow.AddSeconds(-1));
-        created.datetimeCompleted.Should().BeOnOrBefore(DateTime.UtcNow.AddSeconds(1));
+        created.dateTimeCompleted.Should().BeOnOrAfter(DateTime.UtcNow.AddSeconds(-1));
+        created.dateTimeCompleted.Should().BeOnOrBefore(DateTime.UtcNow.AddSeconds(1));
 
         var fromDb = await _repo.GetGameRecordByIdAsync(created.Id);
         fromDb.Should().NotBeNull();
@@ -140,7 +140,7 @@ public class GameRecordModelTests : RepositoryTestBase
         {
             HostUserId = userId,
             QuizId = quizId,
-            datetimeCompleted = DateTime.UtcNow
+            dateTimeCompleted = DateTime.UtcNow
         };
         _context.GameRecords.Add(gameRecord);
         _context.SaveChanges();
