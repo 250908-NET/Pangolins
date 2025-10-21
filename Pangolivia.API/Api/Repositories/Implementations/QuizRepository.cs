@@ -8,7 +8,6 @@ namespace Pangolivia.API.Repositories;
 public class QuizRepository : IQuizRepository
 {
     private readonly PangoliviaDbContext _context;
-  
 
     public QuizRepository(PangoliviaDbContext context)
     {
