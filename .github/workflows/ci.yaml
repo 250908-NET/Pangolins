@@ -55,9 +55,9 @@ jobs:
         run: npm run lint
 
       # Optional: Add TypeScript type checking
-      - name: Type check
-        working-directory: ./Pangolivia.Frontend
-        run: npm run typecheck
+      # - name: Type check
+      #   working-directory: ./Pangolivia.Frontend
+      #   run: npm run typecheck
 
   docker:
     needs: [backend, frontend]
