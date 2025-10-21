@@ -15,7 +15,7 @@
         {
             "label": "docker: start",
             "type": "shell",
-            "command": "cd ./scripts/local-docker/ && docker compose up -d",
+            "command": "cd ./scripts/local-docker/ && docker compose up -d && echo 'Panglivia: localhost:3000'",
             "group": "none",
             "presentation": {
                 "reveal": "always",
