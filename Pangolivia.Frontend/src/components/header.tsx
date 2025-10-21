@@ -1,5 +1,22 @@
 import { Link } from 'react-router-dom'
 import { FaHome } from 'react-icons/fa'
+import { FaMoon, FaSun } from 'react-icons/fa'
+// Simple theme toggle using document root class
+const useTheme = () => {
+    const [theme, setTheme] = React.useState(() =>
+        document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+    );
+    const toggleTheme = () => {
+        if (theme === 'light') {
+            document.documentElement.classList.add('dark');
+            setTheme('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            setTheme('light');
+        }
+    };
+    return { theme, toggleTheme };
+};
 import { Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import React from 'react'
@@ -14,18 +31,20 @@ const menuItems = [
     { name: 'Profile', href: '/profile' },
 ]
 
+
 export const Header = () => {
-    const { isAuthenticated, logout } = useAuth()
-    const [menuState, setMenuState] = React.useState(false)
-    const [isScrolled, setIsScrolled] = React.useState(false)
+    const { isAuthenticated, logout } = useAuth();
+    const [menuState, setMenuState] = React.useState(false);
+    const [isScrolled, setIsScrolled] = React.useState(false);
+    const { theme, toggleTheme } = useTheme();
 
     React.useEffect(() => {
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50)
-        }
-        window.addEventListener('scroll', handleScroll)
-        return () => window.removeEventListener('scroll', handleScroll)
-    }, [])
+            setIsScrolled(window.scrollY > 50);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
     return (
         <header>
             <nav
@@ -40,6 +59,13 @@ export const Header = () => {
                                 className="flex items-center space-x-2">
                                 <FaHome size={28} />
                             </Link>
+                            {/* Theme toggle button */}
+                            <button
+                                aria-label="Toggle theme"
+                                onClick={toggleTheme}
+                                className="ml-2 p-2 rounded-full border border-muted-foreground hover:bg-muted-foreground/10 focus:outline-none focus:ring-2 focus:ring-accent">
+                                {theme === 'dark' ? <FaSun size={20} /> : <FaMoon size={20} />}
+                            </button>
 
                             <button
                                 onClick={() => setMenuState(!menuState)}
@@ -135,5 +161,5 @@ export const Header = () => {
                 </div>
             </nav>
         </header>
-    )
+    );
 }
