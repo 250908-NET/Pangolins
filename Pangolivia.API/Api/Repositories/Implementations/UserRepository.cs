@@ -139,7 +139,7 @@ public class UserRepository : IUserRepository
         // throw new NotImplementedException();
     }
 
-    public async Task<UserModel> updateUserModelHostedGameRecord(int id, GameRecordModel GRM)
+    public async Task<UserModel> updateUserModelHostedGameRecord(int id, GameRecordDto GRMdto)
     {
         var user = await _context.Users
         .Include(u => u.Id)
@@ -150,17 +150,25 @@ public class UserRepository : IUserRepository
         {
             throw new KeyNotFoundException($"UserModel with id {id} not found. HostedGameRecord NOT Updated");
         }
-        // Assign the foreign key 
-        GRM.HostUserId = user.Id;
 
-        user.HostedGameRecords.Add(GRM);
+        GameRecordModel insertModel = new
+        GameRecordModel
+        {
+            Id = GRMdto.Id,
+            HostUserId = user.Id,
+            QuizId = GRMdto.QuizId,
+            datetimeCompleted = GRMdto.datetimeCompleted
+        };
+
+
+        user.HostedGameRecords.Add(insertModel);
 
         await _context.SaveChangesAsync();
 
         return user;
         // throw new NotImplementedException();
     }
-    public async Task<UserModel> updateUserModelCreatedQuizzes(int id, QuizModel quiz)
+    public async Task<UserModel> updateUserModelCreatedQuizzes(int id, QuizDetailDto quizDto)
     {
         var user = await _context.Users
         .Include(u => u.Id)
@@ -171,15 +179,20 @@ public class UserRepository : IUserRepository
         {
             throw new KeyNotFoundException($"UserModel with id {id} not found. CreatedQuizzes NOT Updated");
         }
-        // link quize to user
-        quiz.CreatedByUserId = user.Id;
 
-        user.CreatedQuizzes.Add(quiz);
+        QuizModel insertModel = new
+              QuizModel
+        {
+            Id = quizDto.Id,
+            QuizName = quizDto.QuizName,
+            CreatedByUserId = user.Id
+        };
+        user.CreatedQuizzes.Add(insertModel);
 
         await _context.SaveChangesAsync();
 
         return user;
-        // throw new NotImplementedException();
+
     }
     // **********************************************
     public async Task removeUserModel(int id)

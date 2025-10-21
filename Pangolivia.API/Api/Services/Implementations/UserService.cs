@@ -39,9 +39,9 @@ public class UserService : IUserService
         {
             case PlayerGameRecordDto pgrDTO:
                 return _context.updateUserModelPlayerGameRecord(userId, pgrDTO);
-            case GameRecordModel GRM:
-                return _context.updateUserModelHostedGameRecord(userId, GRM);
-            case QuizModel quiz:
+            case GameRecordDto GRMdto:
+                return _context.updateUserModelHostedGameRecord(userId, GRMdto);
+            case QuizDetailDto quiz:
                 return _context.updateUserModelCreatedQuizzes(userId, quiz);
             default:
                 throw new ArgumentException("Unknown Type: should be type:PlayerGameRecordDto, GameRecordModel, QuizModel");
