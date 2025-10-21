@@ -76,7 +76,7 @@ namespace Pangolivia.Tests.Services
         {
             var games = new List<GameRecordModel>
             {
-                new GameRecordModel { Id = 1, HostUserId = 1, QuizId = 2, datetimeCompleted = DateTime.UtcNow }
+                new GameRecordModel { Id = 1, HostUserId = 1, QuizId = 2, dateTimeCompleted = DateTime.UtcNow }
             };
             _gameRecordRepoMock.Setup(r => r.GetAllGameRecordsAsync())
                 .ReturnsAsync(games);
@@ -90,7 +90,7 @@ namespace Pangolivia.Tests.Services
         [Fact]
         public async Task GetGameByIdAsync_ShouldReturnGame_WhenFound()
         {
-            var game = new GameRecordModel { Id = 5, HostUserId = 2, QuizId = 3, datetimeCompleted = DateTime.UtcNow };
+            var game = new GameRecordModel { Id = 5, HostUserId = 2, QuizId = 3, dateTimeCompleted = DateTime.UtcNow };
             _gameRecordRepoMock.Setup(r => r.GetGameRecordByIdAsync(5))
                 .ReturnsAsync(game);
 

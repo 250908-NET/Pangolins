@@ -72,6 +72,6 @@ public class PlayerGameRecordRepository : IPlayerGameRecordRepository
     {
         return await _context.PlayerGameRecords
             .Where(p => p.GameRecordId == gameRecordId)
-            .AverageAsync(p => p.score);
+            .AverageAsync(p => p.Score);
     }
 }

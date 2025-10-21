@@ -37,7 +37,7 @@ public class UserService : IUserService
     {
         switch (Obj)
         {
-            case PlayerGameRecordDto pgrDTO:
+            case CreatePlayerGameRecordDto pgrDTO:
                 return _context.updateUserModelPlayerGameRecord(userId, pgrDTO);
             case GameRecordModel GRM:
                 return _context.updateUserModelHostedGameRecord(userId, GRM);
