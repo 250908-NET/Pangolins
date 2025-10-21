@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card'
 import { Play, Users, Loader2 } from 'lucide-react'
 import { useQuizzes } from '@/hooks/useQuizzes'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import { useCreateGame } from '@/hooks/useGames'
 
