@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2, Edit, Loader2 } from "lucide-react";
 import { useQuizzesByUser, useDeleteQuiz } from "@/hooks/useQuizzes";
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from "sonner";
 
 // const CURRENT_USER_ID = 1;
