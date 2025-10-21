@@ -16,3 +16,5 @@ services:
     container_name: pangolivia-frontend
     ports:
       - "3000:80"
+  
+  
