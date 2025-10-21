@@ -1,6 +1,6 @@
 using AutoMapper;
-using Pangolivia.API.Models;
 using Pangolivia.API.DTOs;
+using Pangolivia.API.Models;
 
 namespace Pangolivia.API.Data;
 
@@ -14,12 +14,30 @@ public class MappingProfile : Profile
 
         CreateMap<QuizModel, QuizSummaryDto>()
             .ForMember(dest => dest.QuestionCount, opt => opt.MapFrom(src => src.Questions.Count))
-            .ForMember(dest => dest.CreatorUsername, opt => opt.MapFrom(src => src.CreatedByUser != null ? src.CreatedByUser.Username : "Unknown"));
+            .ForMember(
+                dest => dest.CreatorUsername,
+                opt =>
+                    opt.MapFrom(src =>
+                        src.CreatedByUser != null ? src.CreatedByUser.Username : "Unknown"
+                    )
+            );
 
         CreateMap<CreateQuizRequestDto, QuizModel>();
         CreateMap<UpdateQuizRequestDto, QuizModel>();
 
         // QUESTION mappings
         CreateMap<QuestionModel, QuestionDto>();
+
+        // USER mappings
+        CreateMap<UserModel, UserSummaryDto>();
+        CreateMap<UserModel, UserDetailDto>()
+            .ForMember(
+                dest => dest.HostedGamesCount,
+                opt => opt.MapFrom(src => src.HostedGameRecords.Count)
+            )
+            .ForMember(
+                dest => dest.GamesPlayedCount,
+                opt => opt.MapFrom(src => src.PlayerGameRecords.Count)
+            );
     }
 }

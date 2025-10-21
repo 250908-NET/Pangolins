@@ -13,7 +13,11 @@ public class QuizService : IQuizService
     private readonly IQuestionRepository _questionRepository;
     private readonly IMapper _mapper;
 
-    public QuizService(IQuizRepository quizRepository, IQuestionRepository questionRepository, IMapper mapper)
+    public QuizService(
+        IQuizRepository quizRepository,
+        IQuestionRepository questionRepository,
+        IMapper mapper
+    )
     {
         _quizRepository = quizRepository;
         _questionRepository = questionRepository;
@@ -21,12 +25,15 @@ public class QuizService : IQuizService
     }
 
     // Create Quiz
-    public async Task<QuizDetailDto> CreateQuizAsync(CreateQuizRequestDto requestDto, int creatorUserId)
+    public async Task<QuizDetailDto> CreateQuizAsync(
+        CreateQuizRequestDto requestDto,
+        int creatorUserId
+    )
     {
         var quiz = new QuizModel
         {
             QuizName = requestDto.QuizName,
-            CreatedByUserId = creatorUserId
+            CreatedByUserId = creatorUserId,
         };
 
         await _quizRepository.AddAsync(quiz);
@@ -54,7 +61,11 @@ public class QuizService : IQuizService
 
     // UPDATE QUIZ
     // Need to change since Question will be different
-    public async Task<QuizDetailDto> UpdateQuizAsync(int quizId, UpdateQuizRequestDto requestDto, int currentUserId)
+    public async Task<QuizDetailDto> UpdateQuizAsync(
+        int quizId,
+        UpdateQuizRequestDto requestDto,
+        int currentUserId
+    )
     {
         var existingQuiz = await _quizRepository.GetByIdWithDetailsAsync(quizId);
         if (existingQuiz == null)
@@ -153,7 +164,9 @@ public class QuizService : IQuizService
     // FIND QUIZZES BY NAME
     public async Task<List<QuizSummaryDto>> FindQuizzesByNameAsync(string query)
     {
-        var quizzes = string.IsNullOrWhiteSpace(query) ? await _quizRepository.GetAllAsync() : await _quizRepository.FindByNameAsync(query);
+        var quizzes = string.IsNullOrWhiteSpace(query)
+            ? await _quizRepository.GetAllAsync()
+            : await _quizRepository.FindByNameAsync(query);
 
         return _mapper.Map<List<QuizSummaryDto>>(quizzes);
     }

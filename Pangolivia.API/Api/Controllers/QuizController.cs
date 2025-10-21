@@ -1,9 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
-using Pangolivia.API.Services;
-using Pangolivia.API.DTOs;
 using System.Net.Http;
 using System.Threading;
-
+using Microsoft.AspNetCore.Mvc;
+using Pangolivia.API.DTOs;
+using Pangolivia.API.Services;
 
 namespace Pangolivia.API.Controllers
 {
@@ -15,7 +14,11 @@ namespace Pangolivia.API.Controllers
         private readonly IAiQuizService _aiQuizService;
         private readonly ILogger<QuizController> _logger;
 
-        public QuizController(IQuizService quizService, IAiQuizService aiQuizService, ILogger<QuizController> logger)
+        public QuizController(
+            IQuizService quizService,
+            IAiQuizService aiQuizService,
+            ILogger<QuizController> logger
+        )
         {
             _quizService = quizService;
             _aiQuizService = aiQuizService;
@@ -24,7 +27,10 @@ namespace Pangolivia.API.Controllers
 
         // POST: api/Quiz
         [HttpPost]
-        public async Task<ActionResult<QuizDetailDto>> CreateQuiz([FromBody] CreateQuizRequestDto requestDto, [FromQuery] int creatorUserId)
+        public async Task<ActionResult<QuizDetailDto>> CreateQuiz(
+            [FromBody] CreateQuizRequestDto requestDto,
+            [FromQuery] int creatorUserId
+        )
         {
             _logger.LogInformation("Creating a new quiz by user {UserId}.", creatorUserId);
             var result = await _quizService.CreateQuizAsync(requestDto, creatorUserId);
@@ -33,9 +39,17 @@ namespace Pangolivia.API.Controllers
 
         // PUT: api/Quiz/{quizId}
         [HttpPut("{quizId}")]
-        public async Task<ActionResult<QuizDetailDto>> UpdateQuiz(int quizId, [FromBody] UpdateQuizRequestDto requestDto, [FromQuery] int currentUserId)
+        public async Task<ActionResult<QuizDetailDto>> UpdateQuiz(
+            int quizId,
+            [FromBody] UpdateQuizRequestDto requestDto,
+            [FromQuery] int currentUserId
+        )
         {
-            _logger.LogInformation("Updating quiz {QuizId} by user {UserId}.", quizId, currentUserId);
+            _logger.LogInformation(
+                "Updating quiz {QuizId} by user {UserId}.",
+                quizId,
+                currentUserId
+            );
             try
             {
                 var result = await _quizService.UpdateQuizAsync(quizId, requestDto, currentUserId);
@@ -48,7 +62,11 @@ namespace Pangolivia.API.Controllers
             }
             catch (UnauthorizedAccessException)
             {
-                _logger.LogWarning("User {UserId} not authorized to update quiz {QuizId}.", currentUserId, quizId);
+                _logger.LogWarning(
+                    "User {UserId} not authorized to update quiz {QuizId}.",
+                    currentUserId,
+                    quizId
+                );
                 return Forbid();
             }
         }
@@ -70,7 +88,11 @@ namespace Pangolivia.API.Controllers
             }
             catch (UnauthorizedAccessException)
             {
-                _logger.LogWarning("User {UserId} not authorized to delete quiz {QuizId}.", currentUserId, id);
+                _logger.LogWarning(
+                    "User {UserId} not authorized to delete quiz {QuizId}.",
+                    currentUserId,
+                    id
+                );
                 return Forbid();
             }
         }
@@ -109,7 +131,9 @@ namespace Pangolivia.API.Controllers
 
         // GET: api/Quiz/search
         [HttpGet("search")]
-        public async Task<ActionResult<List<QuizSummaryDto>>> FindQuizzesByName([FromQuery] string query)
+        public async Task<ActionResult<List<QuizSummaryDto>>> FindQuizzesByName(
+            [FromQuery] string query
+        )
         {
             _logger.LogInformation("Searching quizzes by name: {Query}.", query);
             var result = await _quizService.FindQuizzesByNameAsync(query);
@@ -118,18 +142,31 @@ namespace Pangolivia.API.Controllers
 
         // POST: api/Quiz/ai/generate
         [HttpPost("ai/generate")]
-        public async Task<ActionResult<List<QuestionDto>>> GenerateQuestionsWithAi([FromBody] GenerateQuizAiRequestDto requestDto, CancellationToken ct)
+        public async Task<ActionResult<List<QuestionDto>>> GenerateQuestionsWithAi(
+            [FromBody] GenerateQuizAiRequestDto requestDto,
+            CancellationToken ct
+        )
         {
             if (requestDto.NumberOfQuestions <= 0 || requestDto.NumberOfQuestions > 50)
             {
                 return BadRequest("NumberOfQuestions must be between 1 and 50.");
             }
 
-            _logger.LogInformation("Generating {Count} AI questions on topic '{Topic}' (difficulty: {Difficulty}).", requestDto.NumberOfQuestions, requestDto.Topic, requestDto.Difficulty);
+            _logger.LogInformation(
+                "Generating {Count} AI questions on topic '{Topic}' (difficulty: {Difficulty}).",
+                requestDto.NumberOfQuestions,
+                requestDto.Topic,
+                requestDto.Difficulty
+            );
 
             try
             {
-                var questions = await _aiQuizService.GenerateQuestionsAsync(requestDto.Topic, requestDto.NumberOfQuestions, requestDto.Difficulty, ct);
+                var questions = await _aiQuizService.GenerateQuestionsAsync(
+                    requestDto.Topic,
+                    requestDto.NumberOfQuestions,
+                    requestDto.Difficulty,
+                    ct
+                );
                 return Ok(questions);
             }
             catch (HttpRequestException ex)

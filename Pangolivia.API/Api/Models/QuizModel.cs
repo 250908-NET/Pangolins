@@ -25,4 +25,3 @@ public class QuizModel
     public ICollection<QuestionModel> Questions { get; set; } = new List<QuestionModel>();
     public ICollection<GameRecordModel> GameRecords { get; set; } = new List<GameRecordModel>();
 }
-

@@ -14,6 +14,7 @@ public class QuestionModel
     [Required]
     [Column("quiz_id")]
     public int QuizId { get; set; }
+
     [ForeignKey(nameof(QuizId))]
     public QuizModel? Quiz { get; set; }
 

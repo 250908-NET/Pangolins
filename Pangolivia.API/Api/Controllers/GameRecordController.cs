@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Pangolivia.API.Services;
 using Pangolivia.API.DTOs;
+using Pangolivia.API.Services;
 
 namespace Pangolivia.API.Controllers
 {
@@ -11,7 +11,10 @@ namespace Pangolivia.API.Controllers
         private readonly IGameRecordService _gameRecordService;
         private readonly ILogger<GameRecordController> _logger;
 
-        public GameRecordController(IGameRecordService gameRecordService, ILogger<GameRecordController> logger)
+        public GameRecordController(
+            IGameRecordService gameRecordService,
+            ILogger<GameRecordController> logger
+        )
         {
             _gameRecordService = gameRecordService;
             _logger = logger;

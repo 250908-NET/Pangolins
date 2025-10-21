@@ -29,13 +29,19 @@ namespace Pangolivia.API.Controllers
             }
             catch (ArgumentException ex)
             {
-                _logger.LogWarning("Registration failed for user {Username}: {Message}", userRegisterDto.Username, ex.Message);
+                _logger.LogWarning(
+                    "Registration failed for user {Username}: {Message}",
+                    userRegisterDto.Username,
+                    ex.Message
+                );
                 return Conflict(new { Message = ex.Message });
             }
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<LoginResponseDto>> Login([FromBody] UserLoginDto userLoginDto)
+        public async Task<ActionResult<LoginResponseDto>> Login(
+            [FromBody] UserLoginDto userLoginDto
+        )
         {
             var loginResponse = await _authService.LoginAsync(userLoginDto);
 
@@ -44,7 +50,10 @@ namespace Pangolivia.API.Controllers
                 _logger.LogWarning("Login failed for user {Username}.", userLoginDto.Username);
                 return Unauthorized(new { Message = "Invalid username or password." });
             }
-            _logger.LogInformation("User {Username} logged in successfully.", userLoginDto.Username);
+            _logger.LogInformation(
+                "User {Username} logged in successfully.",
+                userLoginDto.Username
+            );
             return Ok(loginResponse);
         }
     }

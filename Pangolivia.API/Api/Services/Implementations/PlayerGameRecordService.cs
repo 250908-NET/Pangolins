@@ -13,7 +13,8 @@ namespace Pangolivia.API.Services
         public PlayerGameRecordService(
             IPlayerGameRecordRepository playerGameRecordRepository,
             IGameRecordRepository gameRecordRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository
+        )
         {
             _playerGameRecordRepository = playerGameRecordRepository;
             _gameRecordRepository = gameRecordRepository;
@@ -38,7 +39,7 @@ namespace Pangolivia.API.Services
             {
                 GameRecordId = dto.GameRecordId.Value,
                 UserId = dto.UserId,
-                Score = dto.Score
+                Score = dto.Score,
             };
 
             await _playerGameRecordRepository.AddAsync(record);
@@ -59,12 +60,15 @@ namespace Pangolivia.API.Services
             var records = await _playerGameRecordRepository.GetByGameRecordIdAsync(gameRecordId);
             var ordered = records
                 .OrderByDescending(r => r.Score)
-                .Select((r, index) => new LeaderboardDto
-                {
-                    Username = r.User?.Username ?? "Unknown",
-                    Score = r.Score,
-                    Rank = index + 1
-                });
+                .Select(
+                    (r, index) =>
+                        new LeaderboardDto
+                        {
+                            Username = r.User?.Username ?? "Unknown",
+                            Score = r.Score,
+                            Rank = index + 1,
+                        }
+                );
 
             return ordered;
         }
@@ -87,7 +91,8 @@ namespace Pangolivia.API.Services
         public async Task<double> GetAverageScoreByPlayerAsync(int userId)
         {
             var records = await _playerGameRecordRepository.GetByUserIdAsync(userId);
-            if (!records.Any()) return 0;
+            if (!records.Any())
+                return 0;
             return records.Average(r => r.Score);
         }
 
