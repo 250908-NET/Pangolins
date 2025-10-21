@@ -2,7 +2,7 @@ import { LogoIcon } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
@@ -31,8 +31,9 @@ export default function LoginPage() {
         try {
             await login(username, password)
             navigate(from, { replace: true })
-        } catch (err: any) {
-            setError(err.message || 'An unexpected error occurred.')
+        } catch (err) {
+            const error = err as Error
+            setError(error.message || 'An unexpected error occurred.')
         } finally {
             setLoading(false)
         }

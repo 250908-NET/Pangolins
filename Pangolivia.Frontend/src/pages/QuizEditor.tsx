@@ -9,7 +9,7 @@ import {
   useGenerateAiQuestions,
 } from "@/hooks/useQuizzes";
 import type { QuestionDto, QuizDetailDto } from "@/types/api";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
   QuizHeader,
@@ -58,7 +58,7 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
 
   // AI generation controls
   const [aiTopic, setAiTopic] = useState<string>("");
-  const [aiCount, setAiCount] = useState<number>();
+  const [aiCount, setAiCount] = useState<number>(0);
   const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium"
   );
@@ -242,7 +242,8 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
       });
 
       toast.success(`Added ${aiQuestions.length} AI-generated question(s).`);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: string }; message?: string }
       const msg =
         error?.response?.data ?? error?.message ?? "Failed to generate with AI";
       toast.error(typeof msg === "string" ? msg : "Failed to generate with AI");
@@ -363,7 +364,14 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
         toast.success("Quiz created successfully!");
         navigate(`/game-lobby?quiz=${newQuiz.id}`);
       }
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as { 
+        response?: { 
+          status?: number; 
+          data?: string | { message?: string; title?: string; errors?: unknown } 
+        }; 
+        message?: string 
+      }
       console.error(
         `Failed to ${isEditMode ? "update" : "create"} quiz:`,
         error
@@ -378,13 +386,15 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
         // Handle different error response formats
         if (typeof error.response.data === "string") {
           errorMessage = error.response.data;
-        } else if (error.response.data.message) {
-          errorMessage = error.response.data.message;
-        } else if (error.response.data.title) {
-          errorMessage = error.response.data.title;
-        } else if (error.response.data.errors) {
-          // Validation errors object
-          errorMessage = JSON.stringify(error.response.data.errors);
+        } else if (typeof error.response.data === "object") {
+          if (error.response.data.message) {
+            errorMessage = error.response.data.message;
+          } else if (error.response.data.title) {
+            errorMessage = error.response.data.title;
+          } else if (error.response.data.errors) {
+            // Validation errors object
+            errorMessage = JSON.stringify(error.response.data.errors);
+          }
         }
       } else if (error.message) {
         errorMessage = error.message;

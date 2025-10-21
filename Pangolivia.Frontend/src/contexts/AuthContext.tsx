@@ -1,7 +1,8 @@
-import { createContext, useState, useEffect, useContext, useRef } from 'react'
+import { createContext, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode'
 import { api } from '../lib/api'
+import { AxiosError } from 'axios'
 
 interface User {
   id: number
@@ -76,8 +77,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('token', token)
       setToken(token)
       // Navigation is now handled by the component calling login
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Login failed'
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>
+      const errorMessage = axiosError.response?.data?.message || 'Login failed'
       throw new Error(errorMessage)
     }
   }
@@ -86,8 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await api.post('/Auth/register', { username, password })
       navigate('/login')
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Registration failed'
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>
+      const errorMessage = axiosError.response?.data?.message || 'Registration failed'
       throw new Error(errorMessage)
     }
   }
@@ -114,10 +117,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
+export { AuthContext }
