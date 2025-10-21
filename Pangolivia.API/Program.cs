@@ -25,13 +25,11 @@ if (Environment.GetEnvironmentVariable("SQLAZURECONNSTR_ConnectionStrings__Conne
     Environment.SetEnvironmentVariable("ConnectionStrings__Connection", sqlAzureConnStr);
 }
 
+// Load configuration values.
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
-
-// Debug connection string resolution
-Console.WriteLine($"Connection String: {builder.Configuration.GetConnectionString("Connection")}");
 
 // Register DbContext with the read connection string
 builder.Services.AddDbContext<PangoliviaDbContext>(options =>
@@ -40,7 +38,7 @@ builder.Services.AddDbContext<PangoliviaDbContext>(options =>
     if (connectionString == "")
     {
         Console.WriteLine("Connection string not found. Exiting program.");
-        // Environment.Exit(1);
+        Environment.Exit(1);
     }
     options.UseSqlServer(connectionString);
 });
