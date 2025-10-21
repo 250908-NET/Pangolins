@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Logo } from '@/components/logo'
+import { FaHome } from 'react-icons/fa'
 import { Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import React from 'react'
@@ -38,7 +38,7 @@ export const Header = () => {
                                 to="/"
                                 aria-label="home"
                                 className="flex items-center space-x-2">
-                                <Logo />
+                                <FaHome size={28} />
                             </Link>
 
                             <button
