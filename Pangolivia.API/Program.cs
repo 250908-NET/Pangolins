@@ -60,14 +60,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// *** DEFINE MULTIPLE CORS POLICIES ***
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
+    // Policy for public, anonymous API endpoints. No credentials allowed.
+    options.AddPolicy("AllowAnonymous",
         policy =>
         {
             policy.AllowAnyOrigin()
                   .AllowAnyMethod()
                   .AllowAnyHeader();
+        });
+
+    // Policy for endpoints that require authentication (JWT token).
+    options.AddPolicy("AllowAuthenticated",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173") // Your frontend's specific origin
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials(); // Crucial for sending auth tokens
         });
 });
 
@@ -90,6 +102,9 @@ builder.Services.AddHttpClient("OpenAI", c =>
     c.BaseAddress = new Uri("https://api.openai.com/");
 });
 
+builder.Services.AddSingleton<GameManagerService>();
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Middleware
@@ -102,8 +117,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowAnonymous");
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
@@ -192,5 +208,9 @@ using (var scope = app.Services.CreateScope())
         context.SaveChanges();
     }
 }
+
+// *** APPLY THE AUTHENTICATED POLICY TO THE HUB ***
+app.MapHub<Pangolivia.API.Hubs.GameHub>("/gamehub")
+   .RequireCors("AllowAuthenticated");
 
 app.Run();
