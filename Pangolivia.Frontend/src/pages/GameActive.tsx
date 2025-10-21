@@ -100,6 +100,17 @@ const initialGameState: GameState = {
   questions: [],
 }
 
+// Helper function to shuffle an array (Fisher-Yates)
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
+
 export default function GameActivePage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -112,15 +123,21 @@ export default function GameActivePage() {
   // Transform API quiz data to local Question format
   useEffect(() => {
     if (quiz) {
-      const transformedQuestions: Question[] = quiz.questions.map((q) => ({
-        id: q.id.toString(),
-        text: q.questionText,
-        answers: q.options.map((opt, idx) => ({
-          id: `${q.id}-${idx}`,
-          text: opt,
-          isCorrect: idx === q.correctOptionIndex,
-        })),
-      }))
+      const transformedQuestions: Question[] = quiz.questions.map((q) => {
+        // Create an array of answers from the flat API properties
+        const answers: Answer[] = [
+          { id: `${q.id}-0`, text: q.correctAnswer, isCorrect: true },
+          { id: `${q.id}-1`, text: q.answer2, isCorrect: false },
+          { id: `${q.id}-2`, text: q.answer3, isCorrect: false },
+          { id: `${q.id}-3`, text: q.answer4, isCorrect: false },
+        ];
+        
+        return {
+          id: q.id.toString(),
+          text: q.questionText,
+          answers: shuffleArray(answers), // Shuffle answers for the player
+        };
+      });
       dispatch({ type: 'SET_QUESTIONS', payload: transformedQuestions })
     }
   }, [quiz])

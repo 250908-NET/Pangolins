@@ -1,31 +1,31 @@
 namespace Pangolivia.API.DTOs
 {
-    public class PlayerGameRecordDto
+    public record PlayerGameRecordDto
     {
-        public int Id { get; set; }
-        public int GameRecordId { get; set; }
-        public int UserId { get; set; }
+        public int? Id { get; init; }
+        public int? UserId { get; init; }
+        public required string Username { get; set; }
+        public int? GameRecordId { get; init; }
+        public double Score { get; init; }
+        // public int? Rank { get; init; }
+    }
+
+    public record CreatePlayerGameRecordDto
+    {
+        public int? GameRecordId { get; init; }
+        public int UserId { get; init; }
+        public double Score { get; init; }
+    }
+
+    public record UpdatePlayerGameRecordDto
+    {
+        public double Score { get; set; }
+    }
+
+    public record LeaderboardDto
+    {
         public string Username { get; set; } = string.Empty;
-        public double score { get; set; }
-        public DateTime? GameCompletedAt { get; set; }
-    }
-
-    public class CreatePlayerGameRecordDto
-    {
-        public int GameRecordId { get; set; }
-        public int UserId { get; set; }
-        public double score { get; set; }
-    }
-
-    public class UpdatePlayerGameRecordDto
-    {
-        public double score { get; set; }
-    }
-
-    public class LeaderboardDto
-    {
-        public string Username { get; set; } = string.Empty;
-        public double score { get; set; }
+        public double Score { get; set; }
         public int Rank { get; set; }
     }
 }

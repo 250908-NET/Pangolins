@@ -24,7 +24,10 @@ namespace Pangolivia.API.Services
         // Record a player's score (when they finish a quiz)
         public async Task<PlayerGameRecordDto> RecordScoreAsync(CreatePlayerGameRecordDto dto)
         {
-            var game = await _gameRecordRepository.GetGameRecordByIdAsync(dto.GameRecordId);
+            if (dto.GameRecordId == null)
+                throw new ArgumentException("GameRecordId cannot be null.");
+
+            var game = await _gameRecordRepository.GetGameRecordByIdAsync(dto.GameRecordId.Value);
             var user = await _userRepository.getUserModelById(dto.UserId);
 
             if (game == null)
@@ -34,9 +37,9 @@ namespace Pangolivia.API.Services
 
             var record = new PlayerGameRecordModel
             {
-                GameRecordId = dto.GameRecordId,
+                GameRecordId = dto.GameRecordId.Value,
                 UserId = dto.UserId,
-                score = dto.score,
+                Score = dto.Score,
             };
 
             await _playerGameRecordRepository.AddAsync(record);
@@ -47,8 +50,7 @@ namespace Pangolivia.API.Services
                 GameRecordId = record.GameRecordId,
                 UserId = record.UserId,
                 Username = user.Username,
-                score = record.score,
-                GameCompletedAt = game.datetimeCompleted,
+                Score = record.Score,
             };
         }
 
@@ -57,13 +59,13 @@ namespace Pangolivia.API.Services
         {
             var records = await _playerGameRecordRepository.GetByGameRecordIdAsync(gameRecordId);
             var ordered = records
-                .OrderByDescending(r => r.score)
+                .OrderByDescending(r => r.Score)
                 .Select(
                     (r, index) =>
                         new LeaderboardDto
                         {
                             Username = r.User?.Username ?? "Unknown",
-                            score = r.score,
+                            Score = r.Score,
                             Rank = index + 1,
                         }
                 );
@@ -81,8 +83,7 @@ namespace Pangolivia.API.Services
                 GameRecordId = r.GameRecordId,
                 UserId = r.UserId,
                 Username = r.User?.Username ?? string.Empty,
-                score = r.score,
-                GameCompletedAt = r.GameRecord?.datetimeCompleted,
+                Score = r.Score,
             });
         }
 
@@ -92,7 +93,7 @@ namespace Pangolivia.API.Services
             var records = await _playerGameRecordRepository.GetByUserIdAsync(userId);
             if (!records.Any())
                 return 0;
-            return records.Average(r => r.score);
+            return records.Average(r => r.Score);
         }
 
         // Update player’s score
@@ -102,7 +103,7 @@ namespace Pangolivia.API.Services
             if (record == null)
                 throw new Exception($"PlayerGameRecord with ID {recordId} not found.");
 
-            record.score = dto.score;
+            record.Score = dto.Score;
             await _playerGameRecordRepository.UpdateAsync(record);
         }
 

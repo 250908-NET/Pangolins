@@ -66,21 +66,22 @@ public class PangoliviaDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<PlayerGameRecordModel>().HasKey(pgr => pgr.Id);
+        // The following block was redundant and contained a conflicting OnDelete behavior.
+        // It has been removed to resolve the "multiple cascade paths" error.
+        // modelBuilder.Entity<PlayerGameRecordModel>()
+        //     .HasKey(pgr => pgr.Id);
 
-        modelBuilder
-            .Entity<PlayerGameRecordModel>()
-            .HasOne(pgr => pgr.User)
-            .WithMany(u => u.PlayerGameRecords)
-            .HasForeignKey(pgr => pgr.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // modelBuilder.Entity<PlayerGameRecordModel>()
+        //     .HasOne(pgr => pgr.User)
+        //     .WithMany(u => u.PlayerGameRecords)
+        //     .HasForeignKey(pgr => pgr.UserId)
+        //     .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder
-            .Entity<PlayerGameRecordModel>()
-            .HasOne(pgr => pgr.GameRecord)
-            .WithMany(gr => gr.PlayerGameRecords)
-            .HasForeignKey(pgr => pgr.GameRecordId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // modelBuilder.Entity<PlayerGameRecordModel>()
+        //     .HasOne(pgr => pgr.GameRecord)
+        //     .WithMany(gr => gr.PlayerGameRecords)
+        //     .HasForeignKey(pgr => pgr.GameRecordId)
+        //     .OnDelete(DeleteBehavior.Cascade);
 
         base.OnModelCreating(modelBuilder);
     }

@@ -26,18 +26,18 @@ public class MappingProfile : Profile
         CreateMap<UpdateQuizRequestDto, QuizModel>();
 
         // QUESTION mappings
-        CreateMap<QuestionModel, QuestionDto>()
+        CreateMap<QuestionModel, QuestionDto>();
+
+        // USER mappings
+        CreateMap<UserModel, UserSummaryDto>();
+        CreateMap<UserModel, UserDetailDto>()
             .ForMember(
-                dest => dest.Options,
-                opt =>
-                    opt.MapFrom(src => new List<string>
-                    {
-                        src.CorrectAnswer,
-                        src.Answer2,
-                        src.Answer3,
-                        src.Answer4,
-                    })
+                dest => dest.HostedGamesCount,
+                opt => opt.MapFrom(src => src.HostedGameRecords.Count)
             )
-            .ForMember(dest => dest.CorrectOptionIndex, opt => opt.MapFrom(src => 0)); // CorrectAnswer is always at index 0
+            .ForMember(
+                dest => dest.GamesPlayedCount,
+                opt => opt.MapFrom(src => src.PlayerGameRecords.Count)
+            );
     }
 }

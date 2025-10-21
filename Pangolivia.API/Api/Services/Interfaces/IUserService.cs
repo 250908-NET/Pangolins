@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
 
@@ -5,11 +7,8 @@ namespace Pangolivia.API.Services;
 
 public interface IUserService
 {
-    Task<List<UserModel>> getAllUsersAsync();
-    Task<UserModel> getUserByIdAsync(int id);
-    Task<UserModel?> findUserByUsernameAsync(string username);
-
-    // Task<UserModel> createUserAsync(CreateUserDTO userDTO);
-    Task<UserModel> updateUserAsync(int userId, object Obj);
+    Task<IEnumerable<UserSummaryDto>> getAllUsersAsync();
+    Task<UserDetailDto?> getUserByIdAsync(int id);
+    Task<UserDetailDto?> findUserByUsernameAsync(string username);
     Task deleteUserAsync(int id);
 }

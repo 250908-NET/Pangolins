@@ -28,5 +28,5 @@ public class PlayerGameRecordModel
     public GameRecordModel? GameRecord { get; set; }
 
     [Required]
-    public double score { get; set; } = 0;
+    public double Score { get; set; } = 0;
 }
