@@ -1,218 +1,73 @@
 using Microsoft.EntityFrameworkCore;
 using Pangolivia.API.Data;
-using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
 namespace Pangolivia.API.Repositories;
 
 public class UserRepository : IUserRepository
 {
-    private PangoliviaDbContext _context;
+    private readonly PangoliviaDbContext _context; // Changed to readonly for best practice
     public UserRepository(PangoliviaDbContext context)
     {
         _context = context;
     }
-    public async Task<List<UserDto>> getAllUserModels()
-    {
-        // return await _context.Users
-        // .Include(u => u.Username)
-        // .ToListAsync();
 
+    public async Task<List<UserModel>> getAllUserModels()
+    {
         return await _context.Users
-            .Select(u => new UserDto
-            {
-                Id = u.Id,
-                Username = u.Username,
-                PlayerGameRecords = u.PlayerGameRecords
-                    .Select(pgr => new PlayerGameRecordDto
-                    {
-                        Id = pgr.Id,
-                        score = pgr.score
-                    })
-                    .ToList(),
-                HostedGameRecords = u.HostedGameRecords
-                    .Select(g => new GameRecordDto
-                    {
-                        Id = g.Id,
-                        QuizId = g.QuizId,
-                        datetimeCompleted = g.datetimeCompleted
-                    }).ToList(),
-                CreatedQuizzes = u.CreatedQuizzes
-                    .Select(q => new QuizDetailDto
-                    {
-                        Id = q.Id,
-                        QuizName = q.QuizName,
-                        CreatedByUserId = q.CreatedByUserId
-                    }).ToList()
-            })
-                    .ToListAsync();
-        // throw new NotImplementedException();
+            .Include(u => u.CreatedQuizzes)
+                .ThenInclude(q => q.Questions)
+            .Include(u => u.PlayerGameRecords)
+                .ThenInclude(pgr => pgr.GameRecord)
+            .Include(u => u.HostedGameRecords)
+                .ThenInclude(gr => gr.Quiz)
+            .ToListAsync();
     }
 
-    public async Task<UserModel> getUserModelById(int id)
+    public async Task<UserModel?> getUserModelById(int id)
     {
-        var user = await _context.Users
-                    .FirstOrDefaultAsync(user => user.Id == id);
-        if (user != null)
-        {
-            return user;
-        }
-        throw new KeyNotFoundException($"UserModel with id {id} not found.");
-
+        return await _context.Users
+            .Include(u => u.CreatedQuizzes)
+            .Include(u => u.HostedGameRecords)
+            .Include(u => u.PlayerGameRecords)
+            .FirstOrDefaultAsync(user => user.Id == id);
     }
 
-
-
-    public async Task<UserDto?> getUserModelByUsername(string username)
+    public async Task<UserModel?> getUserModelByUsername(string username)
     {
-        // var user = await _context.Users
-        // .FirstOrDefaultAsync(u => u.Username == username);
         return await _context.Users
-        .Where(u => u.Username == username)
-        .Select(u => new UserDto
-        {
-            Id = u.Id,
-            Username = u.Username,
-            PlayerGameRecords = u.PlayerGameRecords
-                .Select(pgr => new PlayerGameRecordDto
-                {
-                    Id = pgr.Id,
-                    score = pgr.score  // Capital S for C# convention
-                })
-                .ToList(),
-            HostedGameRecords = u.HostedGameRecords
-                .Select(g => new GameRecordDto
-                {
-                    Id = g.Id,
-                    QuizId = g.QuizId,
-                    datetimeCompleted = g.datetimeCompleted  // Match property names
-                })
-                .ToList(),
-            CreatedQuizzes = u.CreatedQuizzes
-                .Select(q => new QuizDetailDto
-                {
-                    Id = q.Id,
-                    QuizName = q.QuizName,
-                    CreatedByUserId = q.CreatedByUserId
-                })
-                .ToList()
-        })
-        .FirstOrDefaultAsync(); // <--- important
-        // return user;
+            .Include(u => u.CreatedQuizzes)
+            .Include(u => u.HostedGameRecords)
+            .Include(u => u.PlayerGameRecords)
+            .FirstOrDefaultAsync(u => u.Username == username);
     }
 
     public async Task<UserModel> createUserModel(UserModel newUser)
     {
-        // UserModel newUser = new UserModel
-        // {
-        //     AuthUuid = userDto.authUuid,
-        //     Username = userDto.username
-        // };
-
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
         return newUser;
     }
-    // Update methods*********************************
-    public async Task<UserModel> updateUserModelPlayerGameRecord(int id, PlayerGameRecordDto pgrDto)
-    {
-        var user = await _context.Users
-    .Include(u => u.PlayerGameRecords)
-    .FirstOrDefaultAsync(u => u.Id == id);
 
-        if (user == null)
-        {
-            throw new KeyNotFoundException($"UserModel with id {id} not found. PlayerGameRecord NOT Updated");
-        }
-
-        var playerGameRecord = new PlayerGameRecordModel
-        {
-            GameRecordId = pgrDto.GameRecordId,
-            UserId = pgrDto.UserId,
-            score = pgrDto.score
-        };
-
-        user.PlayerGameRecords.Add(playerGameRecord);
-
-        await _context.SaveChangesAsync();
-
-        return user;
-        // throw new NotImplementedException();
-    }
-
-    public async Task<UserModel> updateUserModelHostedGameRecord(int id, GameRecordDto GRMdto)
-    {
-        var user = await _context.Users
-        .Include(u => u.Id)
-        .Include(u => u.HostedGameRecords)
-        .FirstOrDefaultAsync(u => u.Id == id);
-
-        if (user == null)
-        {
-            throw new KeyNotFoundException($"UserModel with id {id} not found. HostedGameRecord NOT Updated");
-        }
-
-        GameRecordModel insertModel = new
-        GameRecordModel
-        {
-            Id = GRMdto.Id,
-            HostUserId = user.Id,
-            QuizId = GRMdto.QuizId,
-            datetimeCompleted = GRMdto.datetimeCompleted
-        };
-
-
-        user.HostedGameRecords.Add(insertModel);
-
-        await _context.SaveChangesAsync();
-
-        return user;
-        // throw new NotImplementedException();
-    }
-    public async Task<UserModel> updateUserModelCreatedQuizzes(int id, QuizDetailDto quizDto)
-    {
-        var user = await _context.Users
-        .Include(u => u.Id)
-        .Include(u => u.CreatedQuizzes)
-        .FirstOrDefaultAsync(u => u.Id == id);
-
-        if (user == null)
-        {
-            throw new KeyNotFoundException($"UserModel with id {id} not found. CreatedQuizzes NOT Updated");
-        }
-
-        QuizModel insertModel = new
-              QuizModel
-        {
-            Id = quizDto.Id,
-            QuizName = quizDto.QuizName,
-            CreatedByUserId = user.Id
-        };
-        user.CreatedQuizzes.Add(insertModel);
-
-        await _context.SaveChangesAsync();
-
-        return user;
-
-    }
-    // **********************************************
     public async Task removeUserModel(int id)
     {
-        UserModel user = await _context.Users
-        .Include(u => u.CreatedQuizzes)
-        .Include(u => u.PlayerGameRecords)
-        .Include(u => u.HostedGameRecords)
-        .FirstOrDefaultAsync(u => u.Id == id);
+        UserModel? user = await _context.Users
+            .Include(u => u.CreatedQuizzes)
+            .Include(u => u.PlayerGameRecords)
+            .Include(u => u.HostedGameRecords)
+            .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
         {
             throw new KeyNotFoundException($"UserModel with id {id} not found.");
         }
+        
+        // EF Core with cascade delete should handle this, but being explicit can be safer depending on configuration.
+        // The existing logic is fine.
         _context.Quizzes.RemoveRange(user.CreatedQuizzes);
         _context.PlayerGameRecords.RemoveRange(user.PlayerGameRecords);
         _context.GameRecords.RemoveRange(user.HostedGameRecords);
 
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
-
     }
 }

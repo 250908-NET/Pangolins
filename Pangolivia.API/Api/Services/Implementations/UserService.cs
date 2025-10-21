@@ -1,57 +1,41 @@
+using AutoMapper;
 using Pangolivia.API.DTOs;
-using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public class UserService : IUserService
 {
+    private readonly IUserRepository _userRepository;
+    private readonly IMapper _mapper;
 
-    private IUserRepository _context;
-
-
-    public UserService(IUserRepository context)
+    public UserService(IUserRepository userRepository, IMapper mapper)
     {
-        _context = context;
+        _userRepository = userRepository;
+        _mapper = mapper;
     }
 
-    public Task<List<UserDto>> getAllUsersAsync()
+    public async Task<IEnumerable<UserSummaryDto>> getAllUsersAsync()
     {
-        return _context.getAllUserModels();
+        var users = await _userRepository.getAllUserModels();
+        return _mapper.Map<IEnumerable<UserSummaryDto>>(users);
     }
 
-    public Task<UserModel> getUserByIdAsync(int id)
+    public async Task<UserDetailDto?> getUserByIdAsync(int id)
     {
-        return _context.getUserModelById(id);
+        var user = await _userRepository.getUserModelById(id);
+        return _mapper.Map<UserDetailDto>(user);
     }
-    public Task<UserDto?> findUserByUsernameAsync(string username)
+    
+    public async Task<UserDetailDto?> findUserByUsernameAsync(string username)
     {
-        return _context.getUserModelByUsername(username);
+        var user = await _userRepository.getUserModelByUsername(username);
+        return _mapper.Map<UserDetailDto>(user);
     }
-
-    public Task<UserModel> createUserAsync(UserModel User)
-    {
-        return _context.createUserModel(User);
-    }
-
-    public Task<UserModel> updateUserAsync(int userId, object Obj)
-    {
-        switch (Obj)
-        {
-            case PlayerGameRecordDto pgrDTO:
-                return _context.updateUserModelPlayerGameRecord(userId, pgrDTO);
-            case GameRecordDto GRMdto:
-                return _context.updateUserModelHostedGameRecord(userId, GRMdto);
-            case QuizDetailDto quiz:
-                return _context.updateUserModelCreatedQuizzes(userId, quiz);
-            default:
-                throw new ArgumentException("Unknown Type: should be type:PlayerGameRecordDto, GameRecordModel, QuizModel");
-        }
-    }
-
+    
     public async Task deleteUserAsync(int id)
     {
-        await _context.removeUserModel(id);
+        await _userRepository.removeUserModel(id);
     }
-
-
 }

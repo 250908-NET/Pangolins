@@ -1,17 +1,21 @@
 namespace Pangolivia.API.DTOs
 {
-    public class CreateGameRecordDto
+    public record GameRecordDto
     {
-        public int HostUserId { get; set; }
-        public int QuizId { get; set; }
+        public int? Id { get; init; }
+        public int? HostUserId { get; init; }
+        public required string HostUsername { get; init; }
+        public int? QuizId { get; init; }
+        public required string QuizName { get; init; }
+        public List<PlayerGameRecordDto> PlayerScores { get; init; } = new();
+        public DateTime dateTimeCompleted { get; init; }
     }
 
-    public class GameRecordDto
+    public record CreateGameRecordDto
     {
-        public int Id { get; set; }
-        public int HostUserId { get; set; }
-        public int QuizId { get; set; }
-        public string? QuizName { get; set; }
-        public DateTime datetimeCompleted { get; set; }
+        public int HostUserId { get; init; }
+        public int QuizId { get; init; }
+        public List<CreatePlayerGameRecordDto> PlayerScores { get; init; } = new();
+        public DateTime dateTimeCompleted { get; init; }
     }
 }
