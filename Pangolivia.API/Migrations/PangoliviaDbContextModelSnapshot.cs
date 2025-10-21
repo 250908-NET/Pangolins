@@ -203,7 +203,7 @@ namespace Pangolivia.API.Migrations
                     b.HasOne("Pangolivia.API.Models.UserModel", "User")
                         .WithMany("PlayerGameRecords")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("GameRecord");
