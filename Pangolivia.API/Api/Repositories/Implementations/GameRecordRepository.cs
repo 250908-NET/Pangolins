@@ -19,7 +19,12 @@ public class GameRecordRepository : IGameRecordRepository
     {
         try
         {
-            return await _context.GameRecords.ToListAsync();
+            return await _context.GameRecords
+                .Include(g => g.HostUser)
+                .Include(g => g.Quiz)
+                .Include(g => g.PlayerGameRecords)
+                    .ThenInclude(p => p.User)
+                .ToListAsync();
         }
         catch (Exception ex)
         {
@@ -32,7 +37,12 @@ public class GameRecordRepository : IGameRecordRepository
     {
         try
         {
-            return await _context.GameRecords.FindAsync(gameRecordId);
+            return await _context.GameRecords
+                .Include(g => g.HostUser)
+                .Include(g => g.Quiz)
+                .Include(g => g.PlayerGameRecords)
+                    .ThenInclude(p => p.User)
+                .FirstOrDefaultAsync(g => g.Id == gameRecordId);
         }
         catch (Exception ex)
         {
