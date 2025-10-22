@@ -15,7 +15,7 @@ public class GameSession
     private int CurrentQuestionIndex = -1;
     public CancellationTokenSource? QuestionCts { get; set; }
 
-    private GameStatus Status { get; set; } = GameStatus.Pending;
+    private GameStatus Status { get; set; } = GameStatus.NotStarted;
     public string? HostConnectionId { get; set; }
     public readonly ConcurrentDictionary<int, Player> Players; // Made public for easier access from GameManager
 
@@ -35,18 +35,27 @@ public class GameSession
 
     /// <summary>
     /// Has the game started?
-    //  This now also checks the Status enum, which is more reliable.
     /// </summary>
     public bool HasGameStarted()
     {
-        return Status != GameStatus.Pending;
+        return Status != GameStatus.NotStarted;
     }
 
-    // *** NEW METHOD to formally start the game ***
-    public void Start()
+    /// <summary>
+    /// Starts the game and advances to the first question.
+    /// </summary>
+    /// <returns>The first question.</returns>
+    /// <exception cref="InvalidOperationException">If the game has already been started.</exception>
+    public QuestionForPlayerDto Start()
     {
-        Status = GameStatus.ActiveQuestion;
-        CurrentQuestionIndex = -1; // Reset index to ensure HasNextQuestion works correctly
+        if (Status != GameStatus.NotStarted)
+        {
+            throw new InvalidOperationException("Game has already started.");
+        }
+
+        Status = GameStatus.Pending;
+
+        return AdvanceQuestion();
     }
 
     /// <summary>
@@ -101,6 +110,18 @@ public class GameSession
                 "Can not advance the question in a game that has already ended."
             );
         }
+        else if (Status == GameStatus.NotStarted)
+        {
+            throw new InvalidOperationException(
+                      "Can not advance the question in a game that has not started yet."
+                  );
+        }
+        else if (Status == GameStatus.ActiveQuestion)
+        {
+            throw new InvalidOperationException(
+                "Can not advance the question when the current question round hasn't ended yet."
+            );
+        }
 
         ICollection<QuestionModel> questions = Quiz.Questions;
         if (questions == null || CurrentQuestionIndex >= questions.Count - 1)
@@ -109,6 +130,7 @@ public class GameSession
         }
 
         CurrentQuestionIndex++;
+        Status = GameStatus.ActiveQuestion;
 
         QuestionModel currentQuestion = questions.ElementAt(CurrentQuestionIndex);
 
@@ -168,6 +190,15 @@ public class GameSession
     /// (not total scores).</returns>
     public QuestionScoresDto EndQuestionRound()
     {
+        if (Status != GameStatus.ActiveQuestion)
+        {
+            throw new InvalidOperationException(
+                "Cannot end question round when there is no active question."
+            );
+        }
+
+        Status = GameStatus.Pending;
+
         ICollection<QuestionModel> questions = Quiz.Questions;
 
         QuestionModel currentQuestion = questions.ElementAt(CurrentQuestionIndex);
@@ -240,6 +271,7 @@ public class GameSession
 
 enum GameStatus
 {
+    NotStarted,
     Pending,
     ActiveQuestion,
     Ended,
