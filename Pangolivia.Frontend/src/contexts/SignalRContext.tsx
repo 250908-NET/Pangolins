@@ -2,20 +2,20 @@ import { createContext, useState, useCallback, useEffect, useRef } from 'react'
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 
 
-interface Player {
+export interface Player {
   userId: number
   username: string
   isHost: boolean
 }
 
-interface LobbyDetails {
+export interface LobbyDetails {
   quizName: string
   creatorUsername: string
   questionCount: number
   hostUsername: string
 }
 
-interface QuestionForPlayer {
+export interface QuestionForPlayer {
   questionText: string
   answer1: string
   answer2: string
@@ -23,13 +23,13 @@ interface QuestionForPlayer {
   answer4: string
 }
 
-interface RoundResults {
+export interface RoundResults {
   question: string
   answer: string
   playerScores: { userId: number; username: string; score: number }[]
 }
 
-interface FinalGameRecord {
+export interface FinalGameRecord {
   hostUserId: number
   quizId: number
   playerScores: { userId: number; username: string; score: number }[]
@@ -37,7 +37,7 @@ interface FinalGameRecord {
 
 // --- Context Type Definition ---
 
-interface SignalRContextType {
+export interface SignalRContextType {
   connection: HubConnection | null
   connectToHub: (hubPath: string) => Promise<void>
   disconnect: () => Promise<void>

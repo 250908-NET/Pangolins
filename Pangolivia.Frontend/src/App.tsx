@@ -1,27 +1,26 @@
-import { Routes, Route, Outlet } from 'react-router-dom'
-import { Header } from '@/components/header'
-import Home from '@/pages/Home'
-import Login from '@/pages/Login'
-import SignUp from '@/pages/SignUp'
-import QuizEditor from '@/pages/QuizEditor'
-import StartGame from '@/pages/StartGame'
-import JoinGame from '@/pages/JoinGame'
-import EditGame from '@/pages/EditGame'
-import GameLobby from '@/pages/GameLobby'
-import GameActive from '@/pages/GameActive'
-import Profile from '@/pages/Profile'
-import NotFound from '@/pages/NotFound'
-import { Toaster } from '@/components/ui/sonner'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { SessionExpiredModal } from '@/components/SessionExpiredModal'
-import { GameLayout } from './components/GameLayout'
+import { Routes, Route, Outlet } from 'react-router-dom';
+import { Header } from '@/components/header';
+import Home from '@/pages/Home';
+import Login from '@/pages/Login';
+import SignUp from '@/pages/SignUp';
+import QuizEditor from '@/pages/QuizEditor';
+import StartGame from '@/pages/StartGame';
+import JoinGame from '@/pages/JoinGame';
+import EditGame from '@/pages/EditGame';
+import GamePage from '@/pages/Game/GamePage';
+import Profile from '@/pages/Profile';
+import NotFound from '@/pages/NotFound';
+import { Toaster } from '@/components/ui/sonner';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { SessionExpiredModal } from '@/components/SessionExpiredModal';
+// GameLayout is no longer needed here
 
 // Layout component for protected routes
 const ProtectedRoutesLayout = () => (
   <ProtectedRoute>
     <Outlet />
   </ProtectedRoute>
-)
+);
 
 function App() {
   return (
@@ -41,10 +40,10 @@ function App() {
             <Route path="/quiz/edit/:id" element={<QuizEditor mode="edit" />} />
             <Route path="/start-game" element={<StartGame />} />
             <Route path="/edit-game" element={<EditGame />} />
-            <Route element={<GameLayout />}>
-              <Route path="/game-lobby" element={<GameLobby />} />
-              <Route path="/game-active" element={<GameActive />} />
-            </Route>
+            
+            {/* --- NEW SIMPLIFIED GAME ROUTE --- */}
+            <Route path="/game/:roomCode" element={<GamePage />} />
+
             <Route path="/profile" element={<Profile />} />
           </Route>
 
@@ -55,7 +54,7 @@ function App() {
       <SessionExpiredModal />
       <Toaster richColors position="bottom-center" />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
