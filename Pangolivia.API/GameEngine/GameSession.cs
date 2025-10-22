@@ -67,6 +67,12 @@ public class GameSession
     /// <returns>A UserDto for the registered user.</returns>
     public UserDto RegisterPlayer(UserDto user, string connectionId)
     {
+        if (HasGameStarted())
+        {
+            throw new InvalidOperationException(
+                "Cannot register new players after the game has started."
+            );
+        }
         if (Players.ContainsKey(user.Id))
         {
             throw new InvalidOperationException(
