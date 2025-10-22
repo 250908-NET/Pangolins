@@ -1,143 +1,75 @@
 using Microsoft.EntityFrameworkCore;
 using Pangolivia.API.Data;
-using Pangolivia.API.DTOs;
 using Pangolivia.API.Models;
+
 namespace Pangolivia.API.Repositories;
 
 public class UserRepository : IUserRepository
 {
-    private PangoliviaDbContext _context;
+    private readonly PangoliviaDbContext _context; // Changed to readonly for best practice
+
     public UserRepository(PangoliviaDbContext context)
     {
         _context = context;
     }
+
     public async Task<List<UserModel>> getAllUserModels()
     {
-        return await _context.Users
-        .Include(u => u.Username)
-        .ToListAsync();
-        // throw new NotImplementedException();
+        return await _context
+            .Users.Include(u => u.CreatedQuizzes)
+            .ThenInclude(q => q.Questions)
+            .Include(u => u.PlayerGameRecords)
+            .ThenInclude(pgr => pgr.GameRecord)
+            .Include(u => u.HostedGameRecords)
+            .ThenInclude(gr => gr.Quiz)
+            .ToListAsync();
     }
 
-    public async Task<UserModel> getUserModelById(int id)
+    public async Task<UserModel?> getUserModelById(int id)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(user => user.Id == id);
-        if (user != null)
-        {
-            return user;
-        }
-        throw new KeyNotFoundException($"UserModel with id {id} not found.");
-
+        return await _context
+            .Users.Include(u => u.CreatedQuizzes)
+            .Include(u => u.HostedGameRecords)
+            .Include(u => u.PlayerGameRecords)
+            .FirstOrDefaultAsync(user => user.Id == id);
     }
-
-
 
     public async Task<UserModel?> getUserModelByUsername(string username)
     {
-        var user = await _context.Users
-        .Include(u => u.PlayerGameRecords)
-        .Include(u => u.HostedGameRecords)
-        .Include(u => u.CreatedQuizzes)
-        .FirstOrDefaultAsync(u => u.Username == username);
-
-        return user;
-    }
-
-    public async Task<UserModel> createUserModel(UserModel user)
-    {
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-        return user;
-    }
-    // Update methods*********************************
-    public async Task<UserModel> updateUserModelPlayerGameRecord(int id, CreatePlayerGameRecordDto pgrDto)
-    {
-        if (pgrDto == null)
-        {
-            throw new ArgumentNullException(nameof(pgrDto), "CreatePlayerGameRecordDto cannot be null");
-        }
-        if (!pgrDto.GameRecordId.HasValue)
-        {
-            throw new ArgumentException("GameRecordId must have a value", nameof(pgrDto.GameRecordId));
-        }
-
-        var user = await _context.Users
+        return await _context
+            .Users.Include(u => u.CreatedQuizzes)
+            .Include(u => u.HostedGameRecords)
             .Include(u => u.PlayerGameRecords)
+            .FirstOrDefaultAsync(u => u.Username == username);
+    }
+
+    public async Task<UserModel> createUserModel(UserModel newUser)
+    {
+        _context.Users.Add(newUser);
+        await _context.SaveChangesAsync();
+        return newUser;
+    }
+
+    public async Task removeUserModel(int id)
+    {
+        UserModel? user = await _context
+            .Users.Include(u => u.CreatedQuizzes)
+            .Include(u => u.PlayerGameRecords)
+            .Include(u => u.HostedGameRecords)
             .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
         {
-            throw new KeyNotFoundException($"UserModel with id {id} not found. PlayerGameRecord NOT Updated");
-        }
-
-        var playerGameRecord = new PlayerGameRecordModel
-        {
-            GameRecordId = pgrDto.GameRecordId.Value,
-            UserId = pgrDto.UserId,
-            Score = pgrDto.Score
-        };
-
-        user.PlayerGameRecords.Add(playerGameRecord);
-
-        await _context.SaveChangesAsync();
-
-        return user;
-        // throw new NotImplementedException();
-    }
-
-    public async Task<UserModel> updateUserModelHostedGameRecord(int id, GameRecordModel GRM)
-    {
-        var user = await _context.Users
-        .Include(u => u.Id)
-        .Include(u => u.HostedGameRecords)
-        .FirstOrDefaultAsync(u => u.Id == id);
-
-        if (user == null)
-        {
-            throw new KeyNotFoundException($"UserModel with id {id} not found. HostedGameRecord NOT Updated");
-        }
-        // Assign the foreign key
-        GRM.HostUserId = user.Id;
-
-        user.HostedGameRecords.Add(GRM);
-
-        await _context.SaveChangesAsync();
-
-        return user;
-        // throw new NotImplementedException();
-    }
-    public async Task<UserModel> updateUserModelCreatedQuizzes(int id, QuizModel quiz)
-    {
-        var user = await _context.Users
-        .Include(u => u.Id)
-        .Include(u => u.CreatedQuizzes)
-        .FirstOrDefaultAsync(u => u.Id == id);
-
-        if (user == null)
-        {
-            throw new KeyNotFoundException($"UserModel with id {id} not found. CreatedQuizzes NOT Updated");
-        }
-        // link quize to user
-        quiz.CreatedByUserId = user.Id;
-
-        user.CreatedQuizzes.Add(quiz);
-
-        await _context.SaveChangesAsync();
-
-        return user;
-        // throw new NotImplementedException();
-    }
-    // **********************************************
-    public async Task removeUserModel(int id)
-    {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
-
-        if (user == null)
             throw new KeyNotFoundException($"UserModel with id {id} not found.");
+        }
+
+        // EF Core with cascade delete should handle this, but being explicit can be safer depending on configuration.
+        // The existing logic is fine.
+        _context.Quizzes.RemoveRange(user.CreatedQuizzes);
+        _context.PlayerGameRecords.RemoveRange(user.PlayerGameRecords);
+        _context.GameRecords.RemoveRange(user.HostedGameRecords);
 
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
-
-        // throw new NotImplementedException();
     }
 }

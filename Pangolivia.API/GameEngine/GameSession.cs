@@ -48,13 +48,17 @@ public class GameSession
     {
         if (Players.ContainsKey(user.Id))
         {
-            throw new InvalidOperationException("User is already registered as a player in this game session.");
+            throw new InvalidOperationException(
+                "User is already registered as a player in this game session."
+            );
         }
 
         var player = new Player(user, connectionId);
         if (!Players.TryAdd(user.Id, player))
         {
-            throw new InvalidOperationException("Failed to register player. A player with the same id may already exist.");
+            throw new InvalidOperationException(
+                "Failed to register player. A player with the same id may already exist."
+            );
         }
         return user;
     }
@@ -64,10 +68,12 @@ public class GameSession
     /// </summary>
     public bool HasNextQuestion()
     {
-        if (Status == GameStatus.Ended) return false;
+        if (Status == GameStatus.Ended)
+            return false;
 
         ICollection<QuestionModel> questions = Quiz.Questions;
-        if (questions == null) return false;
+        if (questions == null)
+            return false;
         return CurrentQuestionIndex < questions.Count - 1;
     }
 
@@ -79,11 +85,15 @@ public class GameSession
     {
         if (Status == GameStatus.Ended)
         {
-            throw new InvalidOperationException("Can not advance the question in a game that has already ended.");
+            throw new InvalidOperationException(
+                "Can not advance the question in a game that has already ended."
+            );
         }
         else if (Status == GameStatus.ActiveQuestion)
         {
-            throw new InvalidOperationException("Can not advance the question when the current question round hasn't ended yet.");
+            throw new InvalidOperationException(
+                "Can not advance the question when the current question round hasn't ended yet."
+            );
         }
 
         ICollection<QuestionModel> questions = Quiz.Questions;
@@ -157,7 +167,9 @@ public class GameSession
     {
         if (Status != GameStatus.ActiveQuestion)
         {
-            throw new InvalidOperationException("Cannot end question round when there is no active question.");
+            throw new InvalidOperationException(
+                "Cannot end question round when there is no active question."
+            );
         }
 
         Status = GameStatus.Pending;
@@ -172,20 +184,27 @@ public class GameSession
         foreach (Player player in Players.Values)
         {
             int scoreIncrement = 0;
-            if (player.AnswerToCurrentQuestion != null &&
-                player.AnswerToCurrentQuestion.Equals(correctAnswer, StringComparison.OrdinalIgnoreCase))
+            if (
+                player.AnswerToCurrentQuestion != null
+                && player.AnswerToCurrentQuestion.Equals(
+                    correctAnswer,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
             {
                 // TODO: Factor time into calculating the score increment for a correct answer.
                 scoreIncrement = 1;
                 player.AddPoints(scoreIncrement);
             }
 
-            playerScores.Add(new PlayerQuestionScoresDto
-            {
-                UserId = player.UserId,
-                Username = player.Username,
-                Score = scoreIncrement,
-            });
+            playerScores.Add(
+                new PlayerQuestionScoresDto
+                {
+                    UserId = player.UserId,
+                    Username = player.Username,
+                    Score = scoreIncrement,
+                }
+            );
 
             player.ResetAnswer();
         }
@@ -212,11 +231,11 @@ public class GameSession
         {
             QuizId = Quiz.Id,
             HostUserId = HostUserId,
-            PlayerScores = Players.Values
-                .Select(p => new CreatePlayerGameRecordDto
+            PlayerScores = Players
+                .Values.Select(p => new CreatePlayerGameRecordDto
                 {
                     UserId = p.UserId,
-                    Score = p.CurrentScore
+                    Score = p.CurrentScore,
                 })
                 .ToList(),
             dateTimeCompleted = DateTime.UtcNow,
