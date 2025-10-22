@@ -26,7 +26,7 @@ export interface QuestionForPlayer {
 export interface RoundResults {
   question: string
   answer: string
-  playerScores: { userId: number; username: string; score: number }[]
+  playerScores: { userId: number; username: string; score: number; totalScore: number }[]
 }
 
 export interface FinalGameRecord {
