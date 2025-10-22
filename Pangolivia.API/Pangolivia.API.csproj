@@ -6,11 +6,9 @@
     <UserSecretsId>c1dfc40e-b0a6-4a7e-857e-af9cf0104b5a</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.5.0" />
     <PackageReference Include="AutoMapper" Version="12.0.1" />
-    <PackageReference
-      Include="AutoMapper.Extensions.Microsoft.DependencyInjection"
-      Version="12.0.1"
-    />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.10" />

@@ -1,6 +1,5 @@
-using System;
-using System.Text;
-using System.Threading.Tasks; // Required for Task.CompletedTask
+
+using Auth0.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +9,9 @@ using Pangolivia.API.Models;
 using Pangolivia.API.Options;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
+using System;
+using System.Text;
+using System.Threading.Tasks; // Required for Task.CompletedTask
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,40 +65,27 @@ builder.Services.AddScoped<IAiQuizService, AiQuizService>();
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
-builder
-    .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+// Authentication
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
-            ),
-        };
+        options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}/";
+        options.Audience = builder.Configuration["Auth0:Audience"];
 
-        // *** ADD THIS SECTION TO HANDLE SIGNALR AUTHENTICATION FROM QUERY STRING ***
+        // Configure for SignalR authentication
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
                 var accessToken = context.Request.Query["access_token"];
-
-                // If the request is for our hub...
                 var path = context.HttpContext.Request.Path;
                 if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/gamehub"))
                 {
-                    // Read the token from the query string
                     context.Token = accessToken;
                 }
-
                 return Task.CompletedTask;
-            },
+            }
         };
     });
 
@@ -118,10 +107,11 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy
-                .WithOrigins([
+                .WithOrigins(
                     "http://localhost:3000",
-                    "https://pangolivia-frontend-gjhpf7gphvhmhgbm.canadacentral-01.azurewebsites.net"
-                ]) // Your frontend's specific origin
+                    "https://pangolivia-frontend-gjhpf7gphvhmhgbm.canadacentral-01.azurewebsites.net",
+                    $"https://{builder.Configuration["Auth0:Domain"]}"
+                )
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials(); // Crucial for sending auth tokens
@@ -160,7 +150,6 @@ builder.Services.AddSignalR();
 var app = builder.Build();
 
 app.UseCors("AllowAuthenticated"); // Use the authenticated policy globally now that SignalR needs it
-// Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -169,7 +158,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
@@ -178,12 +166,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<PangoliviaDbContext>();
-    context.Database.Migrate(); // Applies all pending EF Core migrations
-
-    // Apply migrations automatically
-    // context.Database.Migrate();
-
-    //Seed DB
+    context.Database.Migrate();
     DbSeeder.Seed(context);
 }
 

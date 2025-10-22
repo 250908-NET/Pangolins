@@ -17,44 +17,6 @@ namespace Pangolivia.API.Controllers
             _logger = logger;
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] UserRegisterDto userRegisterDto)
-        {
-            try
-            {
-                // Use the alternative register method as it's more complete
-                var user = await _authService.RegisterAsync(userRegisterDto);
-                _logger.LogInformation("User {Username} registered successfully.", user.Username);
-                return Ok(new { Message = "Registration successful" });
-            }
-            catch (ArgumentException ex)
-            {
-                _logger.LogWarning(
-                    "Registration failed for user {Username}: {Message}",
-                    userRegisterDto.Username,
-                    ex.Message
-                );
-                return Conflict(new { Message = ex.Message });
-            }
-        }
-
-        [HttpPost("login")]
-        public async Task<ActionResult<LoginResponseDto>> Login(
-            [FromBody] UserLoginDto userLoginDto
-        )
-        {
-            var loginResponse = await _authService.LoginAsync(userLoginDto);
-
-            if (loginResponse == null)
-            {
-                _logger.LogWarning("Login failed for user {Username}.", userLoginDto.Username);
-                return Unauthorized(new { Message = "Invalid username or password." });
-            }
-            _logger.LogInformation(
-                "User {Username} logged in successfully.",
-                userLoginDto.Username
-            );
-            return Ok(loginResponse);
-        }
+        
     }
 }
