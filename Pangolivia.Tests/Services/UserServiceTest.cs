@@ -120,4 +120,131 @@ public class UserServiceTests
         // Assert
         _userRepoMock.Verify(repo => repo.removeUserModel(1), Times.Once);
     }
+
+
+
+    [Fact]
+    public async Task GetAllUsersAsync_ShouldReturnMappedUserSummaryDtos()
+    {
+        // Arrange
+        var userModels = new List<UserModel>
+            {
+                new UserModel { Id = 1, Username = "Alice"},
+                new UserModel { Id = 2, Username = "Bob" }
+            };
+
+        var expectedDtos = new List<UserSummaryDto>
+            {
+                new UserSummaryDto { Id = 1, Username = "Alice" },
+                new UserSummaryDto { Id = 2, Username = "Bob" }
+            };
+
+        _userRepoMock
+            .Setup(r => r.getAllUserModels())
+            .ReturnsAsync(userModels);
+
+
+        // Act
+        var result = await _userService.getAllUsersAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
+        Assert.Equal("Alice", result.First().Username);
+        Assert.Equal("Bob", result.Last().Username);
+
+        _userRepoMock.Verify(r => r.getAllUserModels(), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetUserByIdAsync_ShouldReturnMappedUserDetailDto_WhenUserExists()
+    {
+        // Arrange
+        int userId = 1;
+        var userModel = new UserModel
+        {
+            Id = userId,
+            Username = "Alice",
+            AuthUuid = "uuid-123"
+        };
+
+        var expectedDto = new UserDetailDto
+        {
+            Id = userId,
+            Username = "Alice"
+        };
+
+        _userRepoMock.Setup(r => r.getUserModelById(userId))
+                     .ReturnsAsync(userModel);
+
+        // Act
+        var result = await _userService.getUserByIdAsync(userId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Alice", result!.Username);
+        Assert.Equal(userId, result.Id);
+
+        _userRepoMock.Verify(r => r.getUserModelById(userId), Times.Once);
+
+    }
+
+
+
+    [Fact]
+    public async Task GetUserByIdAsync_ShouldReturnNull_WhenUserDoesNotExist()
+    {
+        // Arrange
+        int userId = 99;
+        UserModel? nullUser = null;
+
+        _userRepoMock.Setup(r => r.getUserModelById(userId))
+                     .ReturnsAsync(nullUser);
+
+
+
+        // Act
+        var result = await _userService.getUserByIdAsync(userId);
+
+        // Assert
+        Assert.Null(result);
+        _userRepoMock.Verify(r => r.getUserModelById(userId), Times.Once);
+
+    }
+
+    [Fact]
+    public async Task DeleteUserAsync_ShouldCallRepositoryOnce()
+    {
+        // Arrange
+        int userId = 42;
+
+        _userRepoMock.Setup(r => r.removeUserModel(userId))
+                     .Returns(Task.CompletedTask);
+
+        // Act
+        await _userService.deleteUserAsync(userId);
+
+        // Assert
+        _userRepoMock.Verify(r => r.removeUserModel(userId), Times.Once);
+    }
+    [Fact]
+    public async Task DeleteUserAsync_ShouldThrow_WhenRepositoryThrows()
+    {
+        // Arrange
+        int userId = 99;
+        _userRepoMock.Setup(r => r.removeUserModel(userId))
+                     .ThrowsAsync(new Exception("Database failure"));
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<Exception>(() =>
+            _userService.deleteUserAsync(userId)
+        );
+
+        Assert.Equal("Database failure", exception.Message);
+        _userRepoMock.Verify(r => r.removeUserModel(userId), Times.Once);
+    }
 }
+
+
+
+
