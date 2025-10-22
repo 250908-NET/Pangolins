@@ -10,7 +10,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NODE_ENV=production
-ARG VITE_API_URL=https://pangolivia-api-bpdehvd0b4bmcwhj.canadacentral-01.azurewebsites.net/
+ARG VITE_API_URL=https://pangolivia-api-bpdehvd0b4bmcwhj.canadacentral-01.azurewebsites.net
 ENV VITE_API_URL=${VITE_API_URL}
 # Build the Vite app (runs tsc -b && vite build per package.json)
 RUN npm run build
