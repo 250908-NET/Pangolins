@@ -120,7 +120,7 @@ builder.Services.AddCors(options =>
             policy
                 .WithOrigins([
                     "http://localhost:3000",
-                    "https://https://pangolivia-frontend-gjhpf7gphvhmhgbm.canadacentral-01.azurewebsites.net"
+                    "https://pangolivia-frontend-gjhpf7gphvhmhgbm.canadacentral-01.azurewebsites.net"
                 ]) // Your frontend's specific origin
                 .AllowAnyMethod()
                 .AllowAnyHeader()
