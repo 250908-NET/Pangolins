@@ -9,22 +9,26 @@ public class GameSession
     public int Id { get; }
     public string Name { get; }
     public int HostUserId { get; }
+    public string HostUsername { get; }
     public QuizModel Quiz { get; }
 
     private int CurrentQuestionIndex = -1;
+    public CancellationTokenSource? QuestionCts { get; set; }
 
-    private GameStatus Status { get; set; } = GameStatus.Pending;
+    private GameStatus Status { get; set; } = GameStatus.NotStarted;
+    public string? HostConnectionId { get; set; }
+    public readonly ConcurrentDictionary<int, Player> Players; // Made public for easier access from GameManager
 
-    private readonly ConcurrentDictionary<int, Player> Players;
-
-    public GameSession(int id, string name, int hostUserId, QuizModel quiz)
+    public GameSession(int id, string name, int hostUserId, string hostUsername, QuizModel quiz) // Add hostUsername
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(quiz);
+        ArgumentNullException.ThrowIfNull(hostUsername);
 
         Id = id;
         Name = name;
         HostUserId = hostUserId;
+        HostUsername = hostUsername; // Assign host username
         Quiz = quiz;
         Players = new ConcurrentDictionary<int, Player>();
     }
@@ -34,7 +38,21 @@ public class GameSession
     /// </summary>
     public bool HasGameStarted()
     {
-        return CurrentQuestionIndex >= 0;
+        return Status != GameStatus.NotStarted;
+    }
+
+    /// <summary>
+    /// Formally starts the game. New players can no longer join after the game starts.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">If the game has already been started.</exception>
+    public void Start()
+    {
+        if (Status != GameStatus.NotStarted)
+        {
+            throw new InvalidOperationException("Game has already started.");
+        }
+
+        Status = GameStatus.Pending;
     }
 
     /// <summary>
@@ -46,6 +64,12 @@ public class GameSession
     /// <returns>A UserDto for the registered user.</returns>
     public UserDto RegisterPlayer(UserDto user, string connectionId)
     {
+        if (HasGameStarted())
+        {
+            throw new InvalidOperationException(
+                "Cannot register new players after the game has started."
+            );
+        }
         if (Players.ContainsKey(user.Id))
         {
             throw new InvalidOperationException(
@@ -89,6 +113,12 @@ public class GameSession
                 "Can not advance the question in a game that has already ended."
             );
         }
+        else if (Status == GameStatus.NotStarted)
+        {
+            throw new InvalidOperationException(
+                      "Can not advance the question in a game that has not started yet."
+                  );
+        }
         else if (Status == GameStatus.ActiveQuestion)
         {
             throw new InvalidOperationException(
@@ -131,8 +161,6 @@ public class GameSession
             Answer4 = answers[3],
         };
     }
-
-    // public QuestionForPlayerDto NextQuestion() { }
 
     /// <summary>
     /// Register the player's chosen answer.
@@ -192,7 +220,6 @@ public class GameSession
                 )
             )
             {
-                // TODO: Factor time into calculating the score increment for a correct answer.
                 scoreIncrement = 1;
                 player.AddPoints(scoreIncrement);
             }
@@ -247,6 +274,7 @@ public class GameSession
 
 enum GameStatus
 {
+    NotStarted,
     Pending,
     ActiveQuestion,
     Ended,
