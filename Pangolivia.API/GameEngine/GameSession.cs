@@ -116,8 +116,8 @@ public class GameSession
         else if (Status == GameStatus.NotStarted)
         {
             throw new InvalidOperationException(
-                      "Can not advance the question in a game that has not started yet."
-                  );
+                "Can not advance the question in a game that has not started yet."
+            );
         }
         else if (Status == GameStatus.ActiveQuestion)
         {

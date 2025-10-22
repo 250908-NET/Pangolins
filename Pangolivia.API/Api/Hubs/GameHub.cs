@@ -8,10 +8,10 @@ namespace Pangolivia.API.Hubs
     [Authorize]
     public class GameHub : Hub
     {
-        private readonly GameManagerService _gameManager;
+        private readonly IGameManagerService _gameManager;
         private readonly ILogger<GameHub> _logger;
 
-        public GameHub(GameManagerService gameManager, ILogger<GameHub> logger)
+        public GameHub(IGameManagerService gameManager, ILogger<GameHub> logger)
         {
             _gameManager = gameManager;
             _logger = logger;
