@@ -7,7 +7,6 @@ using Pangolivia.API.Controllers;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
-using Pangolivia.API.Services.Interfaces;
 using System;
 using System.Threading.Tasks;
 
