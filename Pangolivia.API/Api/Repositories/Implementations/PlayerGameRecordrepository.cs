@@ -7,38 +7,40 @@ namespace Pangolivia.API.Repositories;
 public class PlayerGameRecordRepository : IPlayerGameRecordRepository
 {
     private PangoliviaDbContext _context;
+
     public PlayerGameRecordRepository(PangoliviaDbContext context)
     {
         _context = context;
     }
+
     public async Task<IEnumerable<PlayerGameRecordModel>> GetAllAsync()
     {
-        return await _context.PlayerGameRecords
-            .Include(p => p.User)
+        return await _context
+            .PlayerGameRecords.Include(p => p.User)
             .Include(p => p.GameRecord)
             .ToListAsync();
     }
 
     public async Task<PlayerGameRecordModel?> GetByIdAsync(int id)
     {
-        return await _context.PlayerGameRecords
-            .Include(p => p.User)
+        return await _context
+            .PlayerGameRecords.Include(p => p.User)
             .Include(p => p.GameRecord)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<IEnumerable<PlayerGameRecordModel>> GetByUserIdAsync(int userId)
     {
-        return await _context.PlayerGameRecords
-            .Where(p => p.UserId == userId)
+        return await _context
+            .PlayerGameRecords.Where(p => p.UserId == userId)
             .Include(p => p.GameRecord)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<PlayerGameRecordModel>> GetByGameRecordIdAsync(int gameRecordId)
     {
-        return await _context.PlayerGameRecords
-            .Where(p => p.GameRecordId == gameRecordId)
+        return await _context
+            .PlayerGameRecords.Where(p => p.GameRecordId == gameRecordId)
             .Include(p => p.User)
             .ToListAsync();
     }
@@ -70,8 +72,8 @@ public class PlayerGameRecordRepository : IPlayerGameRecordRepository
 
     public async Task<double> GetAverageScoreByGameAsync(int gameRecordId)
     {
-        return await _context.PlayerGameRecords
-            .Where(p => p.GameRecordId == gameRecordId)
-            .AverageAsync(p => p.score);
+        return await _context
+            .PlayerGameRecords.Where(p => p.GameRecordId == gameRecordId)
+            .AverageAsync(p => p.Score);
     }
 }

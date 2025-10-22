@@ -1,0 +1,38 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "docker: build",
+            "type": "shell",
+            "command": "docker build -t pangolivia-api:latest -f ./Pangolivia.API/Dockerfile ./Pangolivia.API && docker build -t pangolivia-frontend:latest --build-arg VITE_API_URL=http://localhost:3001/api/ -f ./Pangolivia.Frontend/Dockerfile ./Pangolivia.Frontend",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "docker: start",
+            "type": "shell",
+            "command": "cd ./scripts/local-docker/ && docker compose up -d && echo 'Panglivia: localhost:3000'",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "docker: stop",
+            "type": "shell",
+            "command": "cd ./scripts/local-docker/ && docker compose down",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

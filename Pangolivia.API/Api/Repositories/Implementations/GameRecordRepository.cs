@@ -36,7 +36,11 @@ public class GameRecordRepository : IGameRecordRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving game record with ID {GameRecordId}", gameRecordId);
+            _logger.LogError(
+                ex,
+                "Error retrieving game record with ID {GameRecordId}",
+                gameRecordId
+            );
             throw;
         }
     }
@@ -45,7 +49,7 @@ public class GameRecordRepository : IGameRecordRepository
     {
         try
         {
-            gameRecord.datetimeCompleted = DateTime.UtcNow;
+            gameRecord.dateTimeCompleted = DateTime.UtcNow;
             _context.GameRecords.Add(gameRecord);
             await _context.SaveChangesAsync();
 
@@ -59,6 +63,23 @@ public class GameRecordRepository : IGameRecordRepository
         }
     }
 
+    public async Task<GameRecordModel> UpdateGameRecordAsync(GameRecordModel gameRecord)
+    {
+        try
+        {
+            _context.GameRecords.Update(gameRecord);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Updated game record with ID {GameRecordId}", gameRecord.Id);
+            return gameRecord;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating game record");
+            throw;
+        }
+    }
+
     public async Task<bool> DeleteGameRecordAsync(int gameRecordId)
     {
         try
@@ -66,7 +87,10 @@ public class GameRecordRepository : IGameRecordRepository
             var gameRecord = await _context.GameRecords.FindAsync(gameRecordId);
             if (gameRecord == null)
             {
-                _logger.LogWarning("Game record with ID {GameRecordId} not found for deletion", gameRecordId);
+                _logger.LogWarning(
+                    "Game record with ID {GameRecordId} not found for deletion",
+                    gameRecordId
+                );
                 return false;
             }
 

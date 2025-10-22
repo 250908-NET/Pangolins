@@ -1,16 +1,15 @@
+using System;
+using System.Text;
+using System.Threading.Tasks; // Required for Task.CompletedTask
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Pangolivia.API.Data;
+using Pangolivia.API.Middleware;
+using Pangolivia.API.Models;
+using Pangolivia.API.Options;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
-using Pangolivia.API.Models;
-using Pangolivia.API.Middleware;
-
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Pangolivia.API.Options;
-using System;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,14 +19,17 @@ if (builder.Environment.EnvironmentName == "Development")
 }
 
 // Remap Azure SQL connection string to standard format
-if (Environment.GetEnvironmentVariable("SQLAZURECONNSTR_ConnectionStrings__Connection") is string sqlAzureConnStr)
+if (
+    Environment.GetEnvironmentVariable("SQLAZURECONNSTR_ConnectionStrings__Connection")
+    is string sqlAzureConnStr
+)
 {
     Environment.SetEnvironmentVariable("ConnectionStrings__Connection", sqlAzureConnStr);
 }
 
 // Load configuration values.
-builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
+builder
+    .Configuration.SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
 
@@ -49,6 +51,7 @@ builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
 builder.Services.AddScoped<IGameRecordRepository, GameRecordRepository>();
 builder.Services.AddScoped<IPlayerGameRecordRepository, PlayerGameRecordRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
@@ -60,8 +63,8 @@ builder.Services.AddScoped<IAiQuizService, AiQuizService>();
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder
+    .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -72,19 +75,60 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+            ),
+        };
+
+        // *** ADD THIS SECTION TO HANDLE SIGNALR AUTHENTICATION FROM QUERY STRING ***
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                // If the request is for our hub...
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/gamehub"))
+                {
+                    // Read the token from the query string
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            },
         };
     });
 
+// *** DEFINE MULTIPLE CORS POLICIES ***
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
+    // Policy for public, anonymous API endpoints. No credentials allowed.
+    options.AddPolicy(
+        "AllowAnonymous",
         policy =>
         {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        });
+            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        }
+    );
+
+    // Policy for endpoints that require authentication (JWT token).
+    options.AddPolicy(
+        "AllowAuthenticated",
+        policy =>
+        {
+            policy
+                .WithOrigins([
+                    "http://localhost:5173",
+                    "http://localhost:3000",
+                    "http://localhost:5173",
+                    "https://pangolivia-frontend-gjhpf7gphvhmhgbm.canadacentral-01.azurewebsites.net"
+                ]) // Your frontend's specific origin
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials(); // Crucial for sending auth tokens
+        }
+    );
 });
 
 // Controllers + Swagger
@@ -98,16 +142,26 @@ builder.Services.PostConfigure<OpenAiOptions>(o =>
 {
     if (string.IsNullOrWhiteSpace(o.ApiKey))
     {
-        o.ApiKey = builder.Configuration["OPENAI_API_KEY"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty;
+        o.ApiKey =
+            builder.Configuration["OPENAI_API_KEY"]
+            ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+            ?? string.Empty;
     }
 });
-builder.Services.AddHttpClient("OpenAI", c =>
-{
-    c.BaseAddress = new Uri("https://api.openai.com/");
-});
+builder.Services.AddHttpClient(
+    "OpenAI",
+    c =>
+    {
+        c.BaseAddress = new Uri("https://api.openai.com/");
+    }
+);
+
+builder.Services.AddSingleton<GameManagerService>();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
+app.UseCors("AllowAuthenticated"); // Use the authenticated policy globally now that SignalR needs it
 // Middleware
 if (app.Environment.IsDevelopment())
 {
@@ -118,8 +172,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
-
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
@@ -132,82 +185,11 @@ using (var scope = app.Services.CreateScope())
     // Apply migrations automatically
     // context.Database.Migrate();
 
-    // Check if the tables are empty
-    if (!context.Users.Any() && !context.Quizzes.Any())
-    {
-        // Create a user
-        var user = new UserModel
-        {
-            AuthUuid = Guid.NewGuid().ToString(),
-            Username = "testadmin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123")
-        };
-        context.Users.Add(user);
-        context.SaveChanges();
-
-        // Create a quiz
-        var quiz = new QuizModel
-        {
-            QuizName = "Test Quiz",
-            CreatedByUserId = user.Id
-        };
-        context.Quizzes.Add(quiz);
-        context.SaveChanges();
-
-        // Create 5 sample questions
-        var questions = new List<QuestionModel>
-        {
-            new QuestionModel
-            {
-                QuizId = quiz.Id,
-                QuestionText = "What is the capital of France?",
-                CorrectAnswer = "Paris",
-                Answer2 = "London",
-                Answer3 = "Berlin",
-                Answer4 = "Madrid"
-            },
-
-            new QuestionModel
-            {
-                QuizId = quiz.Id,
-                QuestionText = "Which planet is known as the Red Planet?",
-                CorrectAnswer = "Mars",
-                Answer2 = "Venus",
-                Answer3 = "Jupiter",
-                Answer4 = "Saturn"
-            },
-            new QuestionModel
-            {
-                QuizId = quiz.Id,
-                QuestionText = "What is the primary goal of the player at the start of Stardew Valley?",
-                CorrectAnswer = "Restore and manage a neglected farm inherited from their grandfather",
-                Answer2 = "Build the largest house in Pelican Town",
-                Answer3 = "Defeat monsters in the Skull Cavern",
-                Answer4 = "Become the mayor of Stardew Valley"
-            },
-            new QuestionModel
-            {
-                QuizId = quiz.Id,
-                QuestionText = "What is the largest ocean on Earth?",
-                CorrectAnswer = "Pacific Ocean",
-                Answer2 = "Atlantic Ocean",
-                Answer3 = "Indian Ocean",
-                Answer4 = "Arctic Ocean"
-            },
-            new QuestionModel
-            {
-                QuizId = quiz.Id,
-                QuestionText = "What is the chemical symbol for Gold?",
-                CorrectAnswer = "Au",
-                Answer2 = "Ag",
-                Answer3 = "Fe",
-                Answer4 = "Cu"
-            }
-        };
-
-        context.Questions.AddRange(questions);
-        context.SaveChanges();
-    }
+    //Seed DB
+    DbSeeder.Seed(context);
 }
+
+// Map the hub
+app.MapHub<Pangolivia.API.Hubs.GameHub>("/gamehub");
 
 app.Run();

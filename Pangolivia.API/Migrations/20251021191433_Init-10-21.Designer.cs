@@ -12,8 +12,8 @@ using Pangolivia.API.Data;
 namespace Pangolivia.API.Migrations
 {
     [DbContext(typeof(PangoliviaDbContext))]
-    [Migration("20251020204825_init5")]
-    partial class init5
+    [Migration("20251021191433_Init-10-21")]
+    partial class Init1021
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,7 +42,7 @@ namespace Pangolivia.API.Migrations
                         .HasColumnType("int")
                         .HasColumnName("quiz_id");
 
-                    b.Property<DateTime>("datetimeCompleted")
+                    b.Property<DateTime>("dateTimeCompleted")
                         .HasColumnType("datetime2")
                         .HasColumnName("datetime_completed");
 
@@ -68,12 +68,12 @@ namespace Pangolivia.API.Migrations
                         .HasColumnType("int")
                         .HasColumnName("game_record_id");
 
+                    b.Property<double>("Score")
+                        .HasColumnType("float");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int")
                         .HasColumnName("user_id");
-
-                    b.Property<double>("score")
-                        .HasColumnType("float");
 
                     b.HasKey("Id");
 

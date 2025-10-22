@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Pangolivia.API.Services;
 using Pangolivia.API.DTOs;
-using Pangolivia.API.Models;
-
+using Pangolivia.API.Services;
 
 namespace Pangolivia.API.Controllers
 {
@@ -11,83 +9,65 @@ namespace Pangolivia.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly ILogger<QuizController> _logger;
+        private readonly ILogger<UserController> _logger;
 
-        public UserController(IUserService userService, ILogger<QuizController> logger)
+        public UserController(IUserService userService, ILogger<UserController> logger)
         {
             _userService = userService;
             _logger = logger;
         }
 
-        // POST: api/Quiz
-        [HttpPost]
-        public async Task<ActionResult<UserModel>> CreateUser([FromBody] CreateUserDTO User)
-        {
-            _logger.LogInformation($"Creating a new user. with username {User.username}", User.username);
-            UserModel newUser = new UserModel
-            {
-                AuthUuid = User.authUuid,
-                Username = User.username
-            };
-            UserModel result = await _userService.createUserAsync(newUser);
-            return Ok(User);
-        }
-
         [HttpGet]
-        public async Task<ActionResult<UserDto>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<UserSummaryDto>>> GetAllUsers()
         {
             _logger.LogInformation("Get all Users from database");
-            List<UserDto> result = await _userService.getAllUsersAsync();
+            var result = await _userService.getAllUsersAsync();
             return Ok(result);
         }
+
         [HttpGet("ById/{id}")]
-        public async Task<ActionResult<UserModel>> GetUserByID(int id)
+        public async Task<ActionResult<UserDetailDto>> GetUserByID(int id)
         {
-            _logger.LogInformation($"Get Users with id:{id} from database");
-            UserModel result = await _userService.getUserByIdAsync(id);
+            _logger.LogInformation($"Get User with id:{id} from database");
+            var result = await _userService.getUserByIdAsync(id);
+            if (result == null)
+            {
+                _logger.LogWarning("User with ID {id} not found.", id);
+                return NotFound();
+            }
             return Ok(result);
         }
+
         [HttpGet("{username}")]
-        public async Task<ActionResult<UserModel>> GetUserByUsername(string username)
+        public async Task<ActionResult<UserDetailDto>> GetUserByUsername(string username)
         {
-            _logger.LogInformation($"Get Users with username:{username} from database");
+            _logger.LogInformation($"Get User with username:{username} from database");
             var result = await _userService.findUserByUsernameAsync(username);
             if (result == null)
             {
-                return NoContent();
+                _logger.LogInformation("User with username {username} not found.", username);
+                return NotFound();
             }
             return Ok(result);
         }
-
-        [HttpPatch("{userID}")]
-        public async Task<ActionResult<UserModel>> updateUser(int userID, [FromBody] object OBJ)
-        {
-            _logger.LogInformation($"Updating userID:{userID}");
-            UserModel result = await _userService.updateUserAsync(userID, OBJ);
-            if (result == null)
-            {
-                return NoContent();
-            }
-            return Ok(result);
-        }
-
 
         [HttpDelete("{userID}")]
         public async Task<IActionResult> deleteUser(int userID)
         {
-            _logger.LogInformation($"removing  userID:{userID}");
-            await _userService.deleteUserAsync(userID);
-            return Ok(new { message = $"removed User with id:{userID}" });
+            _logger.LogInformation($"Removing user with ID:{userID}");
+            try
+            {
+                await _userService.deleteUserAsync(userID);
+                return Ok(new { message = $"Removed User with id:{userID}" });
+            }
+            catch (KeyNotFoundException)
+            {
+                _logger.LogWarning(
+                    "Attempted to delete non-existent user with ID {userID}",
+                    userID
+                );
+                return NotFound(new { message = $"User with id:{userID} not found." });
+            }
         }
-
-
-
-
-
-
-
-
-
-
     }
 }

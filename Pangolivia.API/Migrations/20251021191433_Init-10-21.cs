@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Pangolivia.API.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class Init1021 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -105,7 +105,7 @@ namespace Pangolivia.API.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     user_id = table.Column<int>(type: "int", nullable: false),
                     game_record_id = table.Column<int>(type: "int", nullable: false),
-                    score = table.Column<double>(type: "float", nullable: false)
+                    Score = table.Column<double>(type: "float", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -121,7 +121,7 @@ namespace Pangolivia.API.Migrations
                         column: x => x.user_id,
                         principalTable: "users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(

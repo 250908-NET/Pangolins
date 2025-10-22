@@ -5,6 +5,7 @@ import { BrowserRouter as Router } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext.tsx'
+import { SignalRProvider } from './contexts/SignalRContext.tsx'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -21,7 +22,9 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <Router>
         <AuthProvider>
-          <App />
+          <SignalRProvider>
+            <App />
+          </SignalRProvider>
         </AuthProvider>
       </Router>
     </QueryClientProvider>
