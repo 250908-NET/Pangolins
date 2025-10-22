@@ -7,7 +7,7 @@ using Pangolivia.API.Repositories;
 
 namespace Pangolivia.API.Services
 {
-    public class GameManagerService
+    public class GameManagerService : IGameManagerService
     {
         private readonly IHubContext<GameHub> _hubContext;
         private readonly IServiceProvider _serviceProvider;

@@ -9,109 +9,169 @@ using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Pangolivia.API.GameEngine;
+using Pangolivia.API.Models;
+using System.Collections.Generic;
 
-namespace Pangolivia.Tests.Controllers;
-
-public class GamesControllerTests
+namespace Pangolivia.Tests.Controllers
 {
-    private readonly Mock<IGameManagerService> _gameManagerMock;
-    private readonly Mock<IQuizRepository> _quizRepositoryMock;
-    private readonly GamesController _controller;
-
-    public GamesControllerTests()
+    public class GamesControllerTests
     {
-        _gameManagerMock = new Mock<IGameManagerService>();
-        _quizRepositoryMock = new Mock<IQuizRepository>();
+        private readonly Mock<IGameManagerService> _gameManagerMock;
+        private readonly Mock<IQuizRepository> _quizRepositoryMock;
+        private readonly Mock<ILogger<GamesController>> _loggerMock;
+        private readonly GamesController _controller;
 
-        _controller = new GamesController(_gameManagerMock.Object, _quizRepositoryMock.Object);
-        _controller.ControllerContext = new ControllerContext
+        public GamesControllerTests()
         {
-            HttpContext = new DefaultHttpContext()
-        };
-    }
+            _gameManagerMock = new Mock<IGameManagerService>();
+            _quizRepositoryMock = new Mock<IQuizRepository>();
+            _loggerMock = new Mock<ILogger<GamesController>>();
 
-    private void SetUserClaim(string userId)
-    {
-        ClaimsIdentity identity = new ClaimsIdentity(
-            new[] { new Claim(ClaimTypes.NameIdentifier, userId) },
-            "TestAuth"
-        );
+            _controller = new GamesController(
+                _gameManagerMock.Object,
+                _quizRepositoryMock.Object,
+                _loggerMock.Object
+            );
 
-        ClaimsPrincipal user = new ClaimsPrincipal(identity);
-        _controller.ControllerContext.HttpContext.User = user;
-    }
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+        }
 
-    [Fact]
-    public async Task CreateGameReturnsOkWithRoomCodeWhenSuccessful()
-    {
-        SetUserClaim("42");
-        CreateGameRequestDto request = new CreateGameRequestDto { QuizId = 7 };
+        private void SetUserClaims(string userId, string username)
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Name, username)
+            };
+            var identity = new ClaimsIdentity(claims, "TestAuth");
+            var user = new ClaimsPrincipal(identity);
+            _controller.ControllerContext.HttpContext.User = user;
+        }
 
-        _gameManagerMock
-            .Setup(s => s.CreateGame(request.QuizId, 42))
-            .ReturnsAsync("ROOM123");
+        [Fact]
+        public async Task CreateGame_WithValidRequest_ReturnsOkWithRoomCode()
+        {
+            // Arrange
+            SetUserClaims("42", "TestUser");
+            var request = new CreateGameRequestDto { QuizId = 7 };
+            var expectedRoomCode = "ROOM123";
 
-        IActionResult result = await _controller.CreateGame(request);
+            _gameManagerMock
+                .Setup(s => s.CreateGame(request.QuizId, 42, "TestUser"))
+                .ReturnsAsync(expectedRoomCode);
 
-        OkObjectResult ok = Assert.IsType<OkObjectResult>(result);
-        object val = ok.Value!;
-        string? roomCode = val.GetType().GetProperty("roomCode")?.GetValue(val)?.ToString();
-        Assert.Equal("ROOM123", roomCode);
-    }
+            // Act
+            var result = await _controller.CreateGame(request);
 
-    [Fact]
-    public async Task CreateGameReturnsUnauthorizedWhenUserClaimInvalid()
-    {
-        SetUserClaim("invalid_id");
-        CreateGameRequestDto request = new CreateGameRequestDto { QuizId = 1 };
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var value = okResult.Value;
+            Assert.NotNull(value);
 
-        IActionResult result = await _controller.CreateGame(request);
+            // *** FIX: Use reflection to safely access the property ***
+            var roomCodeProperty = value.GetType().GetProperty("roomCode");
+            Assert.NotNull(roomCodeProperty); // Ensure the property exists
+            var roomCodeValue = roomCodeProperty.GetValue(value);
+            Assert.Equal(expectedRoomCode, roomCodeValue);
+        }
 
-        UnauthorizedObjectResult unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
-        Assert.Equal("Invalid user identifier.", unauthorized.Value);
-    }
+        [Fact]
+        public async Task CreateGame_WithInvalidUserIdClaim_ReturnsUnauthorized()
+        {
+            // Arrange
+            SetUserClaims("invalid-id", "TestUser");
+            var request = new CreateGameRequestDto { QuizId = 1 };
 
-    [Fact]
-    public async Task CreateGameReturnsBadRequestWhenServiceThrows()
-    {
-        SetUserClaim("7");
-        CreateGameRequestDto request = new CreateGameRequestDto { QuizId = 10 };
+            // Act
+            var result = await _controller.CreateGame(request);
 
-        _gameManagerMock
-            .Setup(s => s.CreateGame(request.QuizId, 7))
-            .ThrowsAsync(new Exception("Quiz not found."));
+            // Assert
+            var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+            Assert.Equal("Invalid user identifier.", unauthorizedResult.Value);
+        }
 
-        IActionResult result = await _controller.CreateGame(request);
+        [Fact]
+        public async Task CreateGame_WithMissingUsernameClaim_ReturnsUnauthorized()
+        {
+            // Arrange
+            var claims = new[] { new Claim(ClaimTypes.NameIdentifier, "42") };
+            var identity = new ClaimsIdentity(claims, "TestAuth");
+            var user = new ClaimsPrincipal(identity);
+            _controller.ControllerContext.HttpContext.User = user;
 
-        BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        object val = badRequest.Value!;
-        string? message = val.GetType().GetProperty("message")?.GetValue(val)?.ToString();
-        Assert.Contains("Quiz not found", message);
-    }
+            var request = new CreateGameRequestDto { QuizId = 1 };
 
-    [Fact]
-    public void GetGameDetailsReturnsOkWhenSessionExists()
-    {
-        string roomCode = "ABC123";
-        GameSession session = new GameSession(1, 10, "Math Quiz", "HostUser", 5);
-        _gameManagerMock.Setup(s => s.GetGameSession(roomCode)).Returns(session);
+            // Act
+            var result = await _controller.CreateGame(request);
 
-        IActionResult result = _controller.GetGameDetails(roomCode);
+            // Assert
+            var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+            Assert.Equal("Username not found in token.", unauthorizedResult.Value);
+        }
 
-        OkObjectResult ok = Assert.IsType<OkObjectResult>(result);
-        Assert.NotNull(ok.Value);
-    }
+        [Fact]
+        public async Task CreateGame_WhenServiceThrowsException_ReturnsBadRequest()
+        {
+            // Arrange
+            SetUserClaims("7", "AnotherUser");
+            var request = new CreateGameRequestDto { QuizId = 10 };
+            var exceptionMessage = "Quiz not found.";
 
-    [Fact]
-    public void GetGameDetailsReturnsNotFoundWhenSessionMissing()
-    {
-        string roomCode = "NOPE999";
-        _gameManagerMock.Setup(s => s.GetGameSession(roomCode)).Returns((GameSession?)null);
+            _gameManagerMock
+                .Setup(s => s.CreateGame(request.QuizId, 7, "AnotherUser"))
+                .ThrowsAsync(new Exception(exceptionMessage));
 
-        IActionResult result = _controller.GetGameDetails(roomCode);
+            // Act
+            var result = await _controller.CreateGame(request);
 
-        NotFoundObjectResult notFound = Assert.IsType<NotFoundObjectResult>(result);
-        Assert.Equal("Game not found.", notFound.Value);
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            var value = badRequestResult.Value;
+            Assert.NotNull(value);
+
+            // *** FIX: Use reflection to safely access the property ***
+            var messageProperty = value.GetType().GetProperty("message");
+            Assert.NotNull(messageProperty); // Ensure the property exists
+            var messageValue = messageProperty.GetValue(value) as string;
+            Assert.Equal(exceptionMessage, messageValue);
+        }
+
+        [Fact]
+        public void GetGameDetails_WhenSessionExists_ReturnsOk()
+        {
+            // Arrange
+            var roomCode = "ABC123";
+            var mockQuiz = new QuizModel { Id = 10, QuizName = "Math Quiz" };
+            var session = new GameSession(1, "Math Quiz", 5, "HostUser", mockQuiz);
+
+            _gameManagerMock.Setup(s => s.GetGameSession(roomCode)).Returns(session);
+
+            // Act
+            var result = _controller.GetGameDetails(roomCode);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(okResult.Value);
+        }
+
+        [Fact]
+        public void GetGameDetails_WhenSessionIsMissing_ReturnsNotFound()
+        {
+            // Arrange
+            var roomCode = "NOPE999";
+            _gameManagerMock.Setup(s => s.GetGameSession(roomCode)).Returns((GameSession?)null);
+
+            // Act
+            var result = _controller.GetGameDetails(roomCode);
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Equal("Game not found.", notFoundResult.Value);
+        }
     }
 }
-
