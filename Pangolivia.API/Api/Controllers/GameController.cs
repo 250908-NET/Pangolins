@@ -18,11 +18,10 @@ namespace Pangolivia.API.Controllers
 
         // Update the constructor
         public GamesController(
-            GameManagerService gameManager,
+            IGameManagerService gameManager,
             IQuizRepository quizRepository,
             ILogger<GamesController> logger
         )
->>>>>>>>> Temporary merge branch 2
         {
             _gameManager = gameManager;
             _quizRepository = quizRepository;
