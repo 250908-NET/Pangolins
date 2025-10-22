@@ -48,6 +48,7 @@ namespace Pangolivia.API.Services
                 HostUsername = host.Username,
                 QuizId = createdGame.QuizId,
                 QuizName = quiz.QuizName,
+                PlayerScores = new List<PlayerGameRecordDto>(),
                 dateTimeCompleted = createdGame.dateTimeCompleted,
             };
         }
@@ -63,6 +64,14 @@ namespace Pangolivia.API.Services
                 HostUsername = g.HostUser?.Username ?? "Unknown",
                 QuizId = g.QuizId,
                 QuizName = g.Quiz?.QuizName ?? "Unknown",
+                PlayerScores = g.PlayerGameRecords?.Select(p => new PlayerGameRecordDto
+                {
+                    Id = p.Id,
+                    UserId = p.UserId,
+                    Username = p.User?.Username ?? "Unknown",
+                    GameRecordId = p.GameRecordId,
+                    Score = p.Score
+                }).ToList() ?? new List<PlayerGameRecordDto>(),
                 dateTimeCompleted = g.dateTimeCompleted,
             });
         }
@@ -81,6 +90,14 @@ namespace Pangolivia.API.Services
                 HostUsername = game.HostUser?.Username ?? "Unknown",
                 QuizId = game.QuizId,
                 QuizName = game.Quiz?.QuizName ?? "Unknown",
+                PlayerScores = game.PlayerGameRecords?.Select(p => new PlayerGameRecordDto
+                {
+                    Id = p.Id,
+                    UserId = p.UserId,
+                    Username = p.User?.Username ?? "Unknown",
+                    GameRecordId = p.GameRecordId,
+                    Score = p.Score
+                }).ToList() ?? new List<PlayerGameRecordDto>(),
                 dateTimeCompleted = game.dateTimeCompleted,
             };
         }
@@ -102,6 +119,14 @@ namespace Pangolivia.API.Services
                 HostUsername = game.HostUser?.Username ?? "Unknown",
                 QuizId = game.QuizId,
                 QuizName = game.Quiz?.QuizName ?? "Unknown",
+                PlayerScores = game.PlayerGameRecords?.Select(p => new PlayerGameRecordDto
+                {
+                    Id = p.Id,
+                    UserId = p.UserId,
+                    Username = p.User?.Username ?? "Unknown",
+                    GameRecordId = p.GameRecordId,
+                    Score = p.Score
+                }).ToList() ?? new List<PlayerGameRecordDto>(),
                 dateTimeCompleted = game.dateTimeCompleted,
             };
         }
@@ -127,6 +152,14 @@ namespace Pangolivia.API.Services
                     HostUsername = g.HostUser?.Username ?? "Unknown",
                     QuizId = g.QuizId,
                     QuizName = g.Quiz?.QuizName ?? "Unknown",
+                    PlayerScores = g.PlayerGameRecords?.Select(p => new PlayerGameRecordDto
+                    {
+                        Id = p.Id,
+                        UserId = p.UserId,
+                        Username = p.User?.Username ?? "Unknown",
+                        GameRecordId = p.GameRecordId,
+                        Score = p.Score
+                    }).ToList() ?? new List<PlayerGameRecordDto>(),
                     dateTimeCompleted = g.dateTimeCompleted,
                 });
 
@@ -146,6 +179,14 @@ namespace Pangolivia.API.Services
                     HostUsername = g.HostUser?.Username ?? "Unknown",
                     QuizId = g.QuizId,
                     QuizName = g.Quiz?.QuizName ?? "Unknown",
+                    PlayerScores = g.PlayerGameRecords?.Select(p => new PlayerGameRecordDto
+                    {
+                        Id = p.Id,
+                        UserId = p.UserId,
+                        Username = p.User?.Username ?? "Unknown",
+                        GameRecordId = p.GameRecordId,
+                        Score = p.Score
+                    }).ToList() ?? new List<PlayerGameRecordDto>(),
                     dateTimeCompleted = g.dateTimeCompleted,
                 });
 
