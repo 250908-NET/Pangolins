@@ -1,5 +1,6 @@
 using Pangolivia.API.DTOs;
 using Pangolivia.API.GameEngine;
+using Pangolivia.API.Models; // Add this using directive for QuizModel and QuestionModel
 
 namespace Pangolivia.Tests.GameEngine;
 
@@ -12,12 +13,19 @@ public class GameSessionTests
         var quiz = new QuizModel { Id = 123, Questions = new List<QuestionModel>() };
 
         // Act
-        var session = new GameSession(id: 1, name: "test-session", hostUserId: 42, "host", quiz: quiz);
+        var session = new GameSession(
+            id: 1,
+            name: "test-session",
+            hostUserId: 42,
+            hostUsername: "host",
+            quiz: quiz
+        );
 
         // Assert
         Assert.Equal(1, session.Id);
         Assert.Equal("test-session", session.Name);
         Assert.Equal(42, session.HostUserId);
+        Assert.Equal("host", session.HostUsername);
         Assert.Same(quiz, session.Quiz);
         Assert.False(session.HasGameStarted());
     }
@@ -26,20 +34,24 @@ public class GameSessionTests
     public void Constructor_Throws_WhenNameIsNull()
     {
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        Assert.Throws<ArgumentNullException>(() => new GameSession(id: 1, name: null!, hostUserId: 1, "host", quiz: quiz));
+        Assert.Throws<ArgumentNullException>(
+            () => new GameSession(id: 1, name: null!, hostUserId: 1, hostUsername: "host", quiz: quiz)
+        );
     }
 
     [Fact]
     public void Constructor_Throws_WhenQuizIsNull()
     {
-        Assert.Throws<ArgumentNullException>(() => new GameSession(id: 1, name: "name", hostUserId: 1, "host", quiz: null!));
+        Assert.Throws<ArgumentNullException>(
+            () => new GameSession(id: 1, name: "name", hostUserId: 1, hostUsername: "host", quiz: null!)
+        );
     }
 
     [Fact]
     public void HasGameStarted_ReturnsFalse_WhenNoQuestionStarted()
     {
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
 
         Assert.False(session.HasGameStarted());
     }
@@ -59,7 +71,7 @@ public class GameSessionTests
             Answer4 = "22",
         };
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
 
         // Act
         session.Start();
@@ -73,7 +85,7 @@ public class GameSessionTests
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
         var user = new UserDto { Id = 7, Username = "player7" };
 
         // Act
@@ -88,12 +100,14 @@ public class GameSessionTests
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
         var user = new UserDto { Id = 7, Username = "player7" };
         session.RegisterPlayer(user, connectionId: "conn-1");
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => session.RegisterPlayer(user, connectionId: "conn-2"));
+        Assert.Throws<InvalidOperationException>(
+            () => session.RegisterPlayer(user, connectionId: "conn-2")
+        );
     }
 
     [Fact]
@@ -101,7 +115,7 @@ public class GameSessionTests
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
         session.Start();
 
         // Act & Assert
@@ -123,7 +137,7 @@ public class GameSessionTests
             Answer4 = "Berlin",
         };
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
         session.Start();
         Assert.True(session.HasNextQuestion());
 
@@ -155,11 +169,11 @@ public class GameSessionTests
             Answer4 = "4",
         };
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
         session.Start();
 
         // Act
-        QuestionForPlayerDto dto = session.AdvanceQuestion();
+        session.AdvanceQuestion();
 
         // Assert
         Assert.Throws<InvalidOperationException>(() => session.AdvanceQuestion());
@@ -180,7 +194,7 @@ public class GameSessionTests
             Answer4 = "d",
         };
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
         var user = new UserDto { Id = 1, Username = "u" };
         session.RegisterPlayer(user, connectionId: "c");
         session.EndGameAndGetFinalGameRecord();
@@ -190,7 +204,7 @@ public class GameSessionTests
     }
 
     [Fact]
-    public void AnswerQuestionForPlayer_SetsAnswerSuccessfully()
+    public async Task AnswerQuestionForPlayer_CalculatesScoreBasedOnTime()
     {
         // Arrange
         var question = new QuestionModel
@@ -204,23 +218,25 @@ public class GameSessionTests
             Answer4 = "22",
         };
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
         var user1 = new UserDto { Id = 99, Username = "p99" };
         var user2 = new UserDto { Id = 100, Username = "p100" };
         session.RegisterPlayer(user1, connectionId: "c99");
         session.RegisterPlayer(user2, connectionId: "c100");
         session.Start();
-        QuestionForPlayerDto dto = session.AdvanceQuestion();
+        session.AdvanceQuestion();
 
         // Act
+        await Task.Delay(2000); // Simulate user1 taking ~2 seconds
         session.AnswerQuestionForPlayer(user1.Id, "4");
-        session.AnswerQuestionForPlayer(user2.Id, "5");
+        session.AnswerQuestionForPlayer(user2.Id, "5"); // Incorrect answer
         QuestionScoresDto roundResult = session.EndQuestionRound();
 
         // Assert
         PlayerQuestionScoresDto p1 = roundResult.PlayerScores.Single(ps => ps.UserId == user1.Id);
         PlayerQuestionScoresDto p2 = roundResult.PlayerScores.Single(ps => ps.UserId == user2.Id);
-        Assert.Equal(1, p1.Score);
+        // Score for ~2s delay: 1000 - ((1000-500) * (~2/10)) = ~900
+        Assert.InRange(p1.Score, 899, 900);
         Assert.Equal(0, p2.Score);
     }
 
@@ -229,14 +245,16 @@ public class GameSessionTests
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => session.AnswerQuestionForPlayer(playerId: 999, answer: "x"));
+        Assert.Throws<InvalidOperationException>(
+            () => session.AnswerQuestionForPlayer(playerId: 999, answer: "x")
+        );
     }
 
     [Fact]
-    public void EndQuestionRound_ReturnsCorrectAnswerAndPlayerScores()
+    public async Task EndQuestionRound_ReturnsCorrectAnswerAndPlayerScores()
     {
         // Arrange
         var question = new QuestionModel
@@ -251,7 +269,7 @@ public class GameSessionTests
         };
 
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
 
         var alice = new UserDto { Id = 1, Username = "alice" };
         var bob = new UserDto { Id = 2, Username = "bob" };
@@ -259,7 +277,8 @@ public class GameSessionTests
         session.RegisterPlayer(bob, connectionId: "b");
 
         session.Start();
-        QuestionForPlayerDto dto = session.AdvanceQuestion();
+        session.AdvanceQuestion();
+        await Task.Delay(5000); // Simulate Alice taking ~5 seconds
         session.AnswerQuestionForPlayer(alice.Id, "10");
         session.AnswerQuestionForPlayer(bob.Id, "11");
 
@@ -270,8 +289,11 @@ public class GameSessionTests
         Assert.Equal(question.CorrectAnswer, result.Answer);
         var a = result.PlayerScores.Single(ps => ps.UserId == alice.Id);
         var b = result.PlayerScores.Single(ps => ps.UserId == bob.Id);
-        Assert.Equal(1, a.Score);
+        // Score for ~5s delay: 1000 - ((1000-500) * (~5/10)) = ~750
+        Assert.InRange(a.Score, 749, 750);
+        Assert.InRange(a.TotalScore, 749, 750); // Total score after first round
         Assert.Equal(0, b.Score);
+        Assert.Equal(0, b.TotalScore);
     }
 
     [Fact]
@@ -279,14 +301,14 @@ public class GameSessionTests
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => session.EndQuestionRound());
     }
 
     [Fact]
-    public void EndGameAndGetFinalGameRecord_AwardsPointsAndReturnsFinalScores()
+    public async Task EndGameAndGetFinalGameRecord_AwardsPointsAndReturnsFinalScores()
     {
         // Arrange
         var question1 = new QuestionModel
@@ -312,44 +334,59 @@ public class GameSessionTests
         };
 
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question1, question2 } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, hostUsername: "host", quiz: quiz);
 
         var alice = new UserDto { Id = 1, Username = "alice" };
         var bob = new UserDto { Id = 2, Username = "bob" };
         session.RegisterPlayer(alice, connectionId: "a");
         session.RegisterPlayer(bob, connectionId: "b");
 
-        // Round 1
+        // --- Round 1 ---
         session.Start();
-        QuestionForPlayerDto dto = session.AdvanceQuestion();
+        session.AdvanceQuestion();
+        await Task.Delay(2000); // Alice answers after ~2s
         session.AnswerQuestionForPlayer(alice.Id, "5");
-        session.AnswerQuestionForPlayer(bob.Id, "4");
+        session.AnswerQuestionForPlayer(bob.Id, "4"); // Bob answers wrong
         var round1 = session.EndQuestionRound();
 
         var r1a = round1.PlayerScores.Single(ps => ps.UserId == alice.Id);
         var r1b = round1.PlayerScores.Single(ps => ps.UserId == bob.Id);
-        Assert.Equal(1, r1a.Score);
-        Assert.Equal(0, r1b.Score);
 
-        // Round 2
+        // Assert round 1 scores (with tolerance for timing)
+        Assert.InRange(r1a.Score, 899, 900); // Score for ~2s delay
+        Assert.Equal(0, r1b.Score);
+        Assert.Equal(r1a.Score, r1a.TotalScore); // Total score is just round 1 score
+        Assert.Equal(0, r1b.TotalScore);
+
+        // --- Round 2 ---
         Assert.True(session.HasNextQuestion());
         session.AdvanceQuestion();
-        session.AnswerQuestionForPlayer(alice.Id, "6");
+        await Task.Delay(1000); // Bob answers after ~1s
         session.AnswerQuestionForPlayer(bob.Id, "6");
+        await Task.Delay(3000); // Alice answers after a total of ~4s
+        session.AnswerQuestionForPlayer(alice.Id, "6");
         var round2 = session.EndQuestionRound();
 
         var r2a = round2.PlayerScores.Single(ps => ps.UserId == alice.Id);
         var r2b = round2.PlayerScores.Single(ps => ps.UserId == bob.Id);
-        Assert.Equal(1, r2a.Score);
-        Assert.Equal(1, r2b.Score);
 
-        // Act
+        // Assert round 2 scores (with tolerance for timing)
+        Assert.InRange(r2a.Score, 799, 800); // Score for ~4s delay
+        Assert.InRange(r2b.Score, 949, 950); // Score for ~1s delay
+
+        // Assert total scores are correctly accumulated
+        Assert.Equal(r1a.TotalScore + r2a.Score, r2a.TotalScore);
+        Assert.Equal(r1b.TotalScore + r2b.Score, r2b.TotalScore);
+
+        // --- Act ---
         var final = session.EndGameAndGetFinalGameRecord();
 
-        // Assert
+        // --- Assert Final Scores ---
         var fa = final.PlayerScores.Single(p => p.UserId == alice.Id);
         var fb = final.PlayerScores.Single(p => p.UserId == bob.Id);
-        Assert.Equal(2, fa.Score);
-        Assert.Equal(1, fb.Score);
+
+        // The final score should just be the total score from the last round
+        Assert.Equal(r2a.TotalScore, fa.Score);
+        Assert.Equal(r2b.TotalScore, fb.Score);
     }
 }

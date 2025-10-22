@@ -9,6 +9,7 @@ public class Player
     public string Username { get; }
     public string ConnectionId { get; set; }
     public string? AnswerToCurrentQuestion { get; set; }
+    public DateTime? AnswerTime { get; set; }
     public int CurrentScore { get; private set; }
 
     public Player(UserDto user, string connectionId)
