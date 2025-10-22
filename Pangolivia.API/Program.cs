@@ -61,6 +61,7 @@ builder.Services.AddScoped<IGameRecordService, GameRecordService>();
 builder.Services.AddScoped<IPlayerGameRecordService, PlayerGameRecordService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAiQuizService, AiQuizService>();
+builder.Services.AddSingleton<IGameManagerService, GameManagerService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
@@ -109,6 +110,7 @@ builder.Services.AddCors(options =>
             policy
                 .WithOrigins(
                     "http://localhost:3000",
+                    "http://localhost:5173",
                     "https://pangolivia-frontend-gjhpf7gphvhmhgbm.canadacentral-01.azurewebsites.net",
                     $"https://{builder.Configuration["Auth0:Domain"]}"
                 )
@@ -150,6 +152,8 @@ builder.Services.AddSignalR();
 var app = builder.Build();
 
 app.UseCors("AllowAuthenticated"); // Use the authenticated policy globally now that SignalR needs it
+
+// Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

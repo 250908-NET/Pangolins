@@ -46,3 +46,14 @@ export const useCreateUser = () => {
     },
   });
 };
+
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: number) => userService.deleteUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+    },
+  });
+};

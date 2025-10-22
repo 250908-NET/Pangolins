@@ -8,23 +8,37 @@ namespace Pangolivia.API.Hubs
     [Authorize]
     public class GameHub : Hub
     {
-        private readonly GameManagerService _gameManager;
+        private readonly IGameManagerService _gameManager;
         private readonly ILogger<GameHub> _logger;
 
-        public GameHub(GameManagerService gameManager, ILogger<GameHub> logger)
+        public GameHub(IGameManagerService gameManager, ILogger<GameHub> logger)
         {
             _gameManager = gameManager;
             _logger = logger;
         }
 
-        public async Task JoinGame(string roomCode)
+        private int GetUserIdFromContext()
         {
             var userIdStr = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            var username = Context.User?.FindFirstValue(ClaimTypes.Name) ?? "Guest";
+            if (int.TryParse(userIdStr, out var userId))
+            {
+                return userId;
+            }
+            throw new InvalidOperationException("User ID not found in token.");
+        }
 
-            if (!int.TryParse(userIdStr, out var userId))
+        public async Task JoinGame(string roomCode)
+        {
+            var username = Context.User?.FindFirstValue(ClaimTypes.Name) ?? "Guest";
+            int userId;
+            try
+            {
+                userId = GetUserIdFromContext();
+            }
+            catch (Exception ex)
             {
                 _logger.LogWarning(
+                    ex,
                     "JoinGame failed: Could not parse UserId from token for connection {ConnectionId}",
                     Context.ConnectionId
                 );
@@ -56,18 +70,34 @@ namespace Pangolivia.API.Hubs
                 {
                     var lobbyDetails = new
                     {
-                        gameSession.QuizName,
-                        gameSession.CreatorUsername,
-                        gameSession.QuestionCount,
+                        QuizName = gameSession.Quiz.QuizName,
+                        CreatorUsername = gameSession.Quiz.CreatedByUser?.Username ?? "Unknown",
+                        HostUsername = gameSession.HostUsername,
+                        QuestionCount = gameSession.Quiz.Questions.Count,
                     };
                     await Clients.Caller.SendAsync("ReceiveLobbyDetails", lobbyDetails);
 
                     var playerList = gameSession
-                        .Players.Values.Select(p => new { p.UserId, p.Username })
+                        .Players.Values.Select(p => new
+                        {
+                            p.UserId,
+                            p.Username,
+                            IsHost = false,
+                        })
                         .ToList();
+
+                    playerList.Add(
+                        new
+                        {
+                            UserId = gameSession.HostUserId,
+                            Username = gameSession.HostUsername,
+                            IsHost = true,
+                        }
+                    );
+
                     await Clients.Group(roomCode).SendAsync("UpdatePlayerList", playerList);
                     _logger.LogInformation(
-                        "Player {Username} successfully joined room {RoomCode}. Sent updated player list to group.",
+                        "User {Username} successfully joined room {RoomCode}. Sent updated player list to group.",
                         username,
                         roomCode
                     );
@@ -84,6 +114,91 @@ namespace Pangolivia.API.Hubs
                     "Error",
                     "Unable to join game. Room not found or has already started."
                 );
+            }
+        }
+
+        public async Task StartGame(string roomCode)
+        {
+            try
+            {
+                var userId = GetUserIdFromContext();
+                await _gameManager.StartGame(roomCode, userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error starting game for room {RoomCode}", roomCode);
+                await Clients.Caller.SendAsync("Error", $"Failed to start game: {ex.Message}");
+            }
+        }
+
+        // *** NEW METHOD ***
+        public Task BeginGame(string roomCode)
+        {
+            try
+            {
+                var userId = GetUserIdFromContext();
+                _logger.LogInformation(
+                    "Host {UserId} is beginning the game for room {RoomCode}",
+                    userId,
+                    roomCode
+                );
+                _gameManager.TriggerGameLoop(roomCode, userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error beginning game loop for room {RoomCode}", roomCode);
+                // Optionally notify the caller of the error
+                // await Clients.Caller.SendAsync("Error", $"Failed to begin game: {ex.Message}");
+            }
+            return Task.CompletedTask;
+        }
+
+        public async Task SubmitAnswer(string roomCode, string answer)
+        {
+            try
+            {
+                var userId = GetUserIdFromContext();
+                var gameSession = _gameManager.GetGameSession(roomCode);
+                if (gameSession != null && userId == gameSession.HostUserId)
+                {
+                    _logger.LogWarning(
+                        "Host {UserId} attempted to submit an answer in room {RoomCode}.",
+                        userId,
+                        roomCode
+                    );
+                    await Clients.Caller.SendAsync("Error", "The host cannot submit answers.");
+                    return;
+                }
+                _gameManager.SubmitAnswer(roomCode, userId, answer);
+                await Clients.Caller.SendAsync("AnswerSubmitted");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error submitting answer for room {RoomCode}", roomCode);
+                await Clients.Caller.SendAsync("Error", $"Failed to submit answer: {ex.Message}");
+            }
+        }
+
+        public async Task SkipQuestion(string roomCode)
+        {
+            try
+            {
+                var userId = GetUserIdFromContext();
+                _gameManager.SkipQuestion(roomCode, userId);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Unauthorized attempt to skip question in room {RoomCode}",
+                    roomCode
+                );
+                await Clients.Caller.SendAsync("Error", ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error skipping question for room {RoomCode}", roomCode);
+                await Clients.Caller.SendAsync("Error", $"Failed to skip question: {ex.Message}");
             }
         }
 
@@ -106,19 +221,5 @@ namespace Pangolivia.API.Hubs
 
             await base.OnDisconnectedAsync(exception);
         }
-
-        // ----------------------------------------------------------------------------------
-        // --- The methods below are part of the full game logic and can be left out for now ---
-        // ----------------------------------------------------------------------------------
-
-        // public async Task SubmitAnswer(string roomCode, string answer)
-        // {
-        //     // This will be implemented later with the real GameSession.
-        // }
-
-        // public async Task NextState(string roomCode)
-        // {
-        //      // This will be implemented later with the real GameSession.
-        // }
     }
 }

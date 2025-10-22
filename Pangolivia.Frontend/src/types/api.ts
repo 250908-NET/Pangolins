@@ -46,17 +46,58 @@ export interface UserDto {
   username: string;
 }
 
+export interface UserSummaryDto {
+  id: number;
+  username: string;
+}
+
+export interface UserDetailDto {
+  id: number;
+  username: string;
+  createdQuizzes: QuizSummaryDto[];
+  hostedGamesCount: number;
+  gamesPlayedCount: number;
+}
+
 export interface CreateGameRecordDto {
   hostUserId: number;
   quizId: number;
+  playerScores?: CreatePlayerGameRecordDto[];
+  dateTimeCompleted?: string;
 }
 
 export interface GameRecordDto {
   id: number;
   hostUserId: number;
+  hostUsername: string;
   quizId: number;
-  quizName?: string;
-  datetimeCompleted: string;
+  quizName: string;
+  playerScores: PlayerGameRecordDto[];
+  dateTimeCompleted: string;
+}
+
+export interface PlayerGameRecordDto {
+  id?: number;
+  userId?: number;
+  username: string;
+  gameRecordId?: number;
+  score: number;
+}
+
+export interface CreatePlayerGameRecordDto {
+  gameRecordId?: number;
+  userId: number;
+  score: number;
+}
+
+export interface UpdatePlayerGameRecordDto {
+  score: number;
+}
+
+export interface LeaderboardDto {
+  username: string;
+  score: number;
+  rank: number;
 }
 
 export interface GenerateQuizAiRequestDto {
