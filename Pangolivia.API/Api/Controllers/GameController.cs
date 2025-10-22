@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pangolivia.API.DTOs;
-// Add this using statement
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
 
@@ -13,13 +12,13 @@ namespace Pangolivia.API.Controllers
     [Authorize]
     public class GamesController : ControllerBase
     {
-        private readonly GameManagerService _gameManager;
+        private readonly IGameManagerService _gameManager;
         private readonly IQuizRepository _quizRepository; // Inject the quiz repository
         private readonly ILogger<GamesController> _logger; // Inject logger for better diagnostics
 
         // Update the constructor
         public GamesController(
-            GameManagerService gameManager,
+            IGameManagerService gameManager,
             IQuizRepository quizRepository,
             ILogger<GamesController> logger
         )
