@@ -60,16 +60,12 @@ public class GameSessionTests
         };
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
         var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
-        Assert.True(session.HasNextQuestion());
 
         // Act
-        QuestionForPlayerDto q = session.Start();
+        session.Start();
 
         // Assert
         Assert.True(session.HasGameStarted());
-        Assert.NotNull(q);
-        Assert.Equal(question.QuestionText, q.QuestionText);
-        Assert.False(session.HasNextQuestion());
     }
 
     [Fact]
@@ -106,6 +102,7 @@ public class GameSessionTests
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
         var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        session.Start();
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => session.AdvanceQuestion());
@@ -115,17 +112,7 @@ public class GameSessionTests
     public void AdvanceQuestion_ReturnsQuestionWithShuffledAnswers()
     {
         // Arrange
-        var q1 = new QuestionModel
-        {
-            Id = 0,
-            QuizId = 1,
-            QuestionText = "What is 1+1?",
-            CorrectAnswer = "2",
-            Answer2 = "1",
-            Answer3 = "3",
-            Answer4 = "4",
-        };
-        var q2 = new QuestionModel
+        var question = new QuestionModel
         {
             Id = 1,
             QuizId = 1,
@@ -135,24 +122,22 @@ public class GameSessionTests
             Answer3 = "Rome",
             Answer4 = "Berlin",
         };
-        var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { q1, q2 } };
+        var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
         var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        session.Start();
         Assert.True(session.HasNextQuestion());
-        // Have to skip the first question to test AdvanceQuestion individually
-        QuestionForPlayerDto q1Dto = session.Start();
-        QuestionScoresDto q1Scores = session.EndQuestionRound();
 
         // Act
-        QuestionForPlayerDto q2Dto = session.AdvanceQuestion();
+        QuestionForPlayerDto dto = session.AdvanceQuestion();
 
         // Assert
         Assert.True(session.HasGameStarted());
-        Assert.Equal(q2.QuestionText, q2Dto.QuestionText);
-        var answers = new[] { q2Dto.Answer1, q2Dto.Answer2, q2Dto.Answer3, q2Dto.Answer4 };
-        Assert.Contains(q2.CorrectAnswer, answers);
-        Assert.Contains(q2.Answer2, answers);
-        Assert.Contains(q2.Answer3, answers);
-        Assert.Contains(q2.Answer4, answers);
+        Assert.Equal(question.QuestionText, dto.QuestionText);
+        var answers = new[] { dto.Answer1, dto.Answer2, dto.Answer3, dto.Answer4 };
+        Assert.Contains(question.CorrectAnswer, answers);
+        Assert.Contains(question.Answer2, answers);
+        Assert.Contains(question.Answer3, answers);
+        Assert.Contains(question.Answer4, answers);
     }
 
     [Fact]
@@ -171,9 +156,10 @@ public class GameSessionTests
         };
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
         var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        session.Start();
 
         // Act
-        QuestionForPlayerDto dto = session.Start();
+        QuestionForPlayerDto dto = session.AdvanceQuestion();
 
         // Assert
         Assert.Throws<InvalidOperationException>(() => session.AdvanceQuestion());
@@ -223,7 +209,8 @@ public class GameSessionTests
         var user2 = new UserDto { Id = 100, Username = "p100" };
         session.RegisterPlayer(user1, connectionId: "c99");
         session.RegisterPlayer(user2, connectionId: "c100");
-        QuestionForPlayerDto dto = session.Start();
+        session.Start();
+        QuestionForPlayerDto dto = session.AdvanceQuestion();
 
         // Act
         session.AnswerQuestionForPlayer(user1.Id, "4");
@@ -272,6 +259,7 @@ public class GameSessionTests
         session.RegisterPlayer(bob, connectionId: "b");
 
         session.Start();
+        QuestionForPlayerDto dto = session.AdvanceQuestion();
         session.AnswerQuestionForPlayer(alice.Id, "10");
         session.AnswerQuestionForPlayer(bob.Id, "11");
 
@@ -333,6 +321,7 @@ public class GameSessionTests
 
         // Round 1
         session.Start();
+        QuestionForPlayerDto dto = session.AdvanceQuestion();
         session.AnswerQuestionForPlayer(alice.Id, "5");
         session.AnswerQuestionForPlayer(bob.Id, "4");
         var round1 = session.EndQuestionRound();

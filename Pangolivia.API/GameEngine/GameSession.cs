@@ -42,11 +42,10 @@ public class GameSession
     }
 
     /// <summary>
-    /// Starts the game and advances to the first question.
+    /// Formally starts the game. New players can no longer join after the game starts.
     /// </summary>
-    /// <returns>The first question.</returns>
     /// <exception cref="InvalidOperationException">If the game has already been started.</exception>
-    public QuestionForPlayerDto Start()
+    public void Start()
     {
         if (Status != GameStatus.NotStarted)
         {
@@ -54,8 +53,6 @@ public class GameSession
         }
 
         Status = GameStatus.Pending;
-
-        return AdvanceQuestion();
     }
 
     /// <summary>
