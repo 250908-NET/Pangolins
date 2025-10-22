@@ -13,11 +13,16 @@ namespace Pangolivia.API.Controllers
     public class GamesController : ControllerBase
     {
         private readonly IGameManagerService _gameManager;
-        private readonly IQuizRepository _quizRepository;
+        private readonly IQuizRepository _quizRepository; // Inject the quiz repository
         private readonly ILogger<GamesController> _logger; // Inject logger for better diagnostics
 
         // Update the constructor
-        public GamesController(GameManagerService gameManager, IQuizRepository quizRepository)
+        public GamesController(
+            GameManagerService gameManager,
+            IQuizRepository quizRepository,
+            ILogger<GamesController> logger
+        )
+>>>>>>>>> Temporary merge branch 2
         {
             _gameManager = gameManager;
             _quizRepository = quizRepository;

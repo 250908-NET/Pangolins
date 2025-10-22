@@ -7,38 +7,6 @@ using Pangolivia.API.Repositories;
 
 namespace Pangolivia.API.Services
 {
-    public class PlayerInfo
-    {
-        public int UserId { get; set; }
-        public string Username { get; set; } = string.Empty;
-        public string ConnectionId { get; set; } = string.Empty;
-    }
-
-    public class GameSession
-    {
-        public int QuizId { get; }
-        public int HostUserId { get; }
-        public string QuizName { get; }
-        public string CreatorUsername { get; }
-        public int QuestionCount { get; }
-        public ConcurrentDictionary<int, PlayerInfo> Players { get; } = new();
-
-        public GameSession(
-            int quizId,
-            int hostUserId,
-            string quizName,
-            string creatorUsername,
-            int questionCount
-        )
-        {
-            QuizId = quizId;
-            HostUserId = hostUserId;
-            QuizName = quizName;
-            CreatorUsername = creatorUsername;
-            QuestionCount = questionCount;
-        }
-    }
-
     public class GameManagerService : IGameManagerService
     {
         private readonly IHubContext<GameHub> _hubContext;
