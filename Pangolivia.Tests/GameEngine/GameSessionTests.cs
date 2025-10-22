@@ -12,7 +12,7 @@ public class GameSessionTests
         var quiz = new QuizModel { Id = 123, Questions = new List<QuestionModel>() };
 
         // Act
-        var session = new GameSession(id: 1, name: "test-session", hostUserId: 42, quiz: quiz);
+        var session = new GameSession(id: 1, name: "test-session", hostUserId: 42, "host", quiz: quiz);
 
         // Assert
         Assert.Equal(1, session.Id);
@@ -26,20 +26,20 @@ public class GameSessionTests
     public void Constructor_Throws_WhenNameIsNull()
     {
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        Assert.Throws<ArgumentNullException>(() => new GameSession(id: 1, name: null!, hostUserId: 1, quiz: quiz));
+        Assert.Throws<ArgumentNullException>(() => new GameSession(id: 1, name: null!, hostUserId: 1, "host", quiz: quiz));
     }
 
     [Fact]
     public void Constructor_Throws_WhenQuizIsNull()
     {
-        Assert.Throws<ArgumentNullException>(() => new GameSession(id: 1, name: "name", hostUserId: 1, quiz: null!));
+        Assert.Throws<ArgumentNullException>(() => new GameSession(id: 1, name: "name", hostUserId: 1, "host", quiz: null!));
     }
 
     [Fact]
     public void HasGameStarted_ReturnsFalse_WhenNoQuestionStarted()
     {
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
 
         Assert.False(session.HasGameStarted());
     }
@@ -59,17 +59,13 @@ public class GameSessionTests
             Answer4 = "22",
         };
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
-        Assert.True(session.HasNextQuestion());
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
 
         // Act
-        var q = session.AdvanceQuestion();
+        session.Start();
 
         // Assert
         Assert.True(session.HasGameStarted());
-        Assert.NotNull(q);
-        Assert.Equal(question.QuestionText, q.QuestionText);
-        Assert.False(session.HasNextQuestion());
     }
 
     [Fact]
@@ -77,7 +73,7 @@ public class GameSessionTests
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
         var user = new UserDto { Id = 7, Username = "player7" };
 
         // Act
@@ -92,7 +88,7 @@ public class GameSessionTests
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
         var user = new UserDto { Id = 7, Username = "player7" };
         session.RegisterPlayer(user, connectionId: "conn-1");
 
@@ -105,7 +101,8 @@ public class GameSessionTests
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        session.Start();
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => session.AdvanceQuestion());
@@ -125,21 +122,18 @@ public class GameSessionTests
             Answer3 = "Rome",
             Answer4 = "Berlin",
         };
-
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
-
-        // Precondition
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        session.Start();
         Assert.True(session.HasNextQuestion());
 
         // Act
-        var dto = session.AdvanceQuestion();
+        QuestionForPlayerDto dto = session.AdvanceQuestion();
 
         // Assert
         Assert.True(session.HasGameStarted());
         Assert.Equal(question.QuestionText, dto.QuestionText);
         var answers = new[] { dto.Answer1, dto.Answer2, dto.Answer3, dto.Answer4 };
-        // All four original answers must be present after shuffle
         Assert.Contains(question.CorrectAnswer, answers);
         Assert.Contains(question.Answer2, answers);
         Assert.Contains(question.Answer3, answers);
@@ -147,9 +141,9 @@ public class GameSessionTests
     }
 
     [Fact]
-    public void AdvanceQuestion_Throws_WhenActiveQuestion()
+    public void AdvanceQuestion_Throws_WhenAlreadyActiveQuestion()
     {
-        // Arrange: single question quiz
+        // Arrange
         var question = new QuestionModel
         {
             Id = 2,
@@ -161,12 +155,13 @@ public class GameSessionTests
             Answer4 = "4",
         };
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
+        session.Start();
 
-        // Act: advance to start the active question
-        var dto = session.AdvanceQuestion();
+        // Act
+        QuestionForPlayerDto dto = session.AdvanceQuestion();
 
-        // Attempting to advance again while active should throw
+        // Assert
         Assert.Throws<InvalidOperationException>(() => session.AdvanceQuestion());
     }
 
@@ -185,7 +180,7 @@ public class GameSessionTests
             Answer4 = "d",
         };
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
         var user = new UserDto { Id = 1, Username = "u" };
         session.RegisterPlayer(user, connectionId: "c");
         session.EndGameAndGetFinalGameRecord();
@@ -209,11 +204,12 @@ public class GameSessionTests
             Answer4 = "22",
         };
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
         var user1 = new UserDto { Id = 99, Username = "p99" };
         var user2 = new UserDto { Id = 100, Username = "p100" };
         session.RegisterPlayer(user1, connectionId: "c99");
         session.RegisterPlayer(user2, connectionId: "c100");
+        session.Start();
         QuestionForPlayerDto dto = session.AdvanceQuestion();
 
         // Act
@@ -233,7 +229,7 @@ public class GameSessionTests
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => session.AnswerQuestionForPlayer(playerId: 999, answer: "x"));
@@ -255,14 +251,15 @@ public class GameSessionTests
         };
 
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
 
         var alice = new UserDto { Id = 1, Username = "alice" };
         var bob = new UserDto { Id = 2, Username = "bob" };
         session.RegisterPlayer(alice, connectionId: "a");
         session.RegisterPlayer(bob, connectionId: "b");
 
-        session.AdvanceQuestion();
+        session.Start();
+        QuestionForPlayerDto dto = session.AdvanceQuestion();
         session.AnswerQuestionForPlayer(alice.Id, "10");
         session.AnswerQuestionForPlayer(bob.Id, "11");
 
@@ -282,7 +279,7 @@ public class GameSessionTests
     {
         // Arrange
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel>() };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => session.EndQuestionRound());
@@ -315,7 +312,7 @@ public class GameSessionTests
         };
 
         var quiz = new QuizModel { Id = 1, Questions = new List<QuestionModel> { question1, question2 } };
-        var session = new GameSession(id: 1, name: "s", hostUserId: 1, quiz: quiz);
+        var session = new GameSession(id: 1, name: "s", hostUserId: 1, "host", quiz: quiz);
 
         var alice = new UserDto { Id = 1, Username = "alice" };
         var bob = new UserDto { Id = 2, Username = "bob" };
@@ -323,7 +320,8 @@ public class GameSessionTests
         session.RegisterPlayer(bob, connectionId: "b");
 
         // Round 1
-        session.AdvanceQuestion();
+        session.Start();
+        QuestionForPlayerDto dto = session.AdvanceQuestion();
         session.AnswerQuestionForPlayer(alice.Id, "5");
         session.AnswerQuestionForPlayer(bob.Id, "4");
         var round1 = session.EndQuestionRound();
