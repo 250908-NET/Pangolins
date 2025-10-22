@@ -152,7 +152,7 @@ public class GameSession
             currentQuestion.Answer4,
         };
 
-        // Fisher–Yates shuffle
+        // Fisher Yates shuffle
         for (int i = answers.Count - 1; i > 0; i--)
         {
             int j = Random.Shared.Next(i + 1);
@@ -253,7 +253,8 @@ public class GameSession
                 {
                     UserId = player.UserId,
                     Username = player.Username,
-                    Score = scoreIncrement, // DTO's score is a double, which is fine
+                    Score = scoreIncrement,
+                    TotalScore = player.CurrentScore
                 }
             );
 
