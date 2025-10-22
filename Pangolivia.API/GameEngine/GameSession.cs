@@ -13,11 +13,17 @@ public class GameSession
     public QuizModel Quiz { get; }
 
     private int CurrentQuestionIndex = -1;
+    private DateTime QuestionStartTime;
     public CancellationTokenSource? QuestionCts { get; set; }
 
     private GameStatus Status { get; set; } = GameStatus.NotStarted;
     public string? HostConnectionId { get; set; }
     public readonly ConcurrentDictionary<int, Player> Players; // Made public for easier access from GameManager
+    // Scoring Constants
+    private const int QuestionTimeSeconds = 10;
+    private const int MaxScorePerQuestion = 1000;
+    private const int MinScorePerQuestion = 500;
+
 
     public GameSession(int id, string name, int hostUserId, string hostUsername, QuizModel quiz) // Add hostUsername
     {
@@ -134,6 +140,7 @@ public class GameSession
 
         CurrentQuestionIndex++;
         Status = GameStatus.ActiveQuestion;
+        QuestionStartTime = DateTime.UtcNow;
 
         QuestionModel currentQuestion = questions.ElementAt(CurrentQuestionIndex);
 
@@ -180,7 +187,12 @@ public class GameSession
             throw new InvalidOperationException("Player entry is null for this game session.");
         }
 
-        player.AnswerToCurrentQuestion = answer;
+        // Only record the first answer from the player for the current question
+        if (player.AnswerToCurrentQuestion == null)
+        {
+            player.AnswerToCurrentQuestion = answer;
+            player.AnswerTime = DateTime.UtcNow;
+        }
     }
 
     /// <summary>
@@ -211,16 +223,28 @@ public class GameSession
 
         foreach (Player player in Players.Values)
         {
-            int scoreIncrement = 0;
-            if (
+            int scoreIncrement = 0; // Default score is 0 for incorrect/no answer
+            bool isCorrect =
                 player.AnswerToCurrentQuestion != null
                 && player.AnswerToCurrentQuestion.Equals(
                     correctAnswer,
                     StringComparison.OrdinalIgnoreCase
-                )
-            )
+                );
+
+            // Calculate score only if the answer is correct
+            if (isCorrect && player.AnswerTime.HasValue)
             {
-                scoreIncrement = 1;
+                var timeTaken = (player.AnswerTime.Value - QuestionStartTime).TotalSeconds;
+
+                // Clamp timeTaken to be within the question duration to handle any latency issues
+                timeTaken = Math.Max(0, Math.Min(timeTaken, QuestionTimeSeconds));
+
+                // Linear score decay formula: Score = Max - (Range * (TimeElapsed / TotalTime))
+                double scoreRatio = timeTaken / QuestionTimeSeconds;
+                double scoreRange = MaxScorePerQuestion - MinScorePerQuestion;
+                double rawScore = MaxScorePerQuestion - (scoreRange * scoreRatio);
+
+                scoreIncrement = (int)Math.Round(rawScore);
                 player.AddPoints(scoreIncrement);
             }
 
@@ -229,7 +253,7 @@ public class GameSession
                 {
                     UserId = player.UserId,
                     Username = player.Username,
-                    Score = scoreIncrement,
+                    Score = scoreIncrement, // DTO's score is a double, which is fine
                 }
             );
 
