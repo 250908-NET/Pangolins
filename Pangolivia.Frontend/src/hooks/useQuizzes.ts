@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { quizService } from '../services/quizService';
 import type { CreateQuizRequestDto, UpdateQuizRequestDto, GenerateQuizAiRequestDto } from '../types/api';
+import { userKeys } from './useUsers';
 
 // Query keys
 export const quizKeys = {
@@ -62,6 +63,8 @@ export const useCreateQuiz = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: quizKeys.lists() });
       queryClient.invalidateQueries({ queryKey: quizKeys.byUser(variables.creatorUserId) });
+      // Invalidate user data to update createdQuizzes count in Profile
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.creatorUserId) });
     },
   });
 };
@@ -83,6 +86,8 @@ export const useUpdateQuiz = () => {
       queryClient.invalidateQueries({ queryKey: quizKeys.detail(variables.quizId) });
       queryClient.invalidateQueries({ queryKey: quizKeys.lists() });
       queryClient.invalidateQueries({ queryKey: quizKeys.byUser(variables.currentUserId) });
+      // Invalidate user data to update createdQuizzes in Profile
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.currentUserId) });
     },
   });
 };
@@ -93,9 +98,11 @@ export const useDeleteQuiz = () => {
   return useMutation({
     mutationFn: ({ id, currentUserId }: { id: number; currentUserId: number }) =>
       quizService.deleteQuiz(id, currentUserId),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       // Invalidate all quiz-related queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: quizKeys.all });
+      // Invalidate user data to update createdQuizzes count in Profile
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.currentUserId) });
     },
   });
 };
