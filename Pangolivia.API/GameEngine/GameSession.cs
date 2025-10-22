@@ -9,10 +9,11 @@ public class GameSession
     public int Id { get; }
     public string Name { get; }
     public int HostUserId { get; }
-    public string HostUsername { get; } // Add this property
+    public string HostUsername { get; }
     public QuizModel Quiz { get; }
 
     private int CurrentQuestionIndex = -1;
+    public CancellationTokenSource? QuestionCts { get; set; }
 
     private GameStatus Status { get; set; } = GameStatus.Pending;
     public string? HostConnectionId { get; set; }

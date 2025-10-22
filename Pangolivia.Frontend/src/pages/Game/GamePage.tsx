@@ -31,6 +31,7 @@ export default function GamePage() {
     roundResults,
     finalResults,
     answerSubmitted,
+    skipCurrentQuestion,
   } = useSignalR();
 
   // --- Connection and Lobby Management ---
@@ -94,6 +95,13 @@ export default function GamePage() {
       .catch(err => toast.error(`Submit failed: ${err.message}`));
   };
 
+  const handleSkipQuestion = () => {
+    if (!roomCode || !isHost) return;
+    skipCurrentQuestion(roomCode).catch((err) =>
+      toast.error(`Failed to skip: ${err.message}`),
+    );
+  };
+
   // --- Render Logic (State Machine) ---
   if (!connection) {
     return <Waiting message="Connecting to game server..." />;
@@ -108,7 +116,15 @@ export default function GamePage() {
   }
   
   if (currentQuestion) {
-    return <Question question={currentQuestion} answerSubmitted={answerSubmitted} onSelectAnswer={handleSelectAnswer} />;
+    return (
+      <Question
+        question={currentQuestion}
+        answerSubmitted={answerSubmitted}
+        onSelectAnswer={handleSelectAnswer}
+        isHost={isHost}
+        onSkipQuestion={handleSkipQuestion}
+      />
+    );
   }
 
   if (gameStarted) {

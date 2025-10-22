@@ -1,15 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { FastForward } from 'lucide-react';
 import type { QuestionForPlayer } from '@/contexts/SignalRContext';
 
 interface QuestionProps {
   question: QuestionForPlayer;
   answerSubmitted: boolean;
   onSelectAnswer: (answer: string) => void;
+  isHost: boolean;
+  onSkipQuestion: () => void;
 }
 
-export function Question({ question, answerSubmitted, onSelectAnswer }: QuestionProps) {
+export function Question({
+  question,
+  answerSubmitted,
+  onSelectAnswer,
+  isHost,
+  onSkipQuestion,
+}: QuestionProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [timer, setTimer] = useState(10); // Or get this from the server
 
@@ -28,12 +37,17 @@ export function Question({ question, answerSubmitted, onSelectAnswer }: Question
   }, [timer]);
 
   const handleSelect = (answer: string) => {
-    if (answerSubmitted) return;
+    if (answerSubmitted || isHost) return;
     setSelectedAnswer(answer);
     onSelectAnswer(answer);
   };
 
-  const answers = [question.answer1, question.answer2, question.answer3, question.answer4];
+  const answers = [
+    question.answer1,
+    question.answer2,
+    question.answer3,
+    question.answer4,
+  ];
 
   return (
     <section className="flex min-h-screen items-center justify-center px-4 py-16">
@@ -52,12 +66,20 @@ export function Question({ question, answerSubmitted, onSelectAnswer }: Question
               variant={selectedAnswer === answer ? 'default' : 'outline'}
               className="h-auto min-h-[4rem] whitespace-normal justify-start p-4 text-left"
               onClick={() => handleSelect(answer)}
-              disabled={answerSubmitted}
+              disabled={answerSubmitted || isHost}
             >
               {answer}
             </Button>
           ))}
         </CardContent>
+        {isHost && (
+          <CardFooter className="flex justify-end">
+            <Button variant="secondary" onClick={onSkipQuestion}>
+              <FastForward className="mr-2 h-4 w-4" />
+              Skip Question
+            </Button>
+          </CardFooter>
+        )}
       </Card>
     </section>
   );

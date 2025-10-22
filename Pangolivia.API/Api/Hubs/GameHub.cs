@@ -154,6 +154,13 @@ namespace Pangolivia.API.Hubs
             try
             {
                 var userId = GetUserIdFromContext();
+                var gameSession = _gameManager.GetGameSession(roomCode);
+                if (gameSession != null && userId == gameSession.HostUserId)
+                {
+                    _logger.LogWarning("Host {UserId} attempted to submit an answer in room {RoomCode}.", userId, roomCode);
+                    await Clients.Caller.SendAsync("Error", "The host cannot submit answers.");
+                    return;
+                }
                 _gameManager.SubmitAnswer(roomCode, userId, answer);
                 await Clients.Caller.SendAsync("AnswerSubmitted");
             }
@@ -161,6 +168,25 @@ namespace Pangolivia.API.Hubs
             {
                 _logger.LogError(ex, "Error submitting answer for room {RoomCode}", roomCode);
                  await Clients.Caller.SendAsync("Error", $"Failed to submit answer: {ex.Message}");
+            }
+        }
+
+        public async Task SkipQuestion(string roomCode)
+        {
+            try
+            {
+                var userId = GetUserIdFromContext();
+                _gameManager.SkipQuestion(roomCode, userId);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized attempt to skip question in room {RoomCode}", roomCode);
+                await Clients.Caller.SendAsync("Error", ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error skipping question for room {RoomCode}", roomCode);
+                await Clients.Caller.SendAsync("Error", $"Failed to skip question: {ex.Message}");
             }
         }
 

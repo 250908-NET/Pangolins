@@ -56,6 +56,7 @@ export interface SignalRContextType {
   startLobbyGame: (roomCode: string) => Promise<void>
   submitPlayerAnswer: (roomCode: string, answer: string) => Promise<void>
   beginGameLoop: (roomCode: string) => Promise<void> // For host
+  skipCurrentQuestion: (roomCode: string) => Promise<void> // For host
 }
 
 const SignalRContext = createContext<SignalRContextType | undefined>(undefined)
@@ -183,6 +184,8 @@ export function SignalRProvider({ children }: { children: React.ReactNode }) {
     invokeHubMethod('SubmitAnswer', roomCode, answer)
   const beginGameLoop = (roomCode: string) =>
     invokeHubMethod('BeginGame', roomCode)
+  const skipCurrentQuestion = (roomCode: string) =>
+    invokeHubMethod('SkipQuestion', roomCode)
 
   const value = {
     connection,
@@ -199,6 +202,7 @@ export function SignalRProvider({ children }: { children: React.ReactNode }) {
     startLobbyGame,
     submitPlayerAnswer,
     beginGameLoop,
+    skipCurrentQuestion,
   }
 
   return (

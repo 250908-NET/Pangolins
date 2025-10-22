@@ -1,11 +1,9 @@
 using System.Collections.Concurrent;
-using System.Security.Claims; // Add this
 using Microsoft.AspNetCore.SignalR;
 using Pangolivia.API.DTOs;
 using Pangolivia.API.GameEngine;
 using Pangolivia.API.Hubs;
 using Pangolivia.API.Repositories;
-using Pangolivia.API.Services; // Add this
 
 namespace Pangolivia.API.Services
 {
@@ -135,7 +133,21 @@ namespace Pangolivia.API.Services
                     .SendAsync("ReceiveQuestion", question, SECONDS_PER_QUESTION);
 
                 // Wait for the question duration
-                await Task.Delay(SECONDS_PER_QUESTION * 1000);
+                gameSession.QuestionCts = new CancellationTokenSource();
+                try
+                {
+                    // Wait for the question duration, cancellable by SkipQuestion
+                    await Task.Delay(SECONDS_PER_QUESTION * 1000, gameSession.QuestionCts.Token);
+                }
+                catch (TaskCanceledException)
+                {
+                    _logger.LogInformation("Question skipped by host in room {RoomCode}", roomCode);
+                }
+                finally
+                {
+                    gameSession.QuestionCts.Dispose();
+                    gameSession.QuestionCts = null;
+                }
 
                 var roundResults = gameSession.EndQuestionRound();
                 await _hubContext
@@ -223,6 +235,24 @@ namespace Pangolivia.API.Services
                     _logger.LogWarning(ex, "Failed to submit answer for user {UserId} in room {RoomCode}", userId, roomCode);
                 }
             }
+        }
+
+        public void SkipQuestion(string roomCode, int requestingUserId)
+        {
+            if (!_games.TryGetValue(roomCode, out var gameSession))
+            {
+                _logger.LogWarning("SkipQuestion failed: Game session {RoomCode} not found.", roomCode);
+                return;
+            }
+
+            if (gameSession.HostUserId != requestingUserId)
+            {
+                _logger.LogWarning("SkipQuestion failed: User {UserId} is not the host of room {RoomCode}.", requestingUserId, roomCode);
+                throw new UnauthorizedAccessException("Only the host can skip a question.");
+            }
+
+            // Cancel the current question's delay task
+            gameSession.QuestionCts?.Cancel();
         }
 
         public GameSession? GetGameSession(string roomCode)
