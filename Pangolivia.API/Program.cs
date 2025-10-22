@@ -118,7 +118,10 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy
-                .WithOrigins("http://localhost:5173") // Your frontend's specific origin
+                .WithOrigins([
+                    "http://localhost:3000",
+                    "https://pangolivia-frontend-gjhpf7gphvhmhgbm.canadacentral-01.azurewebsites.net"
+                ]) // Your frontend's specific origin
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials(); // Crucial for sending auth tokens
@@ -156,6 +159,7 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
+app.UseCors("AllowAuthenticated"); // Use the authenticated policy globally now that SignalR needs it
 // Middleware
 if (app.Environment.IsDevelopment())
 {
@@ -165,8 +169,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors("AllowAuthenticated"); // Use the authenticated policy globally now that SignalR needs it
 
 app.UseAuthentication();
 app.UseAuthorization();
