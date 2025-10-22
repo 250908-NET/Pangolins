@@ -34,13 +34,13 @@ public class QuizControllerTests
     [Fact]
     public async Task GetAllQuizzesReturnsOk_WithList()
     {
-        
+
         var quizzes = new List<QuizSummaryDto>
         {
             new QuizSummaryDto { Id = 1, QuizName = "QuizWithId1" }
         };
         _quizServiceMock.Setup(s => s.GetAllQuizzesAsync()).ReturnsAsync(quizzes);
-    
+
         var result = await _controller.GetAllQuizzes();
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
@@ -189,7 +189,7 @@ public class QuizControllerTests
     public async Task FindQuizzesByNameReturnsOkWithEmptyListWhenNoMatch()
     {
 
-        _quizServiceMock.Setup(s => s.FindQuizzesByNameAsync("Unknown")).ReturnsAsync(new List<QuizSummaryDto>()); 
+        _quizServiceMock.Setup(s => s.FindQuizzesByNameAsync("Unknown")).ReturnsAsync(new List<QuizSummaryDto>());
 
         var result = await _controller.FindQuizzesByName("Unknown");
 
