@@ -74,7 +74,6 @@ namespace Pangolivia.API.Services
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // Standard claim for user ID
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // Standard claim for user ID
                 new Claim(ClaimTypes.Name, user.Username), // Use ClaimTypes.Name for compatibility
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
@@ -83,7 +82,7 @@ namespace Pangolivia.API.Services
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
+                expires: DateTime.Now.AddMinutes(60),
                 signingCredentials: credentials
             );
 
