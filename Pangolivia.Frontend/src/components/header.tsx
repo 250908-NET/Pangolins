@@ -25,8 +25,8 @@ import { useAuth } from '@/hooks/useAuth'
 
 const menuItems = [
     { name: 'Start Game', href: '/start-game' },
-    { name: 'Create Game', href: '/create-game' },
-    { name: 'Edit Game', href: '/edit-game' },
+    { name: 'Create Quiz', href: '/create-game' },
+    { name: 'Edit Quiz', href: '/edit-game' },
     { name: 'Join Game', href: '/join-game' },
     { name: 'Profile', href: '/profile' },
 ]
@@ -37,6 +37,10 @@ export const Header = () => {
     const [menuState, setMenuState] = React.useState(false);
     const [isScrolled, setIsScrolled] = React.useState(false);
     const { theme, toggleTheme } = useTheme();
+
+    const handleMenuItemClick = () => {
+        setMenuState(false);
+    };
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -97,6 +101,7 @@ export const Header = () => {
                                         <li key={index}>
                                             <Link
                                                 to={item.href}
+                                                onClick={handleMenuItemClick}
                                                 className="text-muted-foreground hover:text-accent-foreground block duration-150">
                                                 <span>{item.name}</span>
                                             </Link>
@@ -107,7 +112,7 @@ export const Header = () => {
                             <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
                                 {isAuthenticated ? (
                                     <>
-                                        <Button onClick={logout} variant="outline" size="sm">
+                                        <Button onClick={() => { logout(); handleMenuItemClick(); }} variant="outline" size="sm">
                                             <span>Logout</span>
                                         </Button>
                                     </>
@@ -117,14 +122,14 @@ export const Header = () => {
                                             asChild
                                             variant="outline"
                                             size="sm">
-                                            <Link to="/login">
+                                            <Link to="/login" onClick={handleMenuItemClick}>
                                                 <span>Login</span>
                                             </Link>
                                         </Button>
                                         <Button
                                             asChild
                                             size="sm">
-                                            <Link to="/sign-up">
+                                            <Link to="/sign-up" onClick={handleMenuItemClick}>
                                                 <span>Sign Up</span>
                                             </Link>
                                         </Button>

@@ -1,8 +1,12 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSignalR } from '@/hooks/useSignalR';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { gameRecordKeys } from '@/hooks/useGameRecords';
+import { playerGameRecordKeys } from '@/hooks/usePlayerGameRecords';
+import { userKeys } from '@/hooks/useUsers';
 
 import { Lobby } from '@/pages/Game/components/Lobby';
 import { Question } from '@/pages/Game/components/Question';
@@ -13,6 +17,7 @@ import { Waiting } from '@/pages/Game/components/Waiting';
 export default function GamePage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const isHost = JSON.parse(localStorage.getItem('currentPlayer') || '{}').isHost;
 
@@ -74,6 +79,16 @@ export default function GamePage() {
     }
   }, [gameStarted, isHost, roomCode, beginGameLoop]);
 
+  // --- Invalidate queries when game ends ---
+  useEffect(() => {
+    if (finalResults && user?.id) {
+      // Invalidate all game-related queries when the game ends
+      queryClient.invalidateQueries({ queryKey: gameRecordKeys.all });
+      queryClient.invalidateQueries({ queryKey: playerGameRecordKeys.all });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(user.id) });
+    }
+  }, [finalResults, user?.id, queryClient]);
+
 
   // --- Event Handlers passed to components ---
   const handleStartGame = () => {
@@ -85,6 +100,14 @@ export default function GamePage() {
   const handleLeaveGame = async () => {
     localStorage.removeItem('currentPlayer');
     await disconnect(); // This now also resets state via the context
+    
+    // Invalidate all game-related queries to refresh data on Profile page
+    if (user?.id) {
+      queryClient.invalidateQueries({ queryKey: gameRecordKeys.all });
+      queryClient.invalidateQueries({ queryKey: playerGameRecordKeys.all });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(user.id) });
+    }
+    
     navigate('/');
   };
 
@@ -112,7 +135,7 @@ export default function GamePage() {
   }
 
   if (roundResults) {
-    return <RoundResults results={roundResults} currentUserId={user?.id} />;
+    return <RoundResults results={roundResults} currentUserId={user?.id} isHost={isHost} />;
   }
   
   if (currentQuestion) {

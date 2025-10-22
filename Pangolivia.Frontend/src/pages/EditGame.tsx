@@ -80,9 +80,9 @@ export default function EditGamePage() {
     <section className="min-h-[calc(100vh-5rem)] px-4 py-2 flex items-center justify-center">
       <div className="w-full max-w-3xl">
         <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">Edit Games</h1>
+          <h1 className="mb-2 text-3xl font-bold">Edit Quizzes</h1>
           <p className="text-muted-foreground">
-            Select a game to edit or delete
+            Select a quiz to edit or delete
           </p>
         </div>
 
@@ -90,10 +90,10 @@ export default function EditGamePage() {
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground mb-4">
-                No games created yet.
+                No quizzes created yet.
               </p>
               <Button onClick={() => navigate("/create-game")}>
-                Create Your First Game
+                Create Your First Quiz
               </Button>
             </CardContent>
           </Card>
