@@ -174,15 +174,28 @@ public class QuizControllerTests
     [Fact]
     public async Task FindQuizzesByNameReturnsOkWithList()
     {
-        var quizzes = new List<QuizSummaryDto> { new QuizSummaryDto { Id = 2, QuizName = "AI Fundamentals" } };
-        _quizServiceMock.Setup(s => s.FindQuizzesByNameAsync("AI")).ReturnsAsync(quizzes);
+        var quizzes = new List<QuizSummaryDto> { new QuizSummaryDto { Id = 2, QuizName = "TestQuiz" } };
+        _quizServiceMock.Setup(s => s.FindQuizzesByNameAsync("Test")).ReturnsAsync(quizzes);
 
-        var result = await _controller.FindQuizzesByName("AI");
+        var result = await _controller.FindQuizzesByName("Test");
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var returnValue = Assert.IsType<List<QuizSummaryDto>>(okResult.Value);
         Assert.Single(returnValue);
-        Assert.Equal("AI Fundamentals", returnValue[0].QuizName);
+        Assert.Equal("TestQuiz", returnValue[0].QuizName);
+    }
+
+    [Fact]
+    public async Task FindQuizzesByNameReturnsOkWithEmptyListWhenNoMatch()
+    {
+
+        _quizServiceMock.Setup(s => s.FindQuizzesByNameAsync("Unknown")).ReturnsAsync(new List<QuizSummaryDto>()); 
+
+        var result = await _controller.FindQuizzesByName("Unknown");
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var returnValue = Assert.IsType<List<QuizSummaryDto>>(okResult.Value);
+        Assert.Empty(returnValue);
     }
 }
 
