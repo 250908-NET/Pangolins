@@ -34,10 +34,17 @@ public class GameSession
 
     /// <summary>
     /// Has the game started?
+    //  This now also checks the Status enum, which is more reliable.
     /// </summary>
     public bool HasGameStarted()
     {
-        return CurrentQuestionIndex >= 0;
+        return Status != GameStatus.Pending;
+    }
+    
+    // *** NEW METHOD to formally start the game ***
+    public void Start() {
+        Status = GameStatus.ActiveQuestion;
+        CurrentQuestionIndex = -1; // Reset index to ensure HasNextQuestion works correctly
     }
 
     /// <summary>
@@ -92,12 +99,6 @@ public class GameSession
                 "Can not advance the question in a game that has already ended."
             );
         }
-        else if (Status == GameStatus.ActiveQuestion)
-        {
-            throw new InvalidOperationException(
-                "Can not advance the question when the current question round hasn't ended yet."
-            );
-        }
 
         ICollection<QuestionModel> questions = Quiz.Questions;
         if (questions == null || CurrentQuestionIndex >= questions.Count - 1)
@@ -106,8 +107,7 @@ public class GameSession
         }
 
         CurrentQuestionIndex++;
-        Status = GameStatus.ActiveQuestion;
-
+        
         QuestionModel currentQuestion = questions.ElementAt(CurrentQuestionIndex);
 
         var answers = new List<string>
@@ -134,8 +134,6 @@ public class GameSession
             Answer4 = answers[3],
         };
     }
-
-    // public QuestionForPlayerDto NextQuestion() { }
 
     /// <summary>
     /// Register the player's chosen answer.
@@ -168,15 +166,6 @@ public class GameSession
     /// (not total scores).</returns>
     public QuestionScoresDto EndQuestionRound()
     {
-        if (Status != GameStatus.ActiveQuestion)
-        {
-            throw new InvalidOperationException(
-                "Cannot end question round when there is no active question."
-            );
-        }
-
-        Status = GameStatus.Pending;
-
         ICollection<QuestionModel> questions = Quiz.Questions;
 
         QuestionModel currentQuestion = questions.ElementAt(CurrentQuestionIndex);
@@ -195,7 +184,6 @@ public class GameSession
                 )
             )
             {
-                // TODO: Factor time into calculating the score increment for a correct answer.
                 scoreIncrement = 1;
                 player.AddPoints(scoreIncrement);
             }

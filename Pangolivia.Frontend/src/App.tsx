@@ -14,6 +14,7 @@ import NotFound from '@/pages/NotFound'
 import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { SessionExpiredModal } from '@/components/SessionExpiredModal'
+import { GameLayout } from './components/GameLayout'
 
 // Layout component for protected routes
 const ProtectedRoutesLayout = () => (
@@ -40,8 +41,10 @@ function App() {
             <Route path="/quiz/edit/:id" element={<QuizEditor mode="edit" />} />
             <Route path="/start-game" element={<StartGame />} />
             <Route path="/edit-game" element={<EditGame />} />
-            <Route path="/game-lobby" element={<GameLobby />} />
-            <Route path="/game-active" element={<GameActive />} />
+            <Route element={<GameLayout />}>
+              <Route path="/game-lobby" element={<GameLobby />} />
+              <Route path="/game-active" element={<GameActive />} />
+            </Route>
             <Route path="/profile" element={<Profile />} />
           </Route>
 

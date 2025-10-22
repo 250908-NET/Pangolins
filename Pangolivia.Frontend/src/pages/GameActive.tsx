@@ -1,398 +1,188 @@
-import { useReducer, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckCircle, XCircle, Trophy, Loader2 } from 'lucide-react'
-import { useQuiz } from '@/hooks/useQuizzes'
-
-interface Answer {
-  id: string
-  text: string
-  isCorrect: boolean
-}
-
-interface Question {
-  id: string
-  text: string
-  answers: Answer[]
-}
-
-const PREFILL_QUIZ_ID = 1; // Development: prefill with a valid quiz ID
-
-interface Player {
-  id: string
-  name: string
-  isHost: boolean
-}
-
-interface GameState {
-  currentPlayer: Player | null
-  currentQuestionIndex: number
-  selectedAnswers: Record<string, string>
-  showResults: boolean
-  gameFinished: boolean
-  questions: Question[]
-}
-
-type GameAction =
-  | { type: 'SET_CURRENT_PLAYER'; payload: Player | null }
-  | { type: 'SET_QUESTIONS'; payload: Question[] }
-  | { type: 'SELECT_ANSWER'; payload: { questionId: string; answerId: string } }
-  | { type: 'SUBMIT_ANSWER' }
-  | { type: 'NEXT_QUESTION' }
-  | { type: 'FINISH_GAME' }
-  | { type: 'PLAY_AGAIN' }
-
-function gameReducer(state: GameState, action: GameAction): GameState {
-  switch (action.type) {
-    case 'SET_CURRENT_PLAYER':
-      return { ...state, currentPlayer: action.payload }
-    
-    case 'SET_QUESTIONS':
-      return { ...state, questions: action.payload }
-    
-    case 'SELECT_ANSWER':
-      if (state.showResults) return state
-      return {
-        ...state,
-        selectedAnswers: {
-          ...state.selectedAnswers,
-          [action.payload.questionId]: action.payload.answerId,
-        },
-      }
-    
-    case 'SUBMIT_ANSWER':
-      return { ...state, showResults: true }
-    
-    case 'NEXT_QUESTION':
-      if (state.questions.length === 0 || state.currentQuestionIndex >= state.questions.length - 1) {
-        return state
-      }
-      return {
-        ...state,
-        currentQuestionIndex: state.currentQuestionIndex + 1,
-        showResults: false,
-      }
-    
-    case 'FINISH_GAME':
-      return { ...state, gameFinished: true }
-    
-    case 'PLAY_AGAIN':
-      return {
-        ...state,
-        currentQuestionIndex: 0,
-        selectedAnswers: {},
-        showResults: false,
-        gameFinished: false,
-      }
-    
-    default:
-      return state
-  }
-}
-
-const initialGameState: GameState = {
-  currentPlayer: null,
-  currentQuestionIndex: 0,
-  selectedAnswers: {},
-  showResults: false,
-  gameFinished: false,
-  questions: [],
-}
-
-// Helper function to shuffle an array (Fisher-Yates)
-const shuffleArray = <T,>(array: T[]): T[] => {
-  const newArray = [...array];
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-  }
-  return newArray;
-};
-
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSignalR } from '@/hooks/useSignalR';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import { Loader2, CheckCircle, XCircle, Trophy } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function GameActivePage() {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const quizIdParam = searchParams.get('quiz')
-  const quizId = quizIdParam ? parseInt(quizIdParam) : PREFILL_QUIZ_ID
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const roomCode = searchParams.get('roomCode');
+  const { user } = useAuth();
+
+  // --- Consume all game state and actions from the centralized hook ---
+  const {
+    connection,
+    currentQuestion,
+    roundResults,
+    finalResults,
+    answerSubmitted,
+    submitPlayerAnswer,
+    beginGameLoop,
+  } = useSignalR();
+
+  // State managed purely by the client for UI purposes
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [timer, setTimer] = useState(0);
+
+  // --- Effect for the HOST to kick off the game loop ---
+  useEffect(() => {
+    if (!connection || !roomCode) return;
+
+    const currentPlayer = JSON.parse(localStorage.getItem('currentPlayer') || '{}');
+    if (currentPlayer.isHost) {
+      const timerId = setTimeout(() => {
+        beginGameLoop(roomCode).catch(err => {
+          toast.error(`Failed to start game: ${err.message}`);
+        });
+      }, 1500);
+      return () => clearTimeout(timerId);
+    }
+  }, [connection, roomCode, beginGameLoop]);
   
-  const { data: quiz, isLoading: loadingQuiz } = useQuiz(quizId)
-  const [state, dispatch] = useReducer(gameReducer, initialGameState)
-
-  // Transform API quiz data to local Question format
+  // --- Effect to handle the countdown timer ---
   useEffect(() => {
-    if (quiz) {
-      const transformedQuestions: Question[] = quiz.questions.map((q) => {
-        // Create an array of answers from the flat API properties
-        const answers: Answer[] = [
-          { id: `${q.id}-0`, text: q.correctAnswer, isCorrect: true },
-          { id: `${q.id}-1`, text: q.answer2, isCorrect: false },
-          { id: `${q.id}-2`, text: q.answer3, isCorrect: false },
-          { id: `${q.id}-3`, text: q.answer4, isCorrect: false },
-        ];
-        
-        return {
-          id: q.id.toString(),
-          text: q.questionText,
-          answers: shuffleArray(answers), // Shuffle answers for the player
-        };
+    // When a new question arrives, we reset the timer.
+    if (currentQuestion) {
+      setTimer(10); // Assuming a 10-second timer; you could pass this from the server
+    }
+  }, [currentQuestion]);
+  
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timer]);
+
+
+  // --- UI HANDLERS ---
+  const handleSelectAnswer = (answer: string) => {
+    if (answerSubmitted || !connection || !roomCode) return;
+    setSelectedAnswer(answer);
+    // Call the action from the context
+    submitPlayerAnswer(roomCode, answer)
+      .then(() => {
+        toast.success("Answer submitted!");
+      })
+      .catch(err => {
+        toast.error(`Failed to submit answer: ${err.message}`);
       });
-      dispatch({ type: 'SET_QUESTIONS', payload: transformedQuestions })
-    }
-  }, [quiz])
-
-  useEffect(() => {
-    if (!quizId) {
-      navigate('/join-game')
-      return
-    }
-
-    // Load current player
-    const playerData = JSON.parse(localStorage.getItem('currentPlayer') || 'null')
-    if (playerData && playerData.quizId === quizId) {
-      dispatch({ type: 'SET_CURRENT_PLAYER', payload: playerData })
-    } else {
-      navigate('/join-game')
-    }
-  }, [quizId, navigate])
-
-  const handleSelectAnswer = (questionId: string, answerId: string) => {
-    dispatch({ type: 'SELECT_ANSWER', payload: { questionId, answerId } })
-  }
-
-  const handleSubmitAnswer = () => {
-    dispatch({ type: 'SUBMIT_ANSWER' })
-  }
-
-  const handleNextQuestion = () => {
-    dispatch({ type: 'NEXT_QUESTION' })
-  }
-
-  const handleFinishGame = () => {
-    dispatch({ type: 'FINISH_GAME' })
-  }
-
-  const calculateScore = () => {
-    if (state.questions.length === 0) return { correct: 0, total: 0, percentage: 0 }
-    
-    let correct = 0
-    state.questions.forEach((question) => {
-      const selectedAnswerId = state.selectedAnswers[question.id]
-      const selectedAnswer = question.answers.find(a => a.id === selectedAnswerId)
-      if (selectedAnswer?.isCorrect) {
-        correct++
-      }
-    })
-    
-    const total = state.questions.length
-    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0
-    
-    return { correct, total, percentage }
-  }
-
-  const handlePlayAgain = () => {
-    dispatch({ type: 'PLAY_AGAIN' })
-  }
+  };
 
   const handleExitGame = () => {
-    if (quizId && state.currentPlayer) {
-      // Remove player from players list
-      const storedPlayers = JSON.parse(localStorage.getItem(`players_${quizId}`) || '[]')
-      const updatedPlayers = storedPlayers.filter((p: Player) => p.id !== state.currentPlayer!.id)
-      localStorage.setItem(`players_${quizId}`, JSON.stringify(updatedPlayers))
-      localStorage.removeItem('currentPlayer')
-    }
-    navigate('/join-game')
-  }
+    navigate('/');
+  };
 
-  if (loadingQuiz) {
+  // --- DERIVED DATA ---
+  const finalLeaderboard = useMemo(() => {
+    if (!finalResults) return [];
+    return [...finalResults.playerScores].sort((a, b) => b.score - a.score);
+  }, [finalResults]);
+
+  // --- RENDER LOGIC ---
+  
+  // Loading View
+  if (!connection) {
     return (
-      <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4">
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="text-lg">Loading quiz...</span>
-        </div>
-      </section>
-    )
+      <div className="flex min-h-screen flex-col items-center justify-center space-y-2">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p>Connecting to game...</p>
+      </div>
+    );
   }
 
-  if (!quiz || !state.currentPlayer || state.questions.length === 0) {
-    return null
-  }
-
-  const currentQuestion = state.questions[state.currentQuestionIndex]
-  const selectedAnswerId = currentQuestion ? state.selectedAnswers[currentQuestion.id] : null
-  const isLastQuestion = state.currentQuestionIndex === state.questions.length - 1
-
-  if (state.gameFinished) {
+  // Final Results View (rendered if `finalResults` has data)
+  if (finalResults) {
     return (
-      <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4 py-2">
-        <div className="w-full max-w-2xl">
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/20">
-                <Trophy className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
-              </div>
-              <CardTitle className="text-3xl">Game Complete!</CardTitle>
-              <CardDescription>{quiz.quizName}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="text-center">
-                <p className="text-6xl font-bold text-blue-600 dark:text-blue-400">
-                  {calculateScore().percentage}%
-                </p>
-                <p className="text-muted-foreground mt-2 text-lg">
-                  {calculateScore().correct} out of {calculateScore().total} correct
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {state.questions.map((question, index) => {
-                  const selectedAnswerId = state.selectedAnswers[question.id]
-                  const selectedAnswer = question.answers.find(a => a.id === selectedAnswerId)
-                  const isCorrect = selectedAnswer?.isCorrect
-                  
-                  return (
-                    <div
-                      key={question.id}
-                      className={`rounded-lg border p-3 ${
-                        isCorrect
-                          ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                          : 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                      }`}
-                    >
-                      <div className="flex items-start gap-2">
-                        {isCorrect ? (
-                          <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
-                        ) : (
-                          <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
-                        )}
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">
-                            Question {index + 1}: {question.text}
-                          </p>
-                          <p className="text-muted-foreground mt-1 text-xs">
-                            Your answer: {selectedAnswer?.text || 'Not answered'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={handleExitGame}
-                  className="flex-1"
-                >
-                  Exit Game
-                </Button>
-                <Button onClick={handlePlayAgain} className="flex-1">
-                  Play Again
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-    )
-  }
-
-  return (
-    <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4 py-2">
-      <div className="w-full max-w-2xl">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardDescription>
-                Question {state.currentQuestionIndex + 1} of {state.questions.length}
-              </CardDescription>
-              <CardDescription>
-                Quiz ID: {quizId}
-              </CardDescription>
-            </div>
-            <CardTitle className="text-2xl">{currentQuestion.text}</CardTitle>
+      <section className="flex min-h-screen items-center justify-center px-4 py-16">
+        <Card className="w-full max-w-2xl">
+          <CardHeader className="text-center">
+             <Trophy className="mx-auto h-12 w-12 text-yellow-500" />
+            <CardTitle className="text-3xl">Game Over!</CardTitle>
+            <CardDescription>Here are the final results.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent>
             <div className="space-y-3">
-              {currentQuestion.answers.map((answer) => {
-                const isSelected = selectedAnswerId === answer.id
-                const showCorrect = state.showResults && answer.isCorrect
-                const showIncorrect = state.showResults && isSelected && !answer.isCorrect
-                
-                return (
-                  <button
-                    key={answer.id}
-                    onClick={() => handleSelectAnswer(currentQuestion.id, answer.id)}
-                    disabled={state.showResults}
-                    className={`w-full rounded-lg border-2 p-4 text-left transition-all ${
-                      showCorrect
-                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                        : showIncorrect
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                        : isSelected
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 hover:border-gray-300 dark:border-gray-700'
-                    } ${state.showResults ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{answer.text}</span>
-                      {showCorrect && (
-                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      )}
-                      {showIncorrect && (
-                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                      )}
-                    </div>
-                  </button>
-                )
-              })}
+              {finalLeaderboard.map((player, index) => (
+                <div key={player.userId} className="flex justify-between rounded-lg border p-3">
+                  <p className="font-bold">{index + 1}. {player.username}</p>
+                  <p>{player.score} Points</p>
+                </div>
+              ))}
             </div>
-
-            {!state.showResults ? (
-              <Button
-                onClick={handleSubmitAnswer}
-                disabled={!selectedAnswerId}
-                className="w-full"
-                size="lg"
-              >
-                Submit Answer
-              </Button>
-            ) : (
-              <div className="space-y-3">
-                {currentQuestion.answers.find(a => a.id === selectedAnswerId)?.isCorrect ? (
-                  <div className="flex items-center gap-2 rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    <p className="font-medium text-green-600 dark:text-green-400">
-                      Correct!
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
-                    <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                    <p className="font-medium text-red-600 dark:text-red-400">
-                      Incorrect
-                    </p>
-                  </div>
-                )}
-                
-                {isLastQuestion ? (
-                  <Button onClick={handleFinishGame} className="w-full" size="lg">
-                    View Results
-                  </Button>
-                ) : (
-                  <Button onClick={handleNextQuestion} className="w-full" size="lg">
-                    Next Question
-                  </Button>
-                )}
-              </div>
-            )}
+            <Button onClick={handleExitGame} className="mt-6 w-full">Back to Home</Button>
           </CardContent>
         </Card>
-      </div>
-    </section>
-  )
+      </section>
+    );
+  }
+
+  // Round Results View (rendered if `roundResults` has data)
+  if (roundResults) {
+     const myScoreThisRound = roundResults.playerScores.find(p => p.userId === user?.id)?.score ?? 0;
+    return (
+      <section className="flex min-h-screen items-center justify-center px-4 py-16">
+        <Card className="w-full max-w-2xl text-center">
+          <CardHeader>
+            {myScoreThisRound > 0 ? (
+                <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+            ) : (
+                <XCircle className="mx-auto h-12 w-12 text-red-500" />
+            )}
+            <CardTitle className="text-3xl">{myScoreThisRound > 0 ? "Correct!" : "Incorrect!"}</CardTitle>
+            <CardDescription>The correct answer was:</CardDescription>
+            <p className="text-xl font-bold">{roundResults.answer}</p>
+          </CardHeader>
+          <CardContent>
+            <p className="font-semibold">Waiting for the next question...</p>
+          </CardContent>
+        </Card>
+      </section>
+    );
+  }
+
+  // Question View (rendered if `currentQuestion` has data)
+  if (currentQuestion) {
+    const answers = [currentQuestion.answer1, currentQuestion.answer2, currentQuestion.answer3, currentQuestion.answer4];
+    return (
+       <section className="flex min-h-screen items-center justify-center px-4 py-16">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+                <div className="flex justify-between text-muted-foreground">
+                    <span>Question</span>
+                    <span className="font-bold text-lg">{timer}s</span>
+                </div>
+                <CardTitle className="text-2xl">{currentQuestion.questionText}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {answers.map((answer, index) => (
+                    <Button
+                        key={index}
+                        variant={selectedAnswer === answer ? 'default' : 'outline'}
+                        className="h-auto min-h-[4rem] whitespace-normal justify-start p-4 text-left"
+                        onClick={() => handleSelectAnswer(answer)}
+                        disabled={answerSubmitted}
+                    >
+                        {answer}
+                    </Button>
+                ))}
+            </CardContent>
+          </Card>
+       </section>
+    );
+  }
+  
+  // Waiting View (initial state before first question arrives)
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center space-y-2">
+      <Loader2 className="h-8 w-8 animate-spin" />
+      <p>Waiting for the game to start...</p>
+    </div>
+  );
 }

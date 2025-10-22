@@ -8,92 +8,49 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Users, Play, Copy, Check, Loader2, Crown } from "lucide-react"; // Import Crown icon
+import { Users, Play, Copy, Check, Loader2, Crown } from "lucide-react";
 import { useSignalR } from "@/hooks/useSignalR";
 import { toast } from "sonner";
-
-interface Player {
-  userId: number;
-  username: string;
-  isHost: boolean; // Add isHost property
-}
-
-interface LobbyDetails {
-  quizName: string;
-  creatorUsername: string;
-  questionCount: number;
-}
 
 export default function GameLobbyPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const roomCode = searchParams.get("roomCode");
 
-  const { connection, connectToHub, disconnect } = useSignalR();
+  // --- Consume centralized state and actions from the hook ---
+  const {
+    connection,
+    disconnect,
+    joinLobby,
+    startLobbyGame,
+    lobbyDetails,
+    players,
+    gameStarted,
+  } = useSignalR();
 
-  // State to hold host and players separately
-  const [host, setHost] = useState<Player | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [lobbyDetails, setLobbyDetails] = useState<LobbyDetails | null>(null);
   const [copied, setCopied] = useState(false);
-
   const currentPlayerIsHost = JSON.parse(
     localStorage.getItem("currentPlayer") || "{}"
   ).isHost;
 
-  useEffect(() => {
-    if (!roomCode ) {
-      toast.error("Invalid game lobby link.");
-      navigate("/join-game");
-      return;
-    }
-
-    // Connect to the hub when the component mounts
-    connectToHub("/gamehub");
-
-    // Cleanup on unmount
-    return () => {
-      disconnect();
-    };
-  }, []); // Run only once
-
+  // --- Effect to join the lobby on component mount ---
   useEffect(() => {
     if (connection && roomCode) {
-      // 1. Join the game room on the server
-      connection.invoke("JoinGame", roomCode).catch((err) => {
+      joinLobby(roomCode).catch((err) => {
         console.error("Error invoking JoinGame:", err);
         toast.error("Failed to join the game room.");
         navigate("/join-game");
       });
-
-      // 2. Listen for lobby details (sent on join)
-      connection.on("ReceiveLobbyDetails", (details: LobbyDetails) => {
-        console.log("Received lobby details:", details);
-        setLobbyDetails(details);
-      });
-      
-      // 3. Listen for full player list updates and separate host from players.
-      connection.on("UpdatePlayerList", (playerList: Player[]) => {
-        console.log("Received updated player list:", playerList);
-        const hostPlayer = playerList.find((p) => p.isHost);
-        const otherPlayers = playerList.filter((p) => !p.isHost);
-        setHost(hostPlayer || null);
-        setPlayers(otherPlayers);
-      });
-
-      // 4. Listen for errors from the hub
-      connection.on("Error", (message: string) => {
-        toast.error(message);
-      });
-
-      // Cleanup event listeners when connection or roomCode changes
-      return () => {
-        connection.off("ReceiveLobbyDetails");
-        connection.off("UpdatePlayerList");
-        connection.off("Error");
-      };
     }
-  }, [connection, roomCode, navigate]);
+  }, [connection, roomCode, joinLobby, navigate]);
+
+  // --- Effect to navigate away when the game starts ---
+  useEffect(() => {
+    if (gameStarted && roomCode) {
+      toast.info("The game is starting!");
+      navigate(`/game-active?roomCode=${roomCode}`);
+    }
+  }, [gameStarted, roomCode, navigate]);
 
   const handleCopyCode = async () => {
     if (roomCode) {
@@ -104,16 +61,22 @@ export default function GameLobbyPage() {
   };
 
   const handleStartGame = () => {
-    // Logic to start the game for all players will be sent from here later
-    // navigate(`/game-active?quiz=${quizId}`);
+    if (roomCode && currentPlayerIsHost) {
+      // Call the action from the context
+      startLobbyGame(roomCode).catch((err) => {
+        console.error("Error starting game:", err);
+        toast.error(`Failed to start game: ${err.message}`);
+      });
+    }
   };
 
   const handleLeaveGame = async () => {
     localStorage.removeItem("currentPlayer");
-    await disconnect(); // Explicitly disconnect from the hub
+    // The disconnect function from the context will handle stopping the connection
+    // and resetting the game state.
+    await disconnect();
     navigate("/join-game");
   };
-
 
   if (!connection || !lobbyDetails) {
     return (
@@ -128,7 +91,10 @@ export default function GameLobbyPage() {
     );
   }
 
-  const totalPlayers = players.length + (host ? 1 : 0);
+  // Derive host and players directly from the centralized state
+  const host = players.find((p) => p.isHost);
+  const otherPlayers = players.filter((p) => !p.isHost);
+  const totalPlayers = players.length;
 
   return (
     <section className="flex min-h-screen items-center justify-center px-4 py-16">
@@ -155,28 +121,26 @@ export default function GameLobbyPage() {
             </div>
 
             <div>
-              {/* Host Section */}
               <div className="mb-2 flex items-center gap-2">
                 <Crown className="h-5 w-5 text-yellow-500" />
                 <h3 className="text-lg font-semibold">Host</h3>
               </div>
               {host ? (
                 <div className="flex items-center justify-between rounded-lg border-2 border-yellow-500 bg-yellow-50 p-3 dark:bg-yellow-900/20">
-                  <p className="font-bold">{host.username}</p>
+                  <p className="font-bold">{lobbyDetails.hostUsername}</p>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">Waiting for host...</p>
               )}
 
-              {/* Players Section */}
               <div className="mt-4">
                 <div className="mb-2 flex items-center gap-2">
                   <Users className="h-5 w-5" />
                   <h3 className="text-lg font-semibold">Players ({totalPlayers})</h3>
                 </div>
                 <div className="space-y-2">
-                  {players.length > 0 ? (
-                    players.map((player) => (
+                  {otherPlayers.length > 0 ? (
+                    otherPlayers.map((player) => (
                       <div
                         key={player.userId}
                         className="flex items-center justify-between rounded-lg border p-3"
@@ -193,13 +157,12 @@ export default function GameLobbyPage() {
               </div>
             </div>
 
-
             <div className="flex gap-3">
               <Button variant="outline" onClick={handleLeaveGame} className="flex-1">
                 Leave Game
               </Button>
               {currentPlayerIsHost && (
-                <Button onClick={handleStartGame} disabled={players.length === 0} className="flex-1" size="lg">
+                <Button onClick={handleStartGame} className="flex-1" size="lg">
                   <Play className="mr-2 h-5 w-5" />
                   Start Game
                 </Button>

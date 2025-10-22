@@ -1,4 +1,3 @@
-/*C:\Users\Husan\Projects\Revature\Pangolins\Pangolivia.API\Api\Controllers\GameController.cs*/
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
