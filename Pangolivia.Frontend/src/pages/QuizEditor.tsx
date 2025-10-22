@@ -8,6 +8,7 @@ import {
   useUpdateQuiz,
   useGenerateAiQuestions,
 } from "@/hooks/useQuizzes";
+import { useCreateGame } from "@/hooks/useGames"; // Import the useCreateGame hook
 import type { QuestionDto } from "@/types/api";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -85,6 +86,7 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
   const createQuizMutation = useCreateQuiz();
   const updateQuizMutation = useUpdateQuiz();
   const generateAiMutation = useGenerateAiQuestions();
+  const createGameMutation = useCreateGame(); // Instantiate the create game hook
 
   const [aiTopic, setAiTopic] = useState<string>("");
   const [aiCount, setAiCount] = useState<number>(5);
@@ -308,22 +310,19 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
         toast.success("Quiz updated successfully!");
         navigate("/edit-game");
       } else {
+        // --- THIS IS THE UPDATED LOGIC ---
         const questionsForApi = apiQuestions.map((q) => ({ ...q, id: 0 }));
+        
+        // Step 1: Create the quiz
         const newQuiz = await createQuizMutation.mutateAsync({
           quiz: { quizName: draftQuiz.quizName, questions: questionsForApi },
           creatorUserId: user?.id ?? 0,
         });
-        const hostPlayer = {
-          id: crypto.randomUUID(),
-          name: hostName,
-          quizId: newQuiz.id,
-          isHost: true,
-          joinedAt: new Date().toISOString(),
-        };
-        localStorage.setItem("currentPlayer", JSON.stringify(hostPlayer));
-        localStorage.setItem(`players_${newQuiz.id}`, JSON.stringify([hostPlayer]));
-        toast.success("Quiz created successfully!");
-        navigate(`/game-lobby?quiz=${newQuiz.id}`);
+
+        toast.success("Quiz created successfully! Creating game lobby...");
+
+        // Step 2: Create a game session, which will navigate to the lobby on success
+        createGameMutation.mutate(newQuiz.id);
       }
     } catch (err) {
       console.error(`Failed to ${isEditMode ? "update" : "create"} quiz:`, err);
@@ -343,7 +342,7 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
 
   const isSaving = isEditMode
     ? updateQuizMutation.isPending
-    : createQuizMutation.isPending;
+    : createQuizMutation.isPending || createGameMutation.isPending; // Update loading state
 
   return (
     <section className="flex justify-center items-center min-h-[calc(100vh-5rem)] px-4 py-2">

@@ -1,3 +1,4 @@
+/*C:\Users\Husan\Projects\Revature\Pangolins\Pangolivia.Frontend\src\hooks\useGames.ts*/
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { AxiosError } from 'axios';
@@ -21,7 +22,6 @@ export const useCreateGame = () => {
     mutationFn: (quizId: number) => gameService.createGame(quizId),
     onSuccess: (data ) => {
       const { roomCode } = data;
-      // Set the host as the current player for the lobby
       const hostPlayer = {
         id: user?.id,
         name: user?.name,
@@ -29,8 +29,9 @@ export const useCreateGame = () => {
       };
       localStorage.setItem('currentPlayer', JSON.stringify(hostPlayer));
 
-      toast.success(`Game created! Room code: ${roomCode}`);
-      navigate(`/game-lobby?roomCode=${roomCode}`);
+      toast.success(`Game created! Joining lobby...`);
+      // --- UPDATED NAVIGATION ---
+      navigate(`/game/${roomCode}`);
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       console.error('Failed to create game:', error);
@@ -49,19 +50,19 @@ export const useJoinGame = () => {
 
   return useMutation({
     mutationFn: async (roomCode: string) => {
-      const gameDetails = await gameService.getGameDetailsByRoomCode(roomCode);
-      console.info(gameDetails);
+      // The API call remains the same, just to validate the room code
+      await gameService.getGameDetailsByRoomCode(roomCode);
       return { roomCode, playerName: user!.name };
     },
     onSuccess: ({ roomCode, playerName }) => {
-      // Set up local player data and navigate to the lobby
       const playerData = {
         id: user?.id,
         name: playerName,
         isHost: false,
       };
       localStorage.setItem('currentPlayer', JSON.stringify(playerData));
-      navigate(`/game-lobby?roomCode=${roomCode.toUpperCase()}`);
+      // --- UPDATED NAVIGATION ---
+      navigate(`/game/${roomCode.toUpperCase()}`);
     },
     onError: (err: AxiosError<ApiErrorResponse>) => {
       console.error('Error joining game:', err);
