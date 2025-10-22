@@ -37,7 +37,7 @@ namespace Pangolivia.API.Hubs
             }
             catch (Exception ex)
             {
-                 _logger.LogWarning(
+                _logger.LogWarning(
                     ex,
                     "JoinGame failed: Could not parse UserId from token for connection {ConnectionId}",
                     Context.ConnectionId
@@ -82,7 +82,7 @@ namespace Pangolivia.API.Hubs
                         {
                             p.UserId,
                             p.Username,
-                            IsHost = false
+                            IsHost = false,
                         })
                         .ToList();
 
@@ -91,10 +91,10 @@ namespace Pangolivia.API.Hubs
                         {
                             UserId = gameSession.HostUserId,
                             Username = gameSession.HostUsername,
-                            IsHost = true
+                            IsHost = true,
                         }
                     );
-                    
+
                     await Clients.Group(roomCode).SendAsync("UpdatePlayerList", playerList);
                     _logger.LogInformation(
                         "User {Username} successfully joined room {RoomCode}. Sent updated player list to group.",
@@ -130,14 +130,18 @@ namespace Pangolivia.API.Hubs
                 await Clients.Caller.SendAsync("Error", $"Failed to start game: {ex.Message}");
             }
         }
-        
+
         // *** NEW METHOD ***
         public Task BeginGame(string roomCode)
         {
             try
             {
                 var userId = GetUserIdFromContext();
-                _logger.LogInformation("Host {UserId} is beginning the game for room {RoomCode}", userId, roomCode);
+                _logger.LogInformation(
+                    "Host {UserId} is beginning the game for room {RoomCode}",
+                    userId,
+                    roomCode
+                );
                 _gameManager.TriggerGameLoop(roomCode, userId);
             }
             catch (Exception ex)
@@ -157,7 +161,11 @@ namespace Pangolivia.API.Hubs
                 var gameSession = _gameManager.GetGameSession(roomCode);
                 if (gameSession != null && userId == gameSession.HostUserId)
                 {
-                    _logger.LogWarning("Host {UserId} attempted to submit an answer in room {RoomCode}.", userId, roomCode);
+                    _logger.LogWarning(
+                        "Host {UserId} attempted to submit an answer in room {RoomCode}.",
+                        userId,
+                        roomCode
+                    );
                     await Clients.Caller.SendAsync("Error", "The host cannot submit answers.");
                     return;
                 }
@@ -167,7 +175,7 @@ namespace Pangolivia.API.Hubs
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error submitting answer for room {RoomCode}", roomCode);
-                 await Clients.Caller.SendAsync("Error", $"Failed to submit answer: {ex.Message}");
+                await Clients.Caller.SendAsync("Error", $"Failed to submit answer: {ex.Message}");
             }
         }
 
@@ -180,7 +188,11 @@ namespace Pangolivia.API.Hubs
             }
             catch (UnauthorizedAccessException ex)
             {
-                _logger.LogWarning(ex, "Unauthorized attempt to skip question in room {RoomCode}", roomCode);
+                _logger.LogWarning(
+                    ex,
+                    "Unauthorized attempt to skip question in room {RoomCode}",
+                    roomCode
+                );
                 await Clients.Caller.SendAsync("Error", ex.Message);
             }
             catch (Exception ex)

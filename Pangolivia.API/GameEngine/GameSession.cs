@@ -41,9 +41,10 @@ public class GameSession
     {
         return Status != GameStatus.Pending;
     }
-    
+
     // *** NEW METHOD to formally start the game ***
-    public void Start() {
+    public void Start()
+    {
         Status = GameStatus.ActiveQuestion;
         CurrentQuestionIndex = -1; // Reset index to ensure HasNextQuestion works correctly
     }
@@ -108,7 +109,7 @@ public class GameSession
         }
 
         CurrentQuestionIndex++;
-        
+
         QuestionModel currentQuestion = questions.ElementAt(CurrentQuestionIndex);
 
         var answers = new List<string>

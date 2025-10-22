@@ -169,7 +169,7 @@ export function SignalRProvider({ children }: { children: React.ReactNode }) {
 
   // --- Actions to Invoke Hub Methods ---
   const invokeHubMethod = useCallback(
-    async (methodName: string, ...args: any[]) => {
+    async (methodName: string, ...args: unknown[]) => {
       if (!connectionRef.current)
         throw new Error('SignalR connection not established.')
       return connectionRef.current.invoke(methodName, ...args)

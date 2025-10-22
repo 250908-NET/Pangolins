@@ -42,7 +42,10 @@ namespace Pangolivia.API.Controllers
             var username = User.FindFirstValue(ClaimTypes.Name);
             if (string.IsNullOrEmpty(username))
             {
-                _logger.LogWarning("CreateGame failed: Username not found in token for UserId {UserId}.", userId);
+                _logger.LogWarning(
+                    "CreateGame failed: Username not found in token for UserId {UserId}.",
+                    userId
+                );
                 return Unauthorized("Username not found in token.");
             }
 

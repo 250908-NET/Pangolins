@@ -84,13 +84,13 @@ namespace Pangolivia.API.Services
             {
                 throw new InvalidOperationException("Game has already started.");
             }
-            
+
             // Mark the game as started internally to prevent new players
             gameSession.Start();
 
             // Notify all clients that the game is starting and they should navigate
             await _hubContext.Clients.Group(roomCode).SendAsync("GameStarted", gameSession.Quiz.Id);
-            
+
             // *** CHANGE: DO NOT START THE GAME LOOP HERE. ***
             // The host's client will trigger it after navigation.
         }
@@ -100,16 +100,23 @@ namespace Pangolivia.API.Services
         {
             if (!_games.TryGetValue(roomCode, out var gameSession))
             {
-                _logger.LogWarning("TriggerGameLoop failed: Game session {RoomCode} not found.", roomCode);
+                _logger.LogWarning(
+                    "TriggerGameLoop failed: Game session {RoomCode} not found.",
+                    roomCode
+                );
                 return;
             }
 
             if (gameSession.HostUserId != requestingUserId)
             {
-                _logger.LogWarning("TriggerGameLoop failed: User {UserId} is not the host of room {RoomCode}.", requestingUserId, roomCode);
+                _logger.LogWarning(
+                    "TriggerGameLoop failed: User {UserId} is not the host of room {RoomCode}.",
+                    requestingUserId,
+                    roomCode
+                );
                 return;
             }
-            
+
             // Fire and forget the game loop to run in the background
             _ = RunGameLoopAsync(roomCode);
         }
@@ -118,7 +125,10 @@ namespace Pangolivia.API.Services
         {
             if (!_games.TryGetValue(roomCode, out var gameSession))
             {
-                _logger.LogWarning("RunGameLoopAsync failed: Game session {RoomCode} not found.", roomCode);
+                _logger.LogWarning(
+                    "RunGameLoopAsync failed: Game session {RoomCode} not found.",
+                    roomCode
+                );
                 return;
             }
 
@@ -169,14 +179,18 @@ namespace Pangolivia.API.Services
             {
                 HostUserId = finalRecordForDb.HostUserId,
                 QuizId = finalRecordForDb.QuizId,
-                PlayerScores = finalRecordForDb.PlayerScores.Select(playerScore => {
-                    gameSession.Players.TryGetValue(playerScore.UserId, out var player);
-                    return new {
-                        UserId = playerScore.UserId,
-                        Username = player?.Username ?? "Unknown",
-                        Score = playerScore.Score
-                    };
-                }).ToList()
+                PlayerScores = finalRecordForDb
+                    .PlayerScores.Select(playerScore =>
+                    {
+                        gameSession.Players.TryGetValue(playerScore.UserId, out var player);
+                        return new
+                        {
+                            UserId = playerScore.UserId,
+                            Username = player?.Username ?? "Unknown",
+                            Score = playerScore.Score,
+                        };
+                    })
+                    .ToList(),
             };
 
             await _hubContext.Clients.Group(roomCode).SendAsync("GameEnded", finalRecordForClient);
@@ -189,7 +203,8 @@ namespace Pangolivia.API.Services
         {
             using (var scope = _serviceProvider.CreateScope())
             {
-                var gameRecordService = scope.ServiceProvider.GetRequiredService<IGameRecordService>();
+                var gameRecordService =
+                    scope.ServiceProvider.GetRequiredService<IGameRecordService>();
                 var playerRecordService =
                     scope.ServiceProvider.GetRequiredService<IPlayerGameRecordService>();
                 try
@@ -204,7 +219,7 @@ namespace Pangolivia.API.Services
                                 {
                                     GameRecordId = createdGame.Id.Value,
                                     UserId = playerScore.UserId,
-                                    Score = playerScore.Score
+                                    Score = playerScore.Score,
                                 }
                             );
                         }
@@ -232,7 +247,12 @@ namespace Pangolivia.API.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to submit answer for user {UserId} in room {RoomCode}", userId, roomCode);
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to submit answer for user {UserId} in room {RoomCode}",
+                        userId,
+                        roomCode
+                    );
                 }
             }
         }
@@ -241,13 +261,20 @@ namespace Pangolivia.API.Services
         {
             if (!_games.TryGetValue(roomCode, out var gameSession))
             {
-                _logger.LogWarning("SkipQuestion failed: Game session {RoomCode} not found.", roomCode);
+                _logger.LogWarning(
+                    "SkipQuestion failed: Game session {RoomCode} not found.",
+                    roomCode
+                );
                 return;
             }
 
             if (gameSession.HostUserId != requestingUserId)
             {
-                _logger.LogWarning("SkipQuestion failed: User {UserId} is not the host of room {RoomCode}.", requestingUserId, roomCode);
+                _logger.LogWarning(
+                    "SkipQuestion failed: User {UserId} is not the host of room {RoomCode}.",
+                    requestingUserId,
+                    roomCode
+                );
                 throw new UnauthorizedAccessException("Only the host can skip a question.");
             }
 
@@ -325,7 +352,9 @@ namespace Pangolivia.API.Services
                     )
                     {
                         gameSession.HostConnectionId = null;
-                        _logger.LogInformation($"[GameManager] Host disconnected from room {roomCode}.");
+                        _logger.LogInformation(
+                            $"[GameManager] Host disconnected from room {roomCode}."
+                        );
                     }
                     else if (gameSession.Players.TryRemove(userId, out var removedPlayer))
                     {
@@ -334,22 +363,23 @@ namespace Pangolivia.API.Services
                         );
                     }
 
-                     var playerList = gameSession
+                    var playerList = gameSession
                         .Players.Values.Select(p => new
                         {
                             p.UserId,
                             p.Username,
-                            IsHost = false
+                            IsHost = false,
                         })
                         .ToList();
 
-                    if(gameSession.HostConnectionId != null) {
-                         playerList.Add(
+                    if (gameSession.HostConnectionId != null)
+                    {
+                        playerList.Add(
                             new
                             {
                                 UserId = gameSession.HostUserId,
                                 Username = gameSession.HostUsername,
-                                IsHost = true
+                                IsHost = true,
                             }
                         );
                     }
@@ -357,7 +387,6 @@ namespace Pangolivia.API.Services
                     await _hubContext
                         .Clients.Group(roomCode)
                         .SendAsync("UpdatePlayerList", playerList);
-
 
                     if (gameSession.HostConnectionId == null && gameSession.Players.IsEmpty)
                     {
