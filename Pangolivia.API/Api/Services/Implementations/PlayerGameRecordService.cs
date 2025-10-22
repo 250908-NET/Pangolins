@@ -13,7 +13,8 @@ namespace Pangolivia.API.Services
         public PlayerGameRecordService(
             IPlayerGameRecordRepository playerGameRecordRepository,
             IGameRecordRepository gameRecordRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository
+        )
         {
             _playerGameRecordRepository = playerGameRecordRepository;
             _gameRecordRepository = gameRecordRepository;
@@ -23,7 +24,10 @@ namespace Pangolivia.API.Services
         // Record a player's score (when they finish a quiz)
         public async Task<PlayerGameRecordDto> RecordScoreAsync(CreatePlayerGameRecordDto dto)
         {
-            var game = await _gameRecordRepository.GetGameRecordByIdAsync(dto.GameRecordId);
+            if (dto.GameRecordId == null)
+                throw new ArgumentException("GameRecordId cannot be null.");
+
+            var game = await _gameRecordRepository.GetGameRecordByIdAsync(dto.GameRecordId.Value);
             var user = await _userRepository.getUserModelById(dto.UserId);
 
             if (game == null)
@@ -33,9 +37,9 @@ namespace Pangolivia.API.Services
 
             var record = new PlayerGameRecordModel
             {
-                GameRecordId = dto.GameRecordId,
+                GameRecordId = dto.GameRecordId.Value,
                 UserId = dto.UserId,
-                score = dto.score
+                Score = dto.Score,
             };
 
             await _playerGameRecordRepository.AddAsync(record);
@@ -46,8 +50,7 @@ namespace Pangolivia.API.Services
                 GameRecordId = record.GameRecordId,
                 UserId = record.UserId,
                 Username = user.Username,
-                score = record.score,
-                GameCompletedAt = game.datetimeCompleted
+                Score = record.Score,
             };
         }
 
@@ -56,13 +59,16 @@ namespace Pangolivia.API.Services
         {
             var records = await _playerGameRecordRepository.GetByGameRecordIdAsync(gameRecordId);
             var ordered = records
-                .OrderByDescending(r => r.score)
-                .Select((r, index) => new LeaderboardDto
-                {
-                    Username = r.User?.Username ?? "Unknown",
-                    score = r.score,
-                    Rank = index + 1
-                });
+                .OrderByDescending(r => r.Score)
+                .Select(
+                    (r, index) =>
+                        new LeaderboardDto
+                        {
+                            Username = r.User?.Username ?? "Unknown",
+                            Score = r.Score,
+                            Rank = index + 1,
+                        }
+                );
 
             return ordered;
         }
@@ -77,8 +83,7 @@ namespace Pangolivia.API.Services
                 GameRecordId = r.GameRecordId,
                 UserId = r.UserId,
                 Username = r.User?.Username ?? string.Empty,
-                score = r.score,
-                GameCompletedAt = r.GameRecord?.datetimeCompleted
+                Score = r.Score,
             });
         }
 
@@ -86,22 +91,23 @@ namespace Pangolivia.API.Services
         public async Task<double> GetAverageScoreByPlayerAsync(int userId)
         {
             var records = await _playerGameRecordRepository.GetByUserIdAsync(userId);
-            if (!records.Any()) return 0;
-            return records.Average(r => r.score);
+            if (!records.Any())
+                return 0;
+            return records.Average(r => r.Score);
         }
 
-        // Update player’s score 
+        // Update player’s score
         public async Task UpdateScoreAsync(int recordId, UpdatePlayerGameRecordDto dto)
         {
             var record = await _playerGameRecordRepository.GetByIdAsync(recordId);
             if (record == null)
                 throw new Exception($"PlayerGameRecord with ID {recordId} not found.");
 
-            record.score = dto.score;
+            record.Score = dto.Score;
             await _playerGameRecordRepository.UpdateAsync(record);
         }
 
-        // Delete player game record 
+        // Delete player game record
         public async Task DeleteRecordAsync(int recordId)
         {
             await _playerGameRecordRepository.DeleteAsync(recordId);

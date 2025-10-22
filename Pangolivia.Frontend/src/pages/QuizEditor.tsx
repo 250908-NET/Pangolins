@@ -8,7 +8,8 @@ import {
   useUpdateQuiz,
   useGenerateAiQuestions,
 } from "@/hooks/useQuizzes";
-import type { QuestionDto, QuizDetailDto } from "@/types/api";
+import { useCreateGame } from "@/hooks/useGames"; // Import the useCreateGame hook
+import type { QuestionDto } from "@/types/api";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
@@ -17,24 +18,57 @@ import {
   QuestionsList,
   AiGeneratorCard,
 } from "@/features/quiz-editor/components";
-import type { Question } from "@/features/quiz-editor/components";
+import type { Question, Answer } from "@/features/quiz-editor/components";
 
-// const CURRENT_USER_ID = 1;
-
-// Helper: Convert API to local format
-const toLocalQuestions = (questions: QuestionDto[]): Question[] =>
-  questions.map((q) => ({
-    id: q.id.toString(),
+// --- TRANSFORMATION HELPERS ---
+/**
+ * Converts API question format (flat) to the local state format used by the UI.
+ * The UI works better with a structured array of answers.
+ */
+const apiToLocalQuestions = (apiQuestions: QuestionDto[]): Question[] => {
+  return apiQuestions.map((q) => ({
+    id: q.id.toString(), // The UI uses string IDs for temporary items
     text: q.questionText,
-    answers: q.options.map((opt, idx) => ({
-      id: `${q.id}-${idx}`,
-      text: opt,
-      isCorrect: idx === q.correctOptionIndex,
-    })),
+    answers: [
+      { id: `${q.id}-0`, text: q.correctAnswer, isCorrect: true },
+      { id: `${q.id}-1`, text: q.answer2, isCorrect: false },
+      { id: `${q.id}-2`, text: q.answer3, isCorrect: false },
+      { id: `${q.id}-3`, text: q.answer4, isCorrect: false },
+    ],
   }));
+};
+
+/**
+ * Converts local UI state format (structured) back to the API format (flat) before submission.
+ */
+const localToApiQuestions = (localQuestions: Question[]): QuestionDto[] => {
+  return localQuestions.map((q) => {
+    const correct = q.answers.find((a) => a.isCorrect);
+    const incorrect = q.answers.filter((a) => !a.isCorrect);
+
+    return {
+      id: parseInt(q.id),
+      questionText: q.text,
+      correctAnswer: correct?.text ?? "",
+      answer2: incorrect[0]?.text ?? "",
+      answer3: incorrect[1]?.text ?? "",
+      answer4: incorrect[2]?.text ?? "",
+    };
+  });
+};
+
 
 interface QuizEditorProps {
   mode: "create" | "edit";
+}
+
+// Define a type for the local state to ensure type safety
+interface LocalQuizState {
+  id: number;
+  quizName: string;
+  createdByUserId: number;
+  creatorUsername: string;
+  questions: Question[]; // Use the UI-friendly Question type
 }
 
 export default function QuizEditorPage({ mode }: QuizEditorProps) {
@@ -44,28 +78,23 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
   const isEditMode = mode === "edit";
   const quizId = isEditMode ? id : null;
 
-  // Counter for generating temporary negative IDs for new questions
-  // Negative IDs won't conflict with positive API-assigned IDs
-  const nextQuestionIdRef = useRef(-1);
+  const nextIdRef = useRef(-1); // For temporary client-side IDs
 
-  // Fetch existing quiz if editing
   const { data: existingQuiz, isLoading: loadingQuiz } = useQuiz(
     quizId ? parseInt(quizId) : 0
   );
   const createQuizMutation = useCreateQuiz();
   const updateQuizMutation = useUpdateQuiz();
   const generateAiMutation = useGenerateAiQuestions();
+  const createGameMutation = useCreateGame(); // Instantiate the create game hook
 
-  // AI generation controls
   const [aiTopic, setAiTopic] = useState<string>("");
-  const [aiCount, setAiCount] = useState<number>(0);
-  const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">(
-    "medium"
-  );
-
-  // Local state for draft quiz and host name
+  const [aiCount, setAiCount] = useState<number>(5);
+  const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [hostName, setHostName] = useState<string>("");
-  const [draftQuiz, setDraftQuiz] = useState<QuizDetailDto>({
+
+  // State now uses the clean, local format for questions
+  const [draftQuiz, setDraftQuiz] = useState<LocalQuizState>({
     id: 0,
     quizName: "",
     questions: [],
@@ -73,136 +102,111 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
     creatorUsername: user?.name ?? "",
   });
 
-  // Load existing quiz data into local state when editing
   useEffect(() => {
     if (isEditMode && existingQuiz) {
-      setDraftQuiz(existingQuiz);
-      // Reset counter when loading existing quiz
-      nextQuestionIdRef.current = -1;
+      // Transform fetched data into local format ONCE
+      setDraftQuiz({
+        ...existingQuiz,
+        questions: apiToLocalQuestions(existingQuiz.questions),
+      });
+      nextIdRef.current = -1;
     }
   }, [isEditMode, existingQuiz]);
 
-  // Current quiz data
-  const currentQuiz = draftQuiz;
-
-  // Update quiz state
-  const updateQuizState = (
-    updater: (current: QuizDetailDto) => QuizDetailDto
-  ) => {
+  const updateQuizState = (updater: (current: LocalQuizState) => LocalQuizState) => {
     setDraftQuiz((prev) => updater(prev));
   };
 
-  // Helper: Extract answer index from answerId string
-  // answerId format: "questionId-answerIndex" (e.g., "-1-0" or "5-2")
-  // Use .pop() to get last element, which handles negative IDs correctly
-  const getAnswerIndex = (answerId: string): number => {
-    return parseInt(answerId.split("-").pop()!);
-  };
-
-  // Actions: Simple state updates
+  // Actions are now refactored to work with the `Question[]` and `Answer[]` types
   const actions = {
     setGameName: (value: string) => {
       updateQuizState((current) => ({ ...current, quizName: value }));
     },
-
-    setHostName: (value: string) => {
-      setHostName(value);
-    },
-
+    setHostName: (value: string) => setHostName(value),
     addQuestion: () => {
       updateQuizState((current) => {
-        // Use negative IDs for new questions (won't conflict with positive API IDs)
-        const newQuestion: QuestionDto = {
-          id: nextQuestionIdRef.current--, // -1, -2, -3, etc.
-          questionText: "",
-          options: [],
-          correctOptionIndex: 0,
+        const newQuestion: Question = {
+          id: (nextIdRef.current--).toString(),
+          text: "",
+          answers: [],
         };
-        return {
-          ...current,
-          questions: [...current.questions, newQuestion],
-        };
+        return { ...current, questions: [...current.questions, newQuestion] };
       });
     },
-
     deleteQuestion: (questionId: string) => {
-      const qId = parseInt(questionId);
       updateQuizState((current) => ({
         ...current,
-        questions: current.questions.filter((q) => q.id !== qId),
+        questions: current.questions.filter((q) => q.id !== questionId),
       }));
     },
-
     updateQuestionText: (questionId: string, text: string) => {
-      const qId = parseInt(questionId);
       updateQuizState((current) => ({
         ...current,
         questions: current.questions.map((q) =>
-          q.id === qId ? { ...q, questionText: text } : q
+          q.id === questionId ? { ...q, text } : q
         ),
       }));
     },
-
     addAnswer: (questionId: string) => {
-      const qId = parseInt(questionId);
       updateQuizState((current) => ({
         ...current,
-        questions: current.questions.map((q) =>
-          q.id === qId ? { ...q, options: [...q.options, ""] } : q
-        ),
+        questions: current.questions.map((q) => {
+          if (q.id === questionId && q.answers.length < 4) {
+            const newAnswer: Answer = {
+              id: `${questionId}-${q.answers.length}`,
+              text: "",
+              isCorrect: q.answers.length === 0, // First answer is correct by default
+            };
+            return { ...q, answers: [...q.answers, newAnswer] };
+          }
+          return q;
+        }),
       }));
     },
-
     deleteAnswer: (questionId: string, answerId: string) => {
-      const qId = parseInt(questionId);
-      const answerIndex = getAnswerIndex(answerId);
-
       updateQuizState((current) => ({
         ...current,
-        questions: current.questions.map((q) =>
-          q.id === qId
-            ? {
-                ...q,
-                options: q.options.filter((_, idx) => idx !== answerIndex),
-                correctOptionIndex:
-                  q.correctOptionIndex === answerIndex
-                    ? 0
-                    : q.correctOptionIndex > answerIndex
-                    ? q.correctOptionIndex - 1
-                    : q.correctOptionIndex,
-              }
-            : q
-        ),
+        questions: current.questions.map((q) => {
+          if (q.id === questionId) {
+            const newAnswers = q.answers.filter((a) => a.id !== answerId);
+            // If the deleted answer was correct, make the first one correct
+            if (!newAnswers.some(a => a.isCorrect) && newAnswers.length > 0) {
+              newAnswers[0].isCorrect = true;
+            }
+            return { ...q, answers: newAnswers };
+          }
+          return q;
+        }),
       }));
     },
-
     updateAnswerText: (questionId: string, answerId: string, text: string) => {
-      const qId = parseInt(questionId);
-      const answerIndex = getAnswerIndex(answerId);
-
       updateQuizState((current) => ({
         ...current,
         questions: current.questions.map((q) =>
-          q.id === qId
+          q.id === questionId
             ? {
                 ...q,
-                options: q.options.map((opt, idx) =>
-                  idx === answerIndex ? text : opt
+                answers: q.answers.map((a) =>
+                  a.id === answerId ? { ...a, text } : a
                 ),
               }
             : q
         ),
       }));
     },
-
-    toggleCorrectAnswer: (questionId: string, answerId: string) => {
-      const qId = parseInt(questionId);
-      const answerIndex = getAnswerIndex(answerId);
-
+    toggleCorrect: (questionId: string, answerId: string) => {
       updateQuizState((current) => ({
         ...current,
         questions: current.questions.map((q) =>
-          q.id === qId ? { ...q, correctOptionIndex: answerIndex } : q
+          q.id === questionId
+            ? {
+                ...q,
+                answers: q.answers.map((a) => ({
+                  ...a,
+                  isCorrect: a.id === answerId,
+                })),
+              }
+            : q
         ),
       }));
     },
@@ -220,226 +224,138 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
     }
 
     try {
-      const aiQuestions = await generateAiMutation.mutateAsync({
+      const aiApiQuestions = await generateAiMutation.mutateAsync({
         topic,
         numberOfQuestions: aiCount,
         difficulty: aiDifficulty,
       });
 
-      if (!aiQuestions || aiQuestions.length === 0) {
+      if (!aiApiQuestions || aiApiQuestions.length === 0) {
         toast("No questions generated. Try a different topic or difficulty.");
         return;
       }
 
-      updateQuizState((current) => {
-        const mapped: QuestionDto[] = aiQuestions.map((q) => ({
-          id: nextQuestionIdRef.current--,
-          questionText: q.questionText,
-          options: q.options.slice(0, 4),
-          correctOptionIndex: Math.min(Math.max(q.correctOptionIndex, 0), 3),
-        }));
-        return { ...current, questions: [...current.questions, ...mapped] };
-      });
+      // Convert the API response into the local format before adding to state
+      const newLocalQuestions = apiToLocalQuestions(aiApiQuestions.map(q => ({ ...q, id: nextIdRef.current-- })));
 
-      toast.success(`Added ${aiQuestions.length} AI-generated question(s).`);
+      updateQuizState((current) => ({
+        ...current,
+        questions: [...current.questions, ...newLocalQuestions],
+      }));
+
+      toast.success(`Added ${aiApiQuestions.length} AI-generated question(s).`);
     } catch (err) {
       const error = err as { response?: { data?: string }; message?: string }
-      const msg =
-        error?.response?.data ?? error?.message ?? "Failed to generate with AI";
+      const msg = error?.response?.data ?? error?.message ?? "Failed to generate with AI";
       toast.error(typeof msg === "string" ? msg : "Failed to generate with AI");
     }
   };
 
   const validateForm = () => {
-    if (!currentQuiz) return false;
-
-    const { questions, quizName } = currentQuiz;
+    if (!draftQuiz) return false;
+    const { questions, quizName } = draftQuiz;
 
     if (!isEditMode && !hostName.trim()) {
       toast.error("Please enter your name before creating the game");
       return false;
     }
-
     if (!quizName.trim()) {
       toast.error("Please enter a quiz name");
       return false;
     }
-
     if (questions.length === 0) {
       toast.error("Please add at least one question");
       return false;
     }
-
-    for (const question of questions) {
-      const questionLabel = question.questionText || "Untitled question";
-
-      if (!question.questionText.trim()) {
-        toast.error(`Please enter text for "${questionLabel}"`);
+    for (const q of questions) {
+      if (!q.text.trim()) {
+        toast.error(`Question "${q.id}" cannot be empty.`);
         return false;
       }
-
-      if (question.options.length !== 4) {
-        toast.error(
-          `Each question must have exactly 4 answers. "${questionLabel}" has ${question.options.length}.`
-        );
+      if (q.answers.length !== 4) {
+        toast.error(`Question "${q.text}" must have exactly 4 answers.`);
         return false;
       }
-
-      // Check all options have text
-      for (let i = 0; i < question.options.length; i++) {
-        if (!question.options[i].trim()) {
-          toast.error(`"${questionLabel}" - Answer ${i + 1} cannot be empty`);
+      if (!q.answers.some(a => a.isCorrect)) {
+        toast.error(`Question "${q.text}" must have one correct answer.`);
+        return false;
+      }
+      for (const a of q.answers) {
+        if (!a.text.trim()) {
+          toast.error(`Answers for "${q.text}" cannot be empty.`);
           return false;
         }
       }
-
-      if (
-        question.correctOptionIndex < 0 ||
-        question.correctOptionIndex >= question.options.length
-      ) {
-        toast.error(`"${questionLabel}" must have a correct answer selected.`);
-        return false;
-      }
     }
-
     return true;
   };
 
   const handleSave = async () => {
-    if (!validateForm() || !currentQuiz) return;
+    if (!validateForm() || !draftQuiz) return;
+
+    // Convert local state back to API format before submitting
+    const apiQuestions = localToApiQuestions(draftQuiz.questions);
 
     try {
       if (isEditMode && existingQuiz) {
-        // Convert negative IDs (new questions) to 0 for API
-        // Keep positive IDs (existing questions) as-is
-        const questionsForApi = currentQuiz.questions.map((q) => ({
+        const questionsForApi = apiQuestions.map((q) => ({
           ...q,
-          id: q.id < 0 ? 0 : q.id, // Negative → 0, Positive → keep
+          id: q.id < 0 ? 0 : q.id,
         }));
-
-        // console.log("Updating quiz - BEFORE:", currentQuiz.questions);
-        // console.log("Updating quiz - AFTER:", questionsForApi);
-
         await updateQuizMutation.mutateAsync({
           quizId: existingQuiz.id,
-          quiz: {
-            quizName: currentQuiz.quizName,
-            questions: questionsForApi,
-          },
+          quiz: { quizName: draftQuiz.quizName, questions: questionsForApi },
           currentUserId: user?.id ?? 0,
         });
         toast.success("Quiz updated successfully!");
-        // Navigate after a brief delay to ensure cache invalidation completes
-        setTimeout(() => navigate("/edit-game"), 150);
+        navigate("/edit-game");
       } else {
-        // For new quiz, set question IDs to 0 (API will assign real IDs)
-        const questionsForApi = currentQuiz.questions.map((q) => ({
-          ...q,
-          id: 0, // API assigns IDs on creation
-        }));
-
-        // console.log("Creating quiz:", {
-        //   quizName: currentQuiz.quizName,
-        //   questions: questionsForApi,
-        // });
+        // --- THIS IS THE UPDATED LOGIC ---
+        const questionsForApi = apiQuestions.map((q) => ({ ...q, id: 0 }));
+        
+        // Step 1: Create the quiz
         const newQuiz = await createQuizMutation.mutateAsync({
-          quiz: { quizName: currentQuiz.quizName, questions: questionsForApi },
+          quiz: { quizName: draftQuiz.quizName, questions: questionsForApi },
           creatorUserId: user?.id ?? 0,
         });
 
-        const hostPlayer = {
-          id: crypto.randomUUID(),
-          name: hostName,
-          quizId: newQuiz.id,
-          isHost: true,
-          joinedAt: new Date().toISOString(),
-        };
+        toast.success("Quiz created successfully! Creating game lobby...");
 
-        localStorage.setItem("currentPlayer", JSON.stringify(hostPlayer));
-        localStorage.setItem(
-          `players_${newQuiz.id}`,
-          JSON.stringify([hostPlayer])
-        );
-
-        toast.success("Quiz created successfully!");
-        navigate(`/game-lobby?quiz=${newQuiz.id}`);
+        // Step 2: Create a game session, which will navigate to the lobby on success
+        createGameMutation.mutate(newQuiz.id);
       }
     } catch (err) {
-      const error = err as { 
-        response?: { 
-          status?: number; 
-          data?: string | { message?: string; title?: string; errors?: unknown } 
-        }; 
-        message?: string 
-      }
-      console.error(
-        `Failed to ${isEditMode ? "update" : "create"} quiz:`,
-        error
-      );
-      console.error("Error status:", error.response?.status);
-      console.error("Error data:", error.response?.data);
-      console.error("Error message:", error.message);
-
-      // Extract meaningful error message
-      let errorMessage = "Please try again.";
-      if (error.response?.data) {
-        // Handle different error response formats
-        if (typeof error.response.data === "string") {
-          errorMessage = error.response.data;
-        } else if (typeof error.response.data === "object") {
-          if (error.response.data.message) {
-            errorMessage = error.response.data.message;
-          } else if (error.response.data.title) {
-            errorMessage = error.response.data.title;
-          } else if (error.response.data.errors) {
-            // Validation errors object
-            errorMessage = JSON.stringify(error.response.data.errors);
-          }
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      toast.error(
-        `Failed to ${isEditMode ? "update" : "create"} quiz: ${errorMessage}`
-      );
+      console.error(`Failed to ${isEditMode ? "update" : "create"} quiz:`, err);
+      toast.error(`Failed to ${isEditMode ? "update" : "create"} quiz. Please try again.`);
     }
   };
 
   if (isEditMode && loadingQuiz) {
     return (
-      <section className="min-h-screen px-4 py-16">
-        <div className="mx-auto max-w-4xl flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+      <section className="min-h-screen px-4 py-16 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </section>
     );
   }
 
-  if (!currentQuiz) return null;
+  if (!draftQuiz) return null;
 
   const isSaving = isEditMode
     ? updateQuizMutation.isPending
-    : createQuizMutation.isPending;
-  const localQuestions = toLocalQuestions(currentQuiz.questions);
+    : createQuizMutation.isPending || createGameMutation.isPending; // Update loading state
 
   return (
     <section className="flex justify-center items-center min-h-[calc(100vh-5rem)] px-4 py-2">
       <div className="w-full max-w-3xl">
-        <QuizHeader
-          isEditMode={isEditMode}
-          onBack={() => navigate("/edit-game")}
-        />
-
+        <QuizHeader isEditMode={isEditMode} onBack={() => navigate("/edit-game")} />
         <QuizDetailsCard
           isEditMode={isEditMode}
-          gameName={currentQuiz.quizName}
+          gameName={draftQuiz.quizName}
           hostName={hostName}
-          creatorUsername={currentQuiz.creatorUsername}
+          creatorUsername={draftQuiz.creatorUsername}
           onGameNameChange={actions.setGameName}
           onHostNameChange={actions.setHostName}
         />
-
         <AiGeneratorCard
           topic={aiTopic}
           count={aiCount}
@@ -450,42 +366,25 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
           onDifficultyChange={setAiDifficulty}
           onGenerate={handleGenerateAi}
         />
-        
         <QuestionsList
-          questions={localQuestions}
+          questions={draftQuiz.questions}
           onAddQuestion={actions.addQuestion}
           onDeleteQuestion={actions.deleteQuestion}
           onUpdateQuestionText={actions.updateQuestionText}
           onAddAnswer={actions.addAnswer}
           onDeleteAnswer={actions.deleteAnswer}
           onUpdateAnswerText={actions.updateAnswerText}
-          onToggleCorrect={actions.toggleCorrectAnswer}
+          onToggleCorrect={actions.toggleCorrect}
         />
-
         <div className="flex justify-end gap-3">
-          <Button
-            variant="outline"
-            onClick={() => navigate(isEditMode ? "/edit-game" : "/")}
-          >
+          <Button variant="outline" onClick={() => navigate(isEditMode ? "/edit-game" : "/")}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={
-              (!isEditMode && !hostName.trim()) ||
-              !currentQuiz.quizName ||
-              currentQuiz.questions.length === 0 ||
-              isSaving
-            }
-          >
+          <Button onClick={handleSave} disabled={isSaving}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSaving
-              ? isEditMode
-                ? "Saving..."
-                : "Creating..."
-              : isEditMode
-              ? "Save Changes"
-              : "Create & Go to Lobby"}
+              ? isEditMode ? "Saving..." : "Creating..."
+              : isEditMode ? "Save Changes" : "Create & Go to Lobby"}
           </Button>
         </div>
       </div>

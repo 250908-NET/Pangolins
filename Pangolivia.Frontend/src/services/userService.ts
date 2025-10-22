@@ -1,54 +1,33 @@
 import { api } from '../lib/api';
-import type { UserDto, CreateUserDto } from '../types/api';
-import { MOCK_USERS } from '../lib/mockData';
-
-// Toggle between mock and real API
-const USE_MOCK = true; // Keep as true since UserController is not implemented yet
+import type { UserDto, CreateUserDto, UserSummaryDto, UserDetailDto } from '../types/api';
 
 export const userService = {
-  // GET: api/User (placeholder - not implemented in backend yet)
-  getAllUsers: async (): Promise<UserDto[]> => {
-    if (USE_MOCK) {
-      return Promise.resolve(MOCK_USERS);
-    }
-    const response = await api.get<UserDto[]>('/User');
+  // GET: api/User
+  getAllUsers: async (): Promise<UserSummaryDto[]> => {
+    const response = await api.get<UserSummaryDto[]>('/User');
     return response.data;
   },
 
-  // GET: api/User/{userId}
-  getUserById: async (userId: number): Promise<UserDto> => {
-    if (USE_MOCK) {
-      const user = MOCK_USERS.find((u) => u.id === userId);
-      if (!user) throw new Error('User not found');
-      return Promise.resolve(user);
-    }
-    const response = await api.get<UserDto>(`/User/${userId}`);
+  // GET: api/User/ById/{userId}
+  getUserById: async (userId: number): Promise<UserDetailDto> => {
+    const response = await api.get<UserDetailDto>(`/User/ById/${userId}`);
     return response.data;
   },
 
   // POST: api/User
   createUser: async (user: CreateUserDto): Promise<UserDto> => {
-    if (USE_MOCK) {
-      const newUser: UserDto = {
-        id: MOCK_USERS.length + 1,
-        authUuid: user.authUuid,
-        username: user.username,
-      };
-      MOCK_USERS.push(newUser);
-      return Promise.resolve(newUser);
-    }
     const response = await api.post<UserDto>('/User', user);
     return response.data;
   },
 
-  // GET: api/User/username/{username}
-  getUserByUsername: async (username: string): Promise<UserDto> => {
-    if (USE_MOCK) {
-      const user = MOCK_USERS.find((u) => u.username === username);
-      if (!user) throw new Error('User not found');
-      return Promise.resolve(user);
-    }
-    const response = await api.get<UserDto>(`/User/username/${username}`);
+  // GET: api/User/{username}
+  getUserByUsername: async (username: string): Promise<UserDetailDto> => {
+    const response = await api.get<UserDetailDto>(`/User/${username}`);
     return response.data;
+  },
+
+  // DELETE: api/User/{userId}
+  deleteUser: async (userId: number): Promise<void> => {
+    await api.delete(`/User/${userId}`);
   },
 };
