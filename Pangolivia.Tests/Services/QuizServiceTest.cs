@@ -27,7 +27,7 @@ public class QuizServiceTest
             QuizName = "Sample",
             Questions = new List<QuestionDto>
             {
-                new QuestionDto { QuestionText = "Q1", Options = new List<string>{ "A","B","C","D" }, CorrectOptionIndex = 0 }
+                new QuestionDto { QuestionText = "Q1", CorrectAnswer = "A", Answer2 = "B", Answer3 = "C", Answer4 = "D" }
             }
         };
 
@@ -135,8 +135,8 @@ public class QuizServiceTest
             QuizName = "New",
             Questions = new List<QuestionDto>
             {
-                new QuestionDto { Id = 100, QuestionText = "Qold1-updated", Options = new List<string>{"X","Y","Z","W"}, CorrectOptionIndex = 0 },
-                new QuestionDto { Id = 0, QuestionText = "NewQ", Options = new List<string>{"N1","N2","N3","N4"}, CorrectOptionIndex = 2 }
+                    new QuestionDto { Id = 100, QuestionText = "Qold1-updated", CorrectAnswer = "X", Answer2 = "Y", Answer3 = "Z", Answer4 = "W" },
+                new QuestionDto { Id = 0, QuestionText = "NewQ", CorrectAnswer = "N3", Answer2 = "N1", Answer3 = "N2", Answer4 = "N4" }
             }
         };
 

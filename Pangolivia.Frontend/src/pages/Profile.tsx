@@ -7,10 +7,29 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { User, Trophy, Calendar } from "lucide-react";
+import { User, Trophy, Calendar, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useUser } from "@/hooks/useUsers";
+import { usePlayerHistory, useAverageScore } from "@/hooks/usePlayerGameRecords";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
+  const userId = authUser?.id || 0;
+
+  const { data: userDetail, isLoading: userLoading } = useUser(userId);
+  const { data: gameHistory, isLoading: historyLoading } = usePlayerHistory(userId);
+  const { data: averageScore, isLoading: averageLoading } = useAverageScore(userId);
+
+  const isLoading = userLoading || historyLoading || averageLoading;
+
+  if (isLoading) {
+    return (
+      <section className="min-h-[calc(100vh-5rem)] px-4 py-2 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </section>
+    );
+  }
 
   return (
     <section className="min-h-[calc(100vh-5rem)] px-4 py-2 flex items-center justify-center">
@@ -35,11 +54,23 @@ export default function ProfilePage() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Profile functionality coming soon. Track your games, scores, and
-                achievements.
-              </p>
+            <CardContent className="space-y-2">
+              <div>
+                <p className="text-sm font-medium">Username</p>
+                <p className="text-lg">{userDetail?.username || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Quizzes Created</p>
+                <p className="text-lg">{userDetail?.createdQuizzes.length || 0}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Games Hosted</p>
+                <p className="text-lg">{userDetail?.hostedGamesCount || 0}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Games Played</p>
+                <p className="text-lg">{userDetail?.gamesPlayedCount || 0}</p>
+              </div>
             </CardContent>
           </Card>
 
@@ -50,16 +81,22 @@ export default function ProfilePage() {
                   <Trophy className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div>
-                  <CardTitle>Achievements</CardTitle>
-                  <CardDescription>Your accomplishments</CardDescription>
+                  <CardTitle>Statistics</CardTitle>
+                  <CardDescription>Your performance</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Earn badges and trophies by playing games and achieving high
-                scores.
-              </p>
+            <CardContent className="space-y-2">
+              <div>
+                <p className="text-sm font-medium">Average Score</p>
+                <p className="text-2xl font-bold">
+                  {averageScore?.averageScore?.toFixed(1) || '0.0'}%
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Total Games</p>
+                <p className="text-lg">{gameHistory?.length || 0}</p>
+              </div>
             </CardContent>
           </Card>
 
@@ -76,10 +113,33 @@ export default function ProfilePage() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground mb-4 text-sm">
-                View your past games, scores, and performance over time.
-              </p>
-              <Button onClick={() => navigate("/start-game")}>
+              {gameHistory && gameHistory.length > 0 ? (
+                <div className="space-y-3">
+                  {gameHistory.slice(0, 5).map((record, index) => (
+                    <div
+                      key={record.id || index}
+                      className="flex items-center justify-between border-b pb-2 last:border-b-0"
+                    >
+                      <div>
+                        <p className="font-medium">Game #{record.gameRecordId || 'N/A'}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Score: {record.score.toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  {gameHistory.length > 5 && (
+                    <p className="text-sm text-muted-foreground text-center pt-2">
+                      Showing 5 of {gameHistory.length} games
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted-foreground mb-4 text-sm">
+                  No game history yet. Start playing to see your results here!
+                </p>
+              )}
+              <Button onClick={() => navigate("/start-game")} className="mt-4">
                 Start a New Game
               </Button>
             </CardContent>

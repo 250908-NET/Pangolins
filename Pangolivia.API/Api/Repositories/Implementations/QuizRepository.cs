@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Pangolivia.API.Data;
 using Pangolivia.API.Models;
 
@@ -38,8 +38,8 @@ public class QuizRepository : IQuizRepository
     // NOTE: not working yet since Questions and Users is not defined
     public async Task<QuizModel?> GetByIdWithDetailsAsync(int quizId)
     {
-        return await _context.Quizzes
-            .Include(q => q.CreatedByUser)
+        return await _context
+            .Quizzes.Include(q => q.CreatedByUser)
             .Include(q => q.Questions)
             .FirstOrDefaultAsync(q => q.Id == quizId);
     }
@@ -54,8 +54,8 @@ public class QuizRepository : IQuizRepository
     // NOTE: not working yet since Questions and Users is not defined
     public async Task<List<QuizModel>> GetAllAsync()
     {
-        return await _context.Quizzes
-            .Include(q => q.CreatedByUser)
+        return await _context
+            .Quizzes.Include(q => q.CreatedByUser)
             .Include(q => q.Questions)
             .ToListAsync();
     }
@@ -63,8 +63,8 @@ public class QuizRepository : IQuizRepository
     // Find quizzes by name (include creator and questions)
     public async Task<List<QuizModel>> FindByNameAsync(string name)
     {
-        return await _context.Quizzes
-            .Include(q => q.CreatedByUser)
+        return await _context
+            .Quizzes.Include(q => q.CreatedByUser)
             .Include(q => q.Questions)
             .Where(q => q.QuizName.Contains(name))
             .ToListAsync();
@@ -73,8 +73,8 @@ public class QuizRepository : IQuizRepository
     // Get quizzes created by a specific userId
     public async Task<List<QuizModel>> GetByUserIdAsync(int userId)
     {
-        return await _context.Quizzes
-            .Include(q => q.CreatedByUser)
+        return await _context
+            .Quizzes.Include(q => q.CreatedByUser)
             .Include(q => q.Questions)
             .Where(q => q.CreatedByUserId == userId)
             .ToListAsync();
