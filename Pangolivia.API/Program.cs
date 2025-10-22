@@ -170,7 +170,27 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<PangoliviaDbContext>();
-    context.Database.Migrate();
+    try
+    {
+        context.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Database migration failed: {ex.Message}");
+        Console.WriteLine("Attempting full drop and rebuild of the database...");
+
+        try
+        {
+            context.Database.EnsureDeleted();
+            context.Database.Migrate();
+            Console.WriteLine("Database drop and rebuild succeeded.");
+        }
+        catch (Exception rebuildEx)
+        {
+            Console.WriteLine($"Database rebuild failed: {rebuildEx.Message}");
+            throw; // allow the app to fail fast if rebuild also fails
+        }
+    }
     DbSeeder.Seed(context);
 }
 
