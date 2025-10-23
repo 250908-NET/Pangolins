@@ -50,8 +50,9 @@ export const Header = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
     return (
-        <header>
+        <header role="banner">
             <nav
+                aria-label="Main navigation"
                 data-state={menuState && 'active'}
                 className="fixed z-20 w-full px-2 backdrop-blur-sm">
                 <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-background/50 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
@@ -59,29 +60,31 @@ export const Header = () => {
                         <div className="flex w-full justify-between lg:w-auto">
                             <Link
                                 to="/"
-                                aria-label="home"
+                                aria-label="Pangolivia home"
                                 className="flex items-center space-x-2">
-                                <FaHome size={28} />
+                                <FaHome size={28} aria-hidden="true" />
                             </Link>
                             {/* Theme toggle button */}
                             <button
-                                aria-label="Toggle theme"
+                                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
                                 onClick={toggleTheme}
                                 className="ml-2 p-2 rounded-full border border-muted-foreground hover:bg-muted-foreground/10 focus:outline-none focus:ring-2 focus:ring-accent">
-                                {theme === 'dark' ? <FaSun size={20} /> : <FaMoon size={20} />}
+                                {theme === 'dark' ? <FaSun size={20} aria-hidden="true" /> : <FaMoon size={20} aria-hidden="true" />}
                             </button>
 
                             <button
                                 onClick={() => setMenuState(!menuState)}
-                                aria-label={menuState == true ? 'Close Menu' : 'Open Menu'}
+                                aria-label="Navigation menu"
+                                aria-expanded={menuState}
+                                aria-controls="mobile-nav-menu"
                                 className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden">
-                                <Menu className="in-data-[state=active]:rotate-180 in-data-[state=active]:scale-0 in-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
-                                <X className="in-data-[state=active]:rotate-0 in-data-[state=active]:scale-100 in-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
+                                <Menu className="in-data-[state=active]:rotate-180 in-data-[state=active]:scale-0 in-data-[state=active]:opacity-0 m-auto size-6 duration-200" aria-hidden="true" />
+                                <X className="in-data-[state=active]:rotate-0 in-data-[state=active]:scale-100 in-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" aria-hidden="true" />
                             </button>
                         </div>
 
                         <div className="absolute inset-0 m-auto hidden size-fit lg:block">
-                            <ul className="flex gap-8 text-sm">
+                            <ul className="flex gap-8 text-sm" role="list">
                                 {menuItems.map((item, index) => (
                                     <li key={index}>
                                         <Link
@@ -94,9 +97,9 @@ export const Header = () => {
                             </ul>
                         </div>
 
-                        <div className="bg-background in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
+                        <div id="mobile-nav-menu" className="bg-background in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
                             <div className="lg:hidden">
-                                <ul className="space-y-6 text-base">
+                                <ul className="space-y-6 text-base" role="list">
                                     {menuItems.map((item, index) => (
                                         <li key={index}>
                                             <Link
