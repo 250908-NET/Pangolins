@@ -41,8 +41,8 @@ export function Lobby({ roomCode, lobbyDetails, players, isHost, onStartGame, on
               <p className="text-muted-foreground mb-2 text-sm font-medium">Room Code</p>
               <div className="flex items-center justify-between">
                 <p className="text-3xl font-bold tracking-widest">{roomCode}</p>
-                <Button variant="outline" size="sm" onClick={handleCopyCode}>
-                  {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                <Button variant="outline" size="sm" onClick={handleCopyCode} aria-label={copied ? "Room code copied" : "Copy room code to clipboard"}>
+                  {copied ? <Check className="mr-2 h-4 w-4" aria-hidden="true" /> : <Copy className="mr-2 h-4 w-4" aria-hidden="true" />}
                   {copied ? 'Copied!' : 'Copy'}
                 </Button>
               </div>
@@ -50,33 +50,33 @@ export function Lobby({ roomCode, lobbyDetails, players, isHost, onStartGame, on
 
             <div>
               <div className="mb-2 flex items-center gap-2">
-                <Crown className="h-5 w-5 text-yellow-500" />
-                <h3 className="text-lg font-semibold">Host</h3>
+                <Crown className="h-5 w-5 text-yellow-500" aria-hidden="true" />
+                <h3 className="text-lg font-semibold" id="host-heading">Host</h3>
               </div>
               {host ? (
-                <div className="flex items-center justify-between rounded-lg border-2 border-yellow-500 bg-yellow-50 p-3 dark:bg-yellow-900/20">
+                <div className="flex items-center justify-between rounded-lg border-2 border-yellow-500 bg-yellow-50 p-3 dark:bg-yellow-900/20" aria-labelledby="host-heading">
                   <p className="font-bold">{lobbyDetails.hostUsername}</p>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Waiting for host...</p>
+                <p className="text-sm text-muted-foreground" role="status">Waiting for host...</p>
               )}
 
               <div className="mt-4">
                 <div className="mb-2 flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  <h3 className="text-lg font-semibold">Players ({totalPlayers})</h3>
+                  <Users className="h-5 w-5" aria-hidden="true" />
+                  <h3 className="text-lg font-semibold" id="players-heading">Players ({totalPlayers})</h3>
                 </div>
-                <div className="space-y-2">
+                <ul className="space-y-2" role="list" aria-labelledby="players-heading">
                   {otherPlayers.length > 0 ? (
                     otherPlayers.map((player) => (
-                      <div key={player.userId} className="flex items-center justify-between rounded-lg border p-3">
+                      <li key={player.userId} className="flex items-center justify-between rounded-lg border p-3">
                         <p className="font-medium">{player.username}</p>
-                      </div>
+                      </li>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground">No other players have joined yet.</p>
+                    <li className="text-sm text-muted-foreground">No other players have joined yet.</li>
                   )}
-                </div>
+                </ul>
               </div>
             </div>
 
@@ -86,7 +86,7 @@ export function Lobby({ roomCode, lobbyDetails, players, isHost, onStartGame, on
               </Button>
               {isHost && (
                 <Button onClick={onStartGame} className="flex-1" size="lg">
-                  <Play className="mr-2 h-5 w-5" />
+                  <Play className="mr-2 h-5 w-5" aria-hidden="true" />
                   Start Game
                 </Button>
               )}

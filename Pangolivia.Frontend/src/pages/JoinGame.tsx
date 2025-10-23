@@ -62,8 +62,12 @@ export default function JoinGamePage() {
             </div>
 
             {error && (
-              <div className="flex items-start gap-2 rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
-                <AlertCircle className="mt-0.5 h-4 w-4 text-red-600 dark:text-red-400" />
+              <div
+                id="join-game-error"
+                role="alert"
+                aria-live="assertive"
+                className="flex items-start gap-2 rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
+                <AlertCircle className="mt-0.5 h-4 w-4 text-red-600 dark:text-red-400" aria-hidden="true" />
                 <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
               </div>
             )}
@@ -76,12 +80,12 @@ export default function JoinGamePage() {
             >
               {joinGameMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
                   Joining...
                 </>
               ) : (
                 <>
-                  <LogIn className="mr-2 h-5 w-5" />
+                  <LogIn className="mr-2 h-5 w-5" aria-hidden="true" />
                   Join Game
                 </>
               )}

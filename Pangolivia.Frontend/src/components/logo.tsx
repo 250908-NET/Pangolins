@@ -3,7 +3,7 @@ export const Logo = () => {
         <img
             src="/logo.png"
             className="w-auto inline-block transition-transform duration-300 hover:-rotate-3 h-7 md:h-10"
-            alt="Logo"
+            alt="Pangolivia - AI-driven trivia platform"
         />
     )
 }
@@ -13,7 +13,7 @@ export const LogoIcon = () => {
         <img
             src="/logo.png"
             className="w-auto inline-block transition-transform duration-300 hover:-rotate-3 h-7 md:h-10"
-            alt="Logo"
+            alt="Pangolivia"
         />
     )
 }
@@ -23,7 +23,7 @@ export const LogoStroke = () => {
         <img
             src="/logo.png"
             className="w-auto inline-block transition-transform duration-300 hover:-rotate-3 h-7 md:h-10"
-            alt="Logo"
-        />  
+            alt="Pangolivia"
+        />
     )
 }

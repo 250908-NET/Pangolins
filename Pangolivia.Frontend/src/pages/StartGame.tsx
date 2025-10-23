@@ -41,12 +41,13 @@ export default function StartGamePage() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" />
+          <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
+            <Loader2 className="h-8 w-8 animate-spin" aria-hidden="true" />
+            <span className="sr-only">Loading quizzes...</span>
           </div>
         ) : !allQuizzes || allQuizzes.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center">
+            <CardContent className="py-12 text-center" role="status">
               <p className="text-muted-foreground mb-4">
                 No quizzes created yet.
               </p>
@@ -78,7 +79,7 @@ export default function StartGamePage() {
                       </CardTitle>
                       <div className="mt-2 flex flex-wrap gap-3 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Users className="h-4 w-4" />
+                          <Users className="h-4 w-4" aria-hidden="true" />
                           <span>{quiz.questionCount} questions</span>
                         </div>
                         <div className="flex items-center gap-1">
@@ -93,12 +94,13 @@ export default function StartGamePage() {
                       }}
                       disabled={createGameMutation.isPending}
                       size="lg"
+                      aria-label={`Start game with ${quiz.quizName}`}
                     >
                       {createGameMutation.isPending &&
                       createGameMutation.variables === quiz.id ? (
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
                       ) : (
-                        <Play className="mr-2 h-5 w-5" />
+                        <Play className="mr-2 h-5 w-5" aria-hidden="true" />
                       )}
                       Start Game
                     </Button>
