@@ -20,7 +20,7 @@ export function Question({
   onSkipQuestion,
 }: QuestionProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [timer, setTimer] = useState(10); // Or get this from the server
+  const [timer, setTimer] = useState(15); // Or get this from the server
 
   useEffect(() => {
     setSelectedAnswer(null);
