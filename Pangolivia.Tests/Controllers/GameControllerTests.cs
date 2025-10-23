@@ -147,7 +147,6 @@ namespace Pangolivia.Tests.Controllers
             _gameManagerMock.Setup(s => s.GetGameSession(roomCode)).Returns((GameSession?)null);
 
             var result = _controller.GetGameDetails(roomCode);
-            
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
             Assert.Equal("Game not found.", notFoundResult.Value);
         }
