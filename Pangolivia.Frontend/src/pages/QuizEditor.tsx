@@ -91,7 +91,6 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
   const [aiTopic, setAiTopic] = useState<string>("");
   const [aiCount, setAiCount] = useState<number>(5);
   const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">("medium");
-  const [hostName, setHostName] = useState<string>("");
 
   // State now uses the clean, local format for questions
   const [draftQuiz, setDraftQuiz] = useState<LocalQuizState>({
@@ -122,7 +121,6 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
     setGameName: (value: string) => {
       updateQuizState((current) => ({ ...current, quizName: value }));
     },
-    setHostName: (value: string) => setHostName(value),
     addQuestion: () => {
       updateQuizState((current) => {
         const newQuestion: Question = {
@@ -255,10 +253,6 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
     if (!draftQuiz) return false;
     const { questions, quizName } = draftQuiz;
 
-    if (!isEditMode && !hostName.trim()) {
-      toast.error("Please enter your name before creating the game");
-      return false;
-    }
     if (!quizName.trim()) {
       toast.error("Please enter a quiz name");
       return false;
@@ -290,6 +284,50 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
     return true;
   };
 
+  const handleCreate = async () => {
+    if (!validateForm() || !draftQuiz) return;
+
+    // Convert local state back to API format before submitting
+    const apiQuestions = localToApiQuestions(draftQuiz.questions);
+    const questionsForApi = apiQuestions.map((q) => ({ ...q, id: 0 }));
+
+    try {
+      await createQuizMutation.mutateAsync({
+        quiz: { quizName: draftQuiz.quizName, questions: questionsForApi },
+        creatorUserId: user?.id ?? 0,
+      });
+      toast.success("Quiz created successfully!");
+      navigate("/edit-game");
+    } catch (err) {
+      console.error("Failed to create quiz:", err);
+      toast.error("Failed to create quiz. Please try again.");
+    }
+  };
+
+  const handleCreateAndGoToLobby = async () => {
+    if (!validateForm() || !draftQuiz) return;
+
+    // Convert local state back to API format before submitting
+    const apiQuestions = localToApiQuestions(draftQuiz.questions);
+    const questionsForApi = apiQuestions.map((q) => ({ ...q, id: 0 }));
+
+    try {
+      // Step 1: Create the quiz
+      const newQuiz = await createQuizMutation.mutateAsync({
+        quiz: { quizName: draftQuiz.quizName, questions: questionsForApi },
+        creatorUserId: user?.id ?? 0,
+      });
+
+      toast.success("Quiz created successfully! Creating game lobby...");
+
+      // Step 2: Create a game session, which will navigate to the lobby on success
+      createGameMutation.mutate(newQuiz.id);
+    } catch (err) {
+      console.error("Failed to create quiz:", err);
+      toast.error("Failed to create quiz. Please try again.");
+    }
+  };
+
   const handleSave = async () => {
     if (!validateForm() || !draftQuiz) return;
 
@@ -310,19 +348,8 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
         toast.success("Quiz updated successfully!");
         navigate("/edit-game");
       } else {
-        // --- THIS IS THE UPDATED LOGIC ---
-        const questionsForApi = apiQuestions.map((q) => ({ ...q, id: 0 }));
-        
-        // Step 1: Create the quiz
-        const newQuiz = await createQuizMutation.mutateAsync({
-          quiz: { quizName: draftQuiz.quizName, questions: questionsForApi },
-          creatorUserId: user?.id ?? 0,
-        });
-
-        toast.success("Quiz created successfully! Creating game lobby...");
-
-        // Step 2: Create a game session, which will navigate to the lobby on success
-        createGameMutation.mutate(newQuiz.id);
+        // In create mode, use handleCreateAndGoToLobby
+        await handleCreateAndGoToLobby();
       }
     } catch (err) {
       console.error(`Failed to ${isEditMode ? "update" : "create"} quiz:`, err);
@@ -351,10 +378,8 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
         <QuizDetailsCard
           isEditMode={isEditMode}
           gameName={draftQuiz.quizName}
-          hostName={hostName}
           creatorUsername={draftQuiz.creatorUsername}
           onGameNameChange={actions.setGameName}
-          onHostNameChange={actions.setHostName}
         />
         <AiGeneratorCard
           topic={aiTopic}
@@ -380,12 +405,32 @@ export default function QuizEditorPage({ mode }: QuizEditorProps) {
           <Button variant="outline" onClick={() => navigate(isEditMode ? "/edit-game" : "/")}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSaving
-              ? isEditMode ? "Saving..." : "Creating..."
-              : isEditMode ? "Save Changes" : "Create & Go to Lobby"}
-          </Button>
+          {isEditMode ? (
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          ) : (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={handleCreate} 
+                disabled={createQuizMutation.isPending}
+              >
+                {createQuizMutation.isPending && !createGameMutation.isPending && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Create
+              </Button>
+              <Button 
+                onClick={handleCreateAndGoToLobby} 
+                disabled={isSaving}
+              >
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSaving ? "Creating..." : "Create & Go to Lobby"}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </section>

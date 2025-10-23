@@ -48,10 +48,10 @@ export default function StartGamePage() {
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground mb-4">
-                No games created yet.
+                No quizzes created yet.
               </p>
               <Button onClick={() => navigate('/create-game')}>
-                Create Your First Game
+                Create Your First Quiz
               </Button>
             </CardContent>
           </Card>
@@ -114,14 +114,14 @@ export default function StartGamePage() {
             onClick={() => navigate('/create-game')}
             className="flex-1"
           >
-            Create New Game
+            Create New Quiz
           </Button>
           <Button
             variant="outline"
             onClick={() => navigate('/edit-game')}
             className="flex-1"
           >
-            Edit Games
+            Edit Quizzes
           </Button>
         </div>
       </div>
