@@ -11,13 +11,14 @@ public class UserModel
     public int Id { get; set; }
 
     [Required]
-    [Column("auth_uuid")]
-    public string AuthUuid { get; set; } = string.Empty;
+    [Column("auth_sub")]
+    public string Auth0Sub { get; set; } = string.Empty;
 
     [Required]
     [Column("username")]
     public string Username { get; set; } = string.Empty;
-    public string PasswordHash { get; set; } = string.Empty;
+
+    public string ProfileImageUrl { get; set; } = string.Empty;
 
     public ICollection<PlayerGameRecordModel> PlayerGameRecords { get; set; } =
         new List<PlayerGameRecordModel>();

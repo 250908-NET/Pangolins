@@ -17,10 +17,12 @@ public class PangoliviaDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // modelBuilder.Entity<UserModel>(entity =>
-        // {
-
-        // });
+        modelBuilder.Entity<UserModel>(entity =>
+        {
+            entity
+                .HasIndex(e => e.Auth0Sub)
+                .IsUnique();
+        });
         modelBuilder.Entity<GameRecordModel>(entity =>
         {
             entity

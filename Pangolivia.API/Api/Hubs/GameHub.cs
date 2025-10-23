@@ -29,6 +29,7 @@ namespace Pangolivia.API.Hubs
 
         public async Task JoinGame(string roomCode)
         {
+            // TODO: Get user info from services/repos
             var username = Context.User?.FindFirstValue(ClaimTypes.Name) ?? "Guest";
             int userId;
             try

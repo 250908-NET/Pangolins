@@ -9,4 +9,5 @@ public interface IUserRepository
     public Task<UserModel?> getUserModelByUsername(string username);
     Task<UserModel> createUserModel(UserModel user);
     Task removeUserModel(int id);
+    Task<UserModel?> getUserModelByAuth0Sub(string sub);
 }

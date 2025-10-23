@@ -17,27 +17,23 @@ namespace Pangolivia.API.Data
                 {
                     new UserModel
                     {
-                        AuthUuid = Guid.NewGuid().ToString(),
-                        Username = "Alice",
-                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("password1"),
+                        Auth0Sub = "sample|" + Guid.NewGuid().ToString(),
+                        Username = "Alice"
                     },
                     new UserModel
                     {
-                        AuthUuid = Guid.NewGuid().ToString(),
-                        Username = "Bob",
-                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("password2"),
+                        Auth0Sub = "sample|" + Guid.NewGuid().ToString(),
+                        Username = "Bob"
                     },
                     new UserModel
                     {
-                        AuthUuid = Guid.NewGuid().ToString(),
-                        Username = "Charlie",
-                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("password3"),
+                        Auth0Sub = "sample|" + Guid.NewGuid().ToString(),
+                        Username = "Charlie"
                     },
                     new UserModel
                     {
-                        AuthUuid = Guid.NewGuid().ToString(),
-                        Username = "Diana",
-                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("password4"),
+                        Auth0Sub = "sample|" + Guid.NewGuid().ToString(),
+                        Username = "Diana"
                     },
                 };
                 context.Users.AddRange(newUsers);

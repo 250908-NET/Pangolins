@@ -52,8 +52,8 @@ public class UserRepository : IUserRepository
 
     public async Task removeUserModel(int id)
     {
-        UserModel? user = await _context
-            .Users.Include(u => u.CreatedQuizzes)
+        UserModel? user = await _context.Users
+            .Include(u => u.CreatedQuizzes)
             .Include(u => u.PlayerGameRecords)
             .Include(u => u.HostedGameRecords)
             .FirstOrDefaultAsync(u => u.Id == id);
@@ -71,5 +71,14 @@ public class UserRepository : IUserRepository
 
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<UserModel?> getUserModelByAuth0Sub(string sub)
+    {
+        return await _context.Users
+            .Include(u => u.CreatedQuizzes)
+            .Include(u => u.HostedGameRecords)
+            .Include(u => u.PlayerGameRecords)
+            .FirstOrDefaultAsync(u => u.Auth0Sub == sub);
     }
 }

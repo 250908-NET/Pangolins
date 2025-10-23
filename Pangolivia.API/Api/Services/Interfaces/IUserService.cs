@@ -11,4 +11,5 @@ public interface IUserService
     Task<UserDetailDto?> getUserByIdAsync(int id);
     Task<UserDetailDto?> findUserByUsernameAsync(string username);
     Task deleteUserAsync(int id);
+    
 }

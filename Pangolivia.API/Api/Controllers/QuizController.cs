@@ -1,7 +1,10 @@
 using System.Net.Http;
+using System.Security.Claims;
 using System.Threading;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pangolivia.API.DTOs;
+using Pangolivia.API.Models;
 using Pangolivia.API.Services;
 
 namespace Pangolivia.API.Controllers
@@ -13,25 +16,41 @@ namespace Pangolivia.API.Controllers
         private readonly IQuizService _quizService;
         private readonly IAiQuizService _aiQuizService;
         private readonly ILogger<QuizController> _logger;
+        private readonly UserService _userService;
 
         public QuizController(
             IQuizService quizService,
             IAiQuizService aiQuizService,
-            ILogger<QuizController> logger
+            ILogger<QuizController> logger,
+            UserService userService
         )
         {
             _quizService = quizService;
             _aiQuizService = aiQuizService;
             _logger = logger;
+            _userService = userService;
         }
 
         // POST: api/Quiz
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<QuizDetailDto>> CreateQuiz(
-            [FromBody] CreateQuizRequestDto requestDto,
-            [FromQuery] int creatorUserId
+            [FromBody] CreateQuizRequestDto requestDto
         )
         {
+            var auth0sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            UserModel userModel = null;
+            try
+            {
+                if (auth0sub is null) throw new Exception();
+                userModel = await _userService.getOrCreateUser(auth0sub);
+            }
+            catch
+            {
+                return Unauthorized();
+            }
+
+            var creatorUserId = userModel.Id;
             _logger.LogInformation("Creating a new quiz by user {UserId}.", creatorUserId);
             var result = await _quizService.CreateQuizAsync(requestDto, creatorUserId);
             return CreatedAtAction(nameof(GetQuizById), new { quizId = result.Id }, result);
@@ -39,12 +58,26 @@ namespace Pangolivia.API.Controllers
 
         // PUT: api/Quiz/{quizId}
         [HttpPut("{quizId}")]
+        [Authorize]
         public async Task<ActionResult<QuizDetailDto>> UpdateQuiz(
             int quizId,
-            [FromBody] UpdateQuizRequestDto requestDto,
-            [FromQuery] int currentUserId
+            [FromBody] UpdateQuizRequestDto requestDto
         )
         {
+            var auth0sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            UserModel userModel = null;
+            try
+            {
+                if (auth0sub is null) throw new Exception();
+                userModel = await _userService.getOrCreateUser(auth0sub);
+            }
+            catch
+            {
+                return Unauthorized();
+            }
+
+            var currentUserId = userModel.Id;
+
             _logger.LogInformation(
                 "Updating quiz {QuizId} by user {UserId}.",
                 quizId,
@@ -73,8 +106,23 @@ namespace Pangolivia.API.Controllers
 
         // DELETE: api/Quiz/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteQuiz(int id, [FromQuery] int currentUserId)
+        [Authorize]
+        public async Task<IActionResult> DeleteQuiz(int id)
         {
+            var auth0sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            UserModel userModel = null;
+            try
+            {
+                if (auth0sub is null) throw new Exception();
+                userModel = await _userService.getOrCreateUser(auth0sub);
+            }
+            catch
+            {
+                return Unauthorized();
+            }
+
+            var currentUserId = userModel.Id;
+
             _logger.LogInformation("Deleting quiz {QuizId} by user {UserId}.", id, currentUserId);
             try
             {

@@ -59,7 +59,6 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IGameRecordService, GameRecordService>();
 builder.Services.AddScoped<IPlayerGameRecordService, PlayerGameRecordService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAiQuizService, AiQuizService>();
 builder.Services.AddSingleton<IGameManagerService, GameManagerService>();
 
