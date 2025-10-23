@@ -19,8 +19,8 @@ namespace Pangolivia.API.Services
         > _connectionToRoomMap = new();
 
         // Add some constants for game timing
-        private const int SECONDS_PER_QUESTION = 10;
-        private const int SECONDS_BETWEEN_ROUNDS = 5;
+        private const int SECONDS_PER_QUESTION = 15;
+        private const int SECONDS_BETWEEN_ROUNDS = 10;
 
         public GameManagerService(
             IHubContext<GameHub> hubContext,
