@@ -24,7 +24,7 @@ export function Question({
 
   useEffect(() => {
     setSelectedAnswer(null);
-    setTimer(10);
+    setTimer(15);
   }, [question]);
 
   useEffect(() => {
