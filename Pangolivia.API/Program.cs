@@ -125,8 +125,8 @@ builder.Services.AddCors(options =>
                         "http://localhost:3000",
                         "http://localhost:5173",
                         "https://pangolivia-frontend-gjhpf7gphvhmhgbm.canadacentral-01.azurewebsites.net",
-                        "pangolivia.com",
-                        "pangolivia.baxendev.com"
+                        "https://pangolivia.com",
+                        "https://pangolivia.baxendev.com"
                     ]
                 ) // Your frontend's specific origin
                 .AllowAnyMethod()
