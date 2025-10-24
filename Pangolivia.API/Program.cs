@@ -108,11 +108,15 @@ builder.Services.AddCors(options =>
         {
             policy
                 .WithOrigins(
-                    "http://localhost:3000",
-                    "http://localhost:5173",
-                    "https://pangolivia-frontend-gjhpf7gphvhmhgbm.canadacentral-01.azurewebsites.net",
-                    $"https://{builder.Configuration["Auth0:Domain"]}"
-                )
+                    [
+                        "http://localhost:5173",
+                        "http://localhost:3000",
+                        "http://localhost:5173",
+                        "https://pangolivia-frontend-gjhpf7gphvhmhgbm.canadacentral-01.azurewebsites.net",
+                        "https://pangolivia.com",
+                        "https://pangolivia.baxendev.com"
+                    ]
+                ) // Your frontend's specific origin
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials(); // Crucial for sending auth tokens

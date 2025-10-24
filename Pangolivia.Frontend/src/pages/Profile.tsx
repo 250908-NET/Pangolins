@@ -23,11 +23,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import { User, Trophy, Calendar, Loader2, Star, Info } from "lucide-react";
+import { User, Trophy, Calendar, Loader2, Star, Info, Gamepad2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUser } from "@/hooks/useUsers";
 import { usePlayerHistory, useAverageScore, useLeaderboard } from "@/hooks/usePlayerGameRecords";
-import { useGameRecord } from "@/hooks/useGameRecords";
+import { useGameRecord, useGameRecordsByHost } from "@/hooks/useGameRecords";
 
 type SortOption = 'newest' | 'oldest' | 'alphabetical';
 
@@ -37,14 +37,16 @@ export default function ProfilePage() {
   const userId = authUser?.id || 0;
   const [selectedGameRecordId, setSelectedGameRecordId] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [hostedSortBy, setHostedSortBy] = useState<SortOption>('newest');
 
   const { data: userDetail, isLoading: userLoading } = useUser(userId);
   const { data: gameHistory, isLoading: historyLoading } = usePlayerHistory(userId);
   const { data: averageScore, isLoading: averageLoading } = useAverageScore(userId);
+  const { data: hostedGames, isLoading: hostedGamesLoading } = useGameRecordsByHost(userId);
   const { data: selectedGame, isLoading: gameLoading } = useGameRecord(selectedGameRecordId || 0);
   const { data: leaderboard, isLoading: leaderboardLoading } = useLeaderboard(selectedGameRecordId || 0);
 
-  const isLoading = userLoading || historyLoading || averageLoading;
+  const isLoading = userLoading || historyLoading || averageLoading || hostedGamesLoading;
 
   // Sort game history based on selected option
   const sortedGameHistory = useMemo(() => {
@@ -65,6 +67,28 @@ export default function ProfilePage() {
         return historyCopy;
     }
   }, [gameHistory, sortBy]);
+
+  // Sort hosted games based on selected option
+  const sortedHostedGames = useMemo(() => {
+    if (!hostedGames) return [];
+    
+    const gamesCopy = [...hostedGames];
+    
+    switch (hostedSortBy) {
+      case 'newest':
+        return gamesCopy.sort((a, b) => (b.id || 0) - (a.id || 0));
+      case 'oldest':
+        return gamesCopy.sort((a, b) => (a.id || 0) - (b.id || 0));
+      case 'alphabetical':
+        return gamesCopy.sort((a, b) => {
+          const nameA = a.quizName || '';
+          const nameB = b.quizName || '';
+          return nameA.localeCompare(nameB);
+        });
+      default:
+        return gamesCopy;
+    }
+  }, [hostedGames, hostedSortBy]);
 
   if (isLoading) {
     return (
@@ -193,6 +217,80 @@ export default function ProfilePage() {
               )}
               <Button onClick={() => navigate("/start-game")} className="mt-4">
                 Start a New Game
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/20">
+                    <Gamepad2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <CardTitle>Hosted Games</CardTitle>
+                    <CardDescription>Games you've hosted</CardDescription>
+                  </div>
+                </div>
+                {hostedGames && hostedGames.length > 0 && (
+                  <Select value={hostedSortBy} onValueChange={(value) => setHostedSortBy(value as SortOption)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="oldest">Oldest First</SelectItem>
+                      <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {sortedHostedGames && sortedHostedGames.length > 0 ? (
+                <div className="space-y-3">
+                  {sortedHostedGames.slice(0, 5).map((game) => (
+                    <div
+                      key={game.id}
+                      className="flex items-center justify-between border-b pb-3 last:border-b-0"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium">{game.quizName}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            {new Date(game.dateTimeCompleted).toLocaleDateString()}
+                          </Badge>
+                          {game.playerScores && (
+                            <Badge variant="secondary" className="text-xs">
+                              {game.playerScores.length} {game.playerScores.length === 1 ? 'player' : 'players'}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedGameRecordId(game.id)}
+                      >
+                        <Info className="h-4 w-4 mr-1" />
+                        Details
+                      </Button>
+                    </div>
+                  ))}
+                  {sortedHostedGames.length > 5 && (
+                    <p className="text-sm text-muted-foreground text-center pt-2">
+                      Showing 5 of {sortedHostedGames.length} hosted games
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted-foreground mb-4 text-sm">
+                  No hosted games yet. Create and host a game to see it here!
+                </p>
+              )}
+              <Button onClick={() => navigate("/create-game")} className="mt-4">
+                Create a New Game
               </Button>
             </CardContent>
           </Card>

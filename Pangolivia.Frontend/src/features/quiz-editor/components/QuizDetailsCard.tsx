@@ -5,18 +5,14 @@ import { Label } from "@/components/ui/label";
 interface Props {
   isEditMode: boolean;
   gameName: string;
-  hostName: string;
   onGameNameChange: (value: string) => void;
-  onHostNameChange: (value: string) => void;
   creatorUsername?: string;
 }
 
 export function QuizDetailsCard({
   isEditMode,
   gameName,
-  hostName,
   onGameNameChange,
-  onHostNameChange,
   creatorUsername,
 }: Props) {
   return (
@@ -28,17 +24,6 @@ export function QuizDetailsCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!isEditMode && (
-          <div className="space-y-2">
-            <Label htmlFor="hostName">Your Name (Host)</Label>
-            <Input
-              id="hostName"
-              placeholder="Enter your name..."
-              value={hostName}
-              onChange={(e) => onHostNameChange(e.target.value)}
-            />
-          </div>
-        )}
         <div className="space-y-2">
           <Label htmlFor="gameName">{isEditMode ? "Quiz Name" : "Game Name"}</Label>
           <Input

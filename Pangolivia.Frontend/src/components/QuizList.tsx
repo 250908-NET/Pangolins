@@ -26,7 +26,7 @@ export function QuizList({ onEdit, onView }: QuizListProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8" role="status">
         <p className="text-muted-foreground">Loading quizzes...</p>
       </div>
     );
@@ -34,7 +34,7 @@ export function QuizList({ onEdit, onView }: QuizListProps) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8" role="alert">
         <p className="text-destructive">Error loading quizzes: {error.message}</p>
       </div>
     );
@@ -42,7 +42,7 @@ export function QuizList({ onEdit, onView }: QuizListProps) {
 
   if (!quizzes || quizzes.length === 0) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8" role="status">
         <p className="text-muted-foreground">No quizzes found</p>
       </div>
     );
@@ -66,8 +66,9 @@ export function QuizList({ onEdit, onView }: QuizListProps) {
                   size="sm"
                   onClick={() => onView(quiz.id)}
                   className="flex-1"
+                  aria-label={`View ${quiz.quizName}`}
                 >
-                  <Eye className="mr-2 h-4 w-4" />
+                  <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
                   View
                 </Button>
               )}
@@ -77,8 +78,9 @@ export function QuizList({ onEdit, onView }: QuizListProps) {
                   size="sm"
                   onClick={() => onEdit(quiz.id)}
                   className="flex-1"
+                  aria-label={`Edit ${quiz.quizName}`}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
+                  <Edit className="mr-2 h-4 w-4" aria-hidden="true" />
                   Edit
                 </Button>
               )}
@@ -87,8 +89,9 @@ export function QuizList({ onEdit, onView }: QuizListProps) {
                 size="sm"
                 onClick={() => handleDelete(quiz.id)}
                 disabled={deleteQuiz.isPending}
+                aria-label={`Delete ${quiz.quizName}`}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </CardContent>
