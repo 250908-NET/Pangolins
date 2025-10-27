@@ -9,6 +9,7 @@ services:
       - Jwt__Key=EYQ6qHAZUd7kLIUalmMatCiYL38Vq02CTGhocOzUtQyzvOlZCAIPdQyvlEih1TEnkcOBlZ0SfXBJ29E6L4DJaJqZFS5MHWw0GfVoy4xiCxfxD3aGi00lmoj3aq0hjcHy
       # - SQLAZURECONNSTR_ConnectionStrings__Connection=Server=localhost,3002;Database=Pangolivia;User Id=sa;Password=qweiuooknAqweasASdoGimnoiqjweklj1noi123&&pokdsa12;TrustServerCertificate=True;
       - SQLAZURECONNSTR_ConnectionStrings__Connection={ConnectionString__Connection}
+      - Auth0__ClientSecret={Auth0__ClientSecret}
     ports:
       - "3001:80"
     

@@ -12,9 +12,9 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
-    private readonly Auth0Service _auth0service;
+    private readonly IAuth0Service _auth0service;
 
-    public UserService(IUserRepository userRepository, IMapper mapper, Auth0Service auth0service)
+    public UserService(IUserRepository userRepository, IMapper mapper, IAuth0Service auth0service)
     {
         _userRepository = userRepository;
         _mapper = mapper;
@@ -52,6 +52,7 @@ public class UserService : IUserService
             Auth0User userInfo = await _auth0service.GetUsersInfo(userSub);
             foundUserModel = new UserModel()
             {
+                // Username = userInfo.Nickname,
                 Username = userInfo.Nickname,
                 Auth0Sub = userInfo.Sub,
                 ProfileImageUrl = userInfo.ProfilePictureUrl

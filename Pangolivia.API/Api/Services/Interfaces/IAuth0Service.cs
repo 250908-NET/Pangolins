@@ -8,6 +8,6 @@ namespace Pangolivia.API.Services
         // auth0|123876123876123
         // google|123876123876123
 
-        
+        Task<Auth0User> GetUsersInfo(string userSub);
     }
 }

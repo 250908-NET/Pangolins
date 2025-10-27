@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pangolivia.API.Data;
 
@@ -11,9 +12,11 @@ using Pangolivia.API.Data;
 namespace Pangolivia.API.Migrations
 {
     [DbContext(typeof(PangoliviaDbContext))]
-    partial class PangoliviaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251024012117_UpdatedForAUTH")]
+    partial class UpdatedForAUTH
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

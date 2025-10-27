@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pangolivia.API.DTOs;
+using Pangolivia.API.Models;
 using Pangolivia.API.Repositories;
 using Pangolivia.API.Services;
 
@@ -15,54 +16,45 @@ namespace Pangolivia.API.Controllers
         private readonly IGameManagerService _gameManager;
         private readonly IQuizRepository _quizRepository; // Inject the quiz repository
         private readonly ILogger<GamesController> _logger; // Inject logger for better diagnostics
+        private readonly UserService _userService;
 
         // Update the constructor
         public GamesController(
             IGameManagerService gameManager,
             IQuizRepository quizRepository,
-            ILogger<GamesController> logger
+            ILogger<GamesController> logger,
+            UserService userService
         )
         {
             _gameManager = gameManager;
             _quizRepository = quizRepository;
             _logger = logger;
+            _userService = userService;
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateGame([FromBody] CreateGameRequestDto request)
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdStr, out var userId))
+            var auth0sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            UserModel userModel = null;
+            try
             {
-                _logger.LogWarning("CreateGame failed: Could not parse UserId from token.");
-                return Unauthorized("Invalid user identifier.");
+                if (auth0sub is null) throw new Exception();
+                userModel = await _userService.getOrCreateUser(auth0sub);
             }
-
-            var username = User.FindFirstValue(ClaimTypes.Name);
-            if (string.IsNullOrEmpty(username))
+            catch
             {
-                _logger.LogWarning(
-                    "CreateGame failed: Username not found in token for UserId {UserId}.",
-                    userId
-                );
-                return Unauthorized("Username not found in token.");
+                return Unauthorized();
             }
-
-            _logger.LogInformation(
-                "User {Username} ({UserId}) is creating a game with QuizId {QuizId}",
-                username,
-                userId,
-                request.QuizId
-            );
 
             try
             {
-                var roomCode = await _gameManager.CreateGame(request.QuizId, userId, username);
+                var roomCode = await _gameManager.CreateGame(request.QuizId, userModel.Id, userModel.Username);
                 return Ok(new { roomCode });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating game for user {Username}", username);
+                _logger.LogError(ex, "Error creating game for user {Username}", userModel.Username);
                 return BadRequest(new { message = ex.Message });
             }
         }

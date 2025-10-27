@@ -53,8 +53,8 @@ builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
 builder.Services.AddScoped<IGameRecordRepository, GameRecordRepository>();
 builder.Services.AddScoped<IPlayerGameRecordRepository, PlayerGameRecordRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
 
+builder.Services.AddScoped<IAuth0Service, Auth0Service>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IGameRecordService, GameRecordService>();
