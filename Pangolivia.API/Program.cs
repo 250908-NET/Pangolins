@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using System.Threading.Tasks; // Required for Task.CompletedTask
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Pangolivia.API.Data;
@@ -121,12 +122,9 @@ builder.Services.AddCors(options =>
             policy
                 .WithOrigins(
                     [
-                        "http://localhost:5173",
                         "http://localhost:3000",
                         "http://localhost:5173",
-                        "https://pangolivia-frontend-gjhpf7gphvhmhgbm.canadacentral-01.azurewebsites.net",
-                        "https://pangolivia.com",
-                        "https://pangolivia.baxendev.com"
+                        builder.Configuration["WEB_URL"]!
                     ]
                 ) // Your frontend's specific origin
                 .AllowAnyMethod()
@@ -176,7 +174,7 @@ if (app.Environment.IsDevelopment())
     app.UseMiddleware<RequestLoggingMiddleware>();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
