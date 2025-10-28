@@ -121,7 +121,11 @@ builder.Services.AddCors(options =>
         {
             policy
                 .WithOrigins(
-                    builder.Configuration["WEB_URL"]!
+                    [
+                        "http://localhost:3000",
+                        "http://localhost:5173",
+                        builder.Configuration["WEB_URL"]!
+                    ]
                 ) // Your frontend's specific origin
                 .AllowAnyMethod()
                 .AllowAnyHeader()
