@@ -65,15 +65,13 @@ namespace Pangolivia.Tests.Controllers
                 .Setup(s => s.CreateGame(request.QuizId, 42, "TestUser"))
                 .ReturnsAsync(expectedRoomCode);
 
-            // Act
             var result = await _controller.CreateGame(request);
 
-            // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var value = okResult.Value;
             Assert.NotNull(value);
 
-            // *** FIX: Use reflection to safely access the property ***
+
             var roomCodeProperty = value.GetType().GetProperty("roomCode");
             Assert.NotNull(roomCodeProperty); // Ensure the property exists
             var roomCodeValue = roomCodeProperty.GetValue(value);
@@ -83,14 +81,11 @@ namespace Pangolivia.Tests.Controllers
         [Fact]
         public async Task CreateGame_WithInvalidUserIdClaim_ReturnsUnauthorized()
         {
-            // Arrange
             SetUserClaims("invalid-id", "TestUser");
             var request = new CreateGameRequestDto { QuizId = 1 };
 
-            // Act
             var result = await _controller.CreateGame(request);
 
-            // Assert
             var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
             Assert.Equal("Invalid user identifier.", unauthorizedResult.Value);
         }
@@ -98,18 +93,14 @@ namespace Pangolivia.Tests.Controllers
         [Fact]
         public async Task CreateGame_WithMissingUsernameClaim_ReturnsUnauthorized()
         {
-            // Arrange
             var claims = new[] { new Claim(ClaimTypes.NameIdentifier, "42") };
             var identity = new ClaimsIdentity(claims, "TestAuth");
             var user = new ClaimsPrincipal(identity);
             _controller.ControllerContext.HttpContext.User = user;
 
             var request = new CreateGameRequestDto { QuizId = 1 };
-
-            // Act
             var result = await _controller.CreateGame(request);
 
-            // Assert
             var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
             Assert.Equal("Username not found in token.", unauthorizedResult.Value);
         }
@@ -117,24 +108,18 @@ namespace Pangolivia.Tests.Controllers
         [Fact]
         public async Task CreateGame_WhenServiceThrowsException_ReturnsBadRequest()
         {
-            // Arrange
             SetUserClaims("7", "AnotherUser");
             var request = new CreateGameRequestDto { QuizId = 10 };
             var exceptionMessage = "Quiz not found.";
 
-            _gameManagerMock
-                .Setup(s => s.CreateGame(request.QuizId, 7, "AnotherUser"))
-                .ThrowsAsync(new Exception(exceptionMessage));
+            _gameManagerMock.Setup(s => s.CreateGame(request.QuizId, 7, "AnotherUser")).ThrowsAsync(new Exception(exceptionMessage));
 
-            // Act
             var result = await _controller.CreateGame(request);
 
-            // Assert
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
             var value = badRequestResult.Value;
             Assert.NotNull(value);
 
-            // *** FIX: Use reflection to safely access the property ***
             var messageProperty = value.GetType().GetProperty("message");
             Assert.NotNull(messageProperty); // Ensure the property exists
             var messageValue = messageProperty.GetValue(value) as string;
@@ -144,17 +129,13 @@ namespace Pangolivia.Tests.Controllers
         [Fact]
         public void GetGameDetails_WhenSessionExists_ReturnsOk()
         {
-            // Arrange
             var roomCode = "ABC123";
             var mockQuiz = new QuizModel { Id = 10, QuizName = "Math Quiz" };
             var session = new GameSession(1, "Math Quiz", 5, "HostUser", mockQuiz);
 
             _gameManagerMock.Setup(s => s.GetGameSession(roomCode)).Returns(session);
-
-            // Act
             var result = _controller.GetGameDetails(roomCode);
 
-            // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.NotNull(okResult.Value);
         }
@@ -162,14 +143,10 @@ namespace Pangolivia.Tests.Controllers
         [Fact]
         public void GetGameDetails_WhenSessionIsMissing_ReturnsNotFound()
         {
-            // Arrange
             var roomCode = "NOPE999";
             _gameManagerMock.Setup(s => s.GetGameSession(roomCode)).Returns((GameSession?)null);
 
-            // Act
             var result = _controller.GetGameDetails(roomCode);
-
-            // Assert
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
             Assert.Equal("Game not found.", notFoundResult.Value);
         }

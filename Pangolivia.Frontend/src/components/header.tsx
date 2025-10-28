@@ -3,18 +3,37 @@ import { FaHome } from 'react-icons/fa'
 import { FaMoon, FaSun } from 'react-icons/fa'
 // Simple theme toggle using document root class
 const useTheme = () => {
-    const [theme, setTheme] = React.useState(() =>
-        document.documentElement.classList.contains('dark') ? 'dark' : 'light'
-    );
+    const [theme, setTheme] = React.useState(() => {
+        // Check localStorage first, then fallback to checking classList
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            return savedTheme;
+        }
+        return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    });
+
     const toggleTheme = () => {
-        if (theme === 'light') {
+        const newTheme = theme === 'light' ? 'dark' : 'light';
+        // Update DOM
+        if (newTheme === 'dark') {
             document.documentElement.classList.add('dark');
-            setTheme('dark');
         } else {
             document.documentElement.classList.remove('dark');
-            setTheme('light');
         }
+        // Update state and localStorage
+        setTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
     };
+
+    // Sync initial theme with DOM on mount
+    React.useEffect(() => {
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, []);
+
     return { theme, toggleTheme };
 };
 import { Menu, X } from 'lucide-react'

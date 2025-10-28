@@ -1,3 +1,4 @@
+
 services:
   api:
     image: pangolivia-api:latest
@@ -12,7 +13,7 @@ services:
       - Auth0__ClientSecret={Auth0__ClientSecret}
     ports:
       - "3001:80"
-    
+
   frontend:
     image: pangolivia-frontend:latest
     container_name: pangolivia-frontend
