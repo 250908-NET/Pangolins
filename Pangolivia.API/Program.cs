@@ -121,7 +121,7 @@ builder.Services.AddCors(options =>
         {
             policy
                 .WithOrigins(
-                    builder.Configuration["ApiUrl"]!
+                    builder.Configuration["WEB_URL"]!
                 ) // Your frontend's specific origin
                 .AllowAnyMethod()
                 .AllowAnyHeader()

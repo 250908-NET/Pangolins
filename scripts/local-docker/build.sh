@@ -41,7 +41,6 @@ fi
 
 echo "Building backend image from '${BACKEND_DIR}' with API_URL='${API_URL}'..."
 docker build \
-    --build-arg API_URL="${API_URL}" \
     -t "pangolivia-api:latest \
     "${BACKEND_DIR}"
 
