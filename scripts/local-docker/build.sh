@@ -41,7 +41,7 @@ fi
 
 echo "Building backend image from '${BACKEND_DIR}' with API_URL='${API_URL}'..."
 docker build \
-    -t "pangolivia-api:latest \
+    -t "pangolivia-api:latest" \
     "${BACKEND_DIR}"
 
 echo "Building frontend image from '${FRONTEND_DIR}' with API_URL='${API_URL}'..."
